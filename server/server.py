@@ -1,7 +1,9 @@
 
-# 클라이언트 연결 수락 및 처리
+# Main server 
 
 import sys
+import os 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from PyQt5.QtCore import QCoreApplication
 from PyQt5.QtNetwork import QTcpServer, QHostAddress
 
@@ -9,7 +11,7 @@ from client_handler import ClientHandler
 from config import SERVER_PORT, SERVER_IP
 from database import FAAdb
 
-class FAAServer(QTCPServer):
+class FAAServer(QTcpServer):
     def __init__(self):
         super(FAAServer, self).__init__()
 

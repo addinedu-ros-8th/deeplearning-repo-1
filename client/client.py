@@ -8,13 +8,15 @@ from config import SERVER_HOST, SERVER_PORT
 
 from_class = uic.loadUiType("./client.ui")[0]
 
-class ClientApp(QMainWindow, from_class):
+class MainWindow(QMainWindow, from_class):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
 
-        self.stackedWidget.setCurrentWidget(self.login_page)
+        self.setWindowTitle("User")
         
+        self.stackedWidget.setCurrentWidget(self.login_page)
+
         # init socket 
         
         # 로그인 화면 버튼 이벤트
@@ -82,6 +84,6 @@ class ClientApp(QMainWindow, from_class):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    client = ClientApp()
+    client = MainWindow()
     client.show()
     sys.exit(app.exec_())

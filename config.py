@@ -6,5 +6,5 @@ DB_CONFIG = {
     "host": "addinedu.synology.me",
     "user": "faa",
     "password": "Addinedu1!@",
-    "database": "faa",
+    "database": "faa"
 }

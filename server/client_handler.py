@@ -1,6 +1,6 @@
 
 
-# 각 client와의 연결 관리 
+# Server의 각 client와의 연결 관리 
 # 소켓을 다루고 client로 부터 받은 데이터 처리하고 응답을 보내는 코드 
 
 from PyQt5.QtCore import QThread
@@ -11,7 +11,6 @@ class ClientHandler(QThread):
         self.client_socket = QTcpSocket()
         self.client_socket.setSocketDescriptor(socketDescriptor)
 
-        
     def start(self):
         # 클라이언트로부터 데이터가 도착했을 때
         self.client_socket.readyRead.connect(self.receive_data)
