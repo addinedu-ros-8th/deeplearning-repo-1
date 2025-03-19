@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5 import uic
-from socket_client import SocketClient
+from socket_client import Client
 import mysql.connector
 from PyQt5.QtNetwork import QTcpSocket
 
@@ -21,7 +21,7 @@ remote = mysql.connector.connect(
         )
 cur = remote.cursor()
 
-from_class = uic.loadUiType("./test.ui")[0]
+from_class = uic.loadUiType("./ui/main.ui")[0]
 
 class MyWindow(QMainWindow, from_class):
     def __init__(self):
@@ -31,12 +31,7 @@ class MyWindow(QMainWindow, from_class):
 
         self.stackedWidget.setCurrentWidget(self.login_page)
 
-        self.socket_client = SocketClient()
-        self.socket_client.connect()
-
-        self.server_ip = SERVER_IP
-        self.server_port = SERVER_PORT
-
+        self.socket_client = Client()
         self.socket_client.connect(SERVER_IP,SERVER_PORT)
 
         # self.socket_client.connected.connect(self.on_connected)

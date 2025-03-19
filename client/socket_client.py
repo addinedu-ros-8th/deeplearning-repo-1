@@ -3,34 +3,25 @@
 
 import sys
 import os 
+import signal 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from config import SERVER_PORT, SERVER_IP
 
 from PyQt5.QtNetwork import QTcpSocket
 from PyQt5.QtCore import QObject, pyqtSignal,QCoreApplication
 
-class Client(QObject) :
-    # event를 받을 수 있는 signals 
-    receive_data = pyqtSignal(str)
-    connected = pyqtSignal()
-    disconnected = pyqtSignal()
-    error = pyqtSignal(str)
-    
+class Client(QObject) :    
     def __init__(self):
         super().__init__()
-        self.socket = QTcpSocket()
+        self.socket = QTcpSocket()                              # 1. create socket 
+        self.socket.connectToHost(SERVER_IP, SERVER_PORT)       # 2. connect to server 
+        self.socket.connected.connect(self.on_connected)        # 3. send data 
+        self.socket.readyRead.connect(self.readData)            # 4. read data 
         
-        # connect socket - event 
-        # self.socket.readyRead.connect(self.readData)
-        # self.socket.connected.connect(self.on_connected)
-        # self.socket.disconnected.connect(self.on_disconnected)
-        # self.socket.errorOccurred.connect(self.on_error)
-
-    def connect(self):
-        self.socket.connectToHost(SERVER_IP, SERVER_PORT)
-        print("연결성공!")
+    def on_connected(self):
+        print("[Client] Connected to server")
         self.send_data()
-
+    
     def send_data(self):
         if self.socket.state() == QTcpSocket.ConnectedState:  # :흰색_확인_표시: 연결 상태 확인
             message = b"hi,server"
@@ -48,11 +39,6 @@ class Client(QObject) :
             message = b"hi,server"
             self.socket.write(message)
             print("서버로 메세지 전송 : ", message.decode("utf-8"))
-        
-    # socket callbacks : gui에서 받을 수 있음 
-    # def on_connected(self):
-    #     print("[Client] Connected to server")
-    #     self.connected.emit()
 
     def on_disconnected(self):
         print("[Client] Disconnected from server")
@@ -63,5 +49,6 @@ class Client(QObject) :
 
 if __name__ == "__main__":
     app = QCoreApplication(sys.argv)
-    client = Client()
+    signal.signal(signal.SIGINT, signal.SIG_DFL)    # Ctrl+C 시그널 등록
+    client = Client() 
     sys.exit(app.exec_())

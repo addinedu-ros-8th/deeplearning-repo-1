@@ -10,9 +10,9 @@ class FAAdb:
         try:
             self.conn = mysql.connector.connect(**DB_CONFIG)
             if self.conn.is_connected():
-                print("success connect...")
+                print("success connect to db...")
         except Exception as e:
-            print("failed connect...", e)
+            print("failed connect to db...", e)
 
     def commit(self):
         self.conn.commit()

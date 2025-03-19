@@ -9,7 +9,7 @@ from PyQt5.QtNetwork import QTcpSocket
 from config import SERVER_PORT, SERVER_PORT
 from client import SocketClient
 
-from_class = uic.loadUiType("./ui/main.ui")[0]
+from_class = uic.loadUiType("./ui/auth.ui")[0]
 
 class MainWindow(QMainWindow, from_class):
     def __init__(self):
