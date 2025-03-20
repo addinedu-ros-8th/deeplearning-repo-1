@@ -7,7 +7,7 @@ from PyQt5.QtGui import *
 from PyQt5 import uic
 from PyQt5.QtNetwork import QTcpSocket
 from config import SERVER_PORT, SERVER_PORT
-from client import SocketClient
+
 
 from_class = uic.loadUiType("./ui/auth.ui")[0]
 
@@ -16,12 +16,6 @@ class MainWindow(QMainWindow, from_class):
         super().__init__()
         self.setupUi(self)
         self.setWindowTitle("User")
-
-        # 네트워크 클라이언트 연결
-        self.socket_client = SocketClient()
-        self.socket_client.connected.connect(lambda: print("서버 연결됨"))
-        self.socket_client.receive_data.connect(self.handle_server_response)
-        self.socket_client.connect()
         
         self.stackedWidget.setCurrentWidget(self.login_page)
         
