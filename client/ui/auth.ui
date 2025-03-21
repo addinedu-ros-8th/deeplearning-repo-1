@@ -26,7 +26,7 @@
     <string notr="true">background-color:white</string>
    </property>
    <property name="currentIndex">
-    <number>4</number>
+    <number>0</number>
    </property>
    <widget class="QWidget" name="login_page">
     <widget class="QPushButton" name="login_btn">
@@ -130,7 +130,7 @@ color: white;</string>
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="lineEdit"/>
+       <widget class="QLineEdit" name="input_id"/>
       </item>
       <item>
        <widget class="QLabel" name="label_2">
@@ -140,7 +140,7 @@ color: white;</string>
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="lineEdit_2"/>
+       <widget class="QLineEdit" name="input_passwd"/>
       </item>
      </layout>
     </widget>
@@ -158,8 +158,11 @@ color: white;</string>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
        <widget class="QLabel" name="label_3">
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
         <property name="text">
-         <string>이름</string>
+         <string>* 이름</string>
         </property>
        </widget>
       </item>
@@ -169,7 +172,7 @@ color: white;</string>
       <item>
        <widget class="QLabel" name="label_4">
         <property name="text">
-         <string>아이디</string>
+         <string>* 아이디</string>
         </property>
        </widget>
       </item>
@@ -179,7 +182,7 @@ color: white;</string>
       <item>
        <widget class="QLabel" name="label_5">
         <property name="text">
-         <string>비밀번호</string>
+         <string>* 비밀번호</string>
         </property>
        </widget>
       </item>
@@ -189,7 +192,7 @@ color: white;</string>
       <item>
        <widget class="QLabel" name="label_6">
         <property name="text">
-         <string>비밀번호 재확인</string>
+         <string>* 비밀번호 재확인</string>
         </property>
        </widget>
       </item>
@@ -199,7 +202,7 @@ color: white;</string>
       <item>
        <widget class="QLabel" name="label_7">
         <property name="text">
-         <string>이메일</string>
+         <string>* 이메일</string>
         </property>
        </widget>
       </item>
