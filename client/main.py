@@ -11,8 +11,8 @@ from socket_client import Client
 from server.database import FAAdb
 import json
 
-main_class = uic.loadUiType("/home/sang/dev_ws/git_ws/deeplearning-repo-1/client/ui/auth.ui")[0]
-second_class = uic.loadUiType("/home/sang/dev_ws/git_ws/deeplearning-repo-1/client/ui/main_page.ui")[0]
+main_class = uic.loadUiType("./ui/auth.ui")[0]
+second_class = uic.loadUiType("./ui/main_page.ui")[0]
 
 class MainWindow(QMainWindow, main_class):
     def __init__(self):
@@ -38,11 +38,6 @@ class MainWindow(QMainWindow, main_class):
         #아이디 찾기 화면 버튼 이벤트
         self.find_id_result.clicked.connect(self.id_check)
 
-        #비밀번호 찾기 화면 버튼 이벤트
-        self.id_check_btn.clicked.connect(self.id_check)
-
-        #비밀번호 재설정 화면 버튼 이벤트
-        self.passwd_reset_btn.clicked.connect(self.passwd_reset)
 
     def login(self):
         id = self.input_id.text()
@@ -67,7 +62,8 @@ class MainWindow(QMainWindow, main_class):
     
     def register(self):
         self.stackedWidget.setCurrentWidget(self.register_page)
-    
+    def back2login (self):
+        self.stackedWidget.setCurrentWidget(self.login_page)
     def find_id(self):
         self.stackedWidget.setCurrentWidget(self.find_id_page)
     
@@ -103,6 +99,7 @@ class MainWindow(QMainWindow, main_class):
     
     def receiveData(self, data):
         command = data["command"]
+    
 
 class secondWindow(QMainWindow, second_class):
     def __init__(self):
