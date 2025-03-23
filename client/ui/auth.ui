@@ -26,7 +26,7 @@
     <string notr="true">background-color:white</string>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>4</number>
    </property>
    <widget class="QWidget" name="login_page">
     <widget class="QPushButton" name="login_btn">
@@ -157,19 +157,6 @@ color: white;</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
-       <widget class="QLabel" name="label_3">
-        <property name="styleSheet">
-         <string notr="true"/>
-        </property>
-        <property name="text">
-         <string>* 이름</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLineEdit" name="lineEdit_3"/>
-      </item>
-      <item>
        <widget class="QLabel" name="label_4">
         <property name="text">
          <string>* 아이디</string>
@@ -177,7 +164,7 @@ color: white;</string>
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="lineEdit_4"/>
+       <widget class="QLineEdit" name="register_input_id"/>
       </item>
       <item>
        <widget class="QLabel" name="label_5">
@@ -187,7 +174,7 @@ color: white;</string>
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="lineEdit_5"/>
+       <widget class="QLineEdit" name="register_input_passwd"/>
       </item>
       <item>
        <widget class="QLabel" name="label_6">
@@ -197,7 +184,7 @@ color: white;</string>
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="lineEdit_6"/>
+       <widget class="QLineEdit" name="input_passwd_compare"/>
       </item>
       <item>
        <widget class="QLabel" name="label_7">
@@ -207,61 +194,15 @@ color: white;</string>
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="lineEdit_7"/>
+       <widget class="QLineEdit" name="register_input_email"/>
       </item>
      </layout>
-    </widget>
-    <widget class="QLabel" name="label_8">
-     <property name="geometry">
-      <rect>
-       <x>30</x>
-       <y>390</y>
-       <width>66</width>
-       <height>19</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>키</string>
-     </property>
-    </widget>
-    <widget class="QLabel" name="label_9">
-     <property name="geometry">
-      <rect>
-       <x>180</x>
-       <y>390</y>
-       <width>66</width>
-       <height>19</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>몸무게</string>
-     </property>
-    </widget>
-    <widget class="QLineEdit" name="lineEdit_8">
-     <property name="geometry">
-      <rect>
-       <x>30</x>
-       <y>420</y>
-       <width>100</width>
-       <height>27</height>
-      </rect>
-     </property>
-    </widget>
-    <widget class="QLineEdit" name="lineEdit_9">
-     <property name="geometry">
-      <rect>
-       <x>180</x>
-       <y>420</y>
-       <width>100</width>
-       <height>27</height>
-      </rect>
-     </property>
     </widget>
     <widget class="QPushButton" name="register_complete_btn">
      <property name="geometry">
       <rect>
        <x>30</x>
-       <y>460</y>
+       <y>430</y>
        <width>251</width>
        <height>31</height>
       </rect>
@@ -286,16 +227,6 @@ color: white;</string>
       </rect>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_3">
-      <item>
-       <widget class="QLabel" name="label_10">
-        <property name="text">
-         <string>이름</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLineEdit" name="find_id_input_name"/>
-      </item>
       <item>
        <widget class="QLabel" name="label_11">
         <property name="text">
@@ -337,16 +268,6 @@ color: white;</string>
       </rect>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_4">
-      <item>
-       <widget class="QLabel" name="label_12">
-        <property name="text">
-         <string>이름</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLineEdit" name="id_check_input_name"/>
-      </item>
       <item>
        <widget class="QLabel" name="label_14">
         <property name="text">
@@ -416,7 +337,7 @@ color: white;</string>
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="lineEdit_16"/>
+       <widget class="QLineEdit" name="passwd_reset_input_passwd_compare"/>
       </item>
      </layout>
     </widget>
@@ -435,6 +356,76 @@ color: white;</string>
      </property>
      <property name="text">
       <string>재설정</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="add_profile_page">
+    <widget class="QPushButton" name="btn_select_profile_img">
+     <property name="geometry">
+      <rect>
+       <x>80</x>
+       <y>30</y>
+       <width>211</width>
+       <height>261</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+    <widget class="QWidget" name="gridLayoutWidget">
+     <property name="geometry">
+      <rect>
+       <x>80</x>
+       <y>307</y>
+       <width>211</width>
+       <height>161</height>
+      </rect>
+     </property>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="0" column="1">
+       <widget class="QLineEdit" name="lineEdit"/>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_8">
+        <property name="text">
+         <string>이름</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="lineEdit_2"/>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_9">
+        <property name="text">
+         <string>키</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLineEdit" name="lineEdit_8"/>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_17">
+        <property name="text">
+         <string>몸무게</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QPushButton" name="btn_profile_save">
+     <property name="geometry">
+      <rect>
+       <x>80</x>
+       <y>480</y>
+       <width>211</width>
+       <height>27</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>저장</string>
      </property>
     </widget>
    </widget>
