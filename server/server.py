@@ -158,9 +158,10 @@ class FAAServer(QTcpServer):
             print("[Server] 클라이언트와의 연결이 끊어져 응답을 전송할 수 없습니다.")
 
     def disconnected(self, client_socket):
-        print(f"[Server] client disconnected : {client_socket.peerAddress().toString()}")
-        self.client_list.remove(client_socket)
-        client_socket.deleteLater()
+        client_socket = self.sender()  # 현재 신호를 보낸 객체 가져오기
+        if isinstance(client_socket, QTcpSocket):
+            print("[Server] Client disconnected:", client_socket.peerAddress().toString())
+        client_socket.deleteLater()  # 안전하게 객체 삭제
     
     def find_id(self):
         if self.data['id'] == None:
@@ -197,7 +198,7 @@ class FAAServer(QTcpServer):
     def login(self):
         self.cur.execute("SELECT login_id FROM user where login_id = %s and password = %s",(self.data['id'],self.data['pw']))
         rows = self.cur.fetchall()
-        print(rows[0][0])
+        #print(rows)
         if len(rows) == 0:
             print('로그인정보가 틀렸습니다.')
             #data = {"command":"LOGIN_RESULT","status":1,"err":"Invalid credentials"}
