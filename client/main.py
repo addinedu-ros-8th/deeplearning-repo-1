@@ -16,7 +16,7 @@ from camera import Camera
 import cv2
 
 main_class = uic.loadUiType("/home/sang/dev_ws/save_file/client/ui/auth.ui")[0]
-second_class = uic.loadUiType("/home/sang/dev_ws/save_file/client/ui/main_page.ui")[0]
+second_class = uic.loadUiType("/home/sang/dev_ws/save_file/client/ui/real_real_main_page.ui")[0]
 
 class MainWindow(QMainWindow, main_class):
     def __init__(self):
@@ -236,10 +236,9 @@ class secondWindow(QMainWindow, second_class):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        self.setWindowTitle("main_page")
         self.db = FAAdb()
         self.cur = self.db.conn.cursor()
-        self.tcp = Client()
+        #self.tcp = Client()
         self.udp = UdpClient()
         self.profile_cnt = 0
 
@@ -249,11 +248,11 @@ class secondWindow(QMainWindow, second_class):
         self.btn_rank.setCheckable(True)
 
         # 버튼 그룹으로 묶어서 exclusive 설정
-        self.tab_group = QButtonGroup()
-        self.tab_group.addButton(self.btn_workout)
-        self.tab_group.addButton(self.btn_record)
-        self.tab_group.addButton(self.btn_rank)
-        self.tab_group.setExclusive(True)
+        # self.tab_group = QButtonGroup()
+        # self.tab_group.addButton(self.btn_workout)
+        # self.tab_group.addButton(self.btn_record)
+        # self.tab_group.addButton(self.btn_rank)
+        # self.tab_group.setExclusive(True)
 
         # 페이지 전환 이벤트 연결 
         self.btn_workout.clicked.connect(self.show_main)
@@ -261,10 +260,12 @@ class secondWindow(QMainWindow, second_class):
         self.btn_rank.clicked.connect(self.show_rank)
         # 첫 화면 기본 설정 
         self.btn_workout.setChecked(True)
-        self.stackedWidget_2.setCurrentWidget(self.profile_page)
-        self.stackedWidget.setCurrentWidget(self.main_page)
+        self.stackedWidget_big.setCurrentWidget(self.profile_page)
+        self.stackedWidget_small.setCurrentWidget(self.main_page)
 
         self.btn_start.clicked.connect(self.go2workout)
+
+        self.count_up = 0
 
         # 프로필 계정 유무확인후 버튼 활성화
         self.cur.execute("select count(name) from user")
@@ -367,6 +368,7 @@ class secondWindow(QMainWindow, second_class):
             self.btn_profile4.setIconSize(QSize(icon_size, icon_size))
             self.label_profile4.setText(name_list[3])
             self.btn_profile4.setVisible(True)
+            self.btn_plus_profile.setEnabled(False)
             self.profile_cnt = 4
         
         # 계정 생성 버튼 이벤트 연결
@@ -395,12 +397,15 @@ class secondWindow(QMainWindow, second_class):
             background-color: white;
         }
         """)
+
+        #영상 저장 명령버튼
+        self.btn_save.clicked.connect(self.save_video)
     # main pages 
     def show_main(self):
-        self.stackedWidget.setCurrentWidget(self.main_page)
+        self.stackedWidget_small.setCurrentWidget(self.main_page)
 
     def show_record(self):
-        self.stackedWidget.setCurrentWidget(self.record_page)
+        self.stackedWidget_small.setCurrentWidget(self.record_page)
 
         self.radio_day.setChecked(True)
         self.radio_day.toggled.connect(self.switch_graph)
@@ -408,7 +413,7 @@ class secondWindow(QMainWindow, second_class):
         self.radio_month.toggled.connect(self.switch_graph)
     
     def show_rank(self):
-        self.stackedWidget.setCurrentWidget(self.rank_page)
+        self.stackedWidget_small.setCurrentWidget(self.rank_page)
 
 
     def switch_graph(self):
@@ -422,7 +427,7 @@ class secondWindow(QMainWindow, second_class):
     # login page
     def plus_profile(self):
         client.show()
-        client.stackedWidget.setCurrentWidget(client.add_profile_page)
+        client.stackedWidget_big.setCurrentWidget(client.add_profile_page)
     
     def add_profile(self, profile_cnt):
         self.db.conn.reconnect(attempts=3, delay=2) #db 새로고침
@@ -511,7 +516,7 @@ class secondWindow(QMainWindow, second_class):
         passwd = self.cur.fetchall()[0][0]
 
         if ok and passwd == input_passwd:
-            self.stackedWidget_2.setCurrentWidget(self.big_main_page)
+            self.stackedWidget_big.setCurrentWidget(self.big_main_page)
         else:
             QMessageBox.warning(self, "계정 비밀번호", "비밀번호가 일치하지 않습니다.")
         self.set_user_name(name)
@@ -520,7 +525,7 @@ class secondWindow(QMainWindow, second_class):
         self.lb_name.setText(name)
     
     def go2workout(self):
-        self.stackedWidget_2.setCurrentWidget(self.workout_page)
+        self.stackedWidget_big.setCurrentWidget(self.workout_page)
         self.lb_cam = self.workout_page.findChild(QLabel, "lb_cam")
 
         self.camera = Camera()
@@ -530,14 +535,33 @@ class secondWindow(QMainWindow, second_class):
         self.timer.timeout.connect(self.update_gui)
         self.timer.start(30)
         
+    def count(self):
+        if client.tcp.result == 'up':
+            #print(self.tcp.result)
+            self.count_up+=1
 
     def update_gui(self):
         if self.camera.frame is not None:
-            img = cv2.cvtColor(self.camera.frame, cv2.COLOR_BGR2RGB)
-            qt_img = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888)
-            self.lb_cam.setPixmap(QPixmap.fromImage(qt_img))
-            self.udp.send_video(self.camera.frame)
+            # OpenCV 영상에 텍스트 추가
+            cv2.putText(self.camera.frame, f"Repetition : {client.tcp.result}", 
+                        (20, 120), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
+            # OpenCV BGR → PyQt RGB 변환
+            img = cv2.cvtColor(self.camera.frame, cv2.COLOR_BGR2RGB)
+
+            # QImage 변환 (stride 값 추가)
+            qt_img = QImage(img.data, img.shape[1], img.shape[0], img.shape[1] * 3, QImage.Format_RGB888)
+
+            # QPixmap 변환 및 크기 조정
+            pixmap = QPixmap.fromImage(qt_img)
+            scaled_pixmap = pixmap.scaled(self.lb_cam.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+
+            # QLabel 업데이트
+            self.lb_cam.setPixmap(scaled_pixmap)
+            self.udp.send_video(self.camera.frame)
+    def save_video(self):
+        self.udp.video_writer=True
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

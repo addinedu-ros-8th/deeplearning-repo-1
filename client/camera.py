@@ -8,6 +8,7 @@ class Camera:
         self.stopped = False
         self.thread = threading.Thread(target=self._update)
         self.thread.daemon = True
+        self.counter = 0 
 
     def start(self):
         self.thread.start()

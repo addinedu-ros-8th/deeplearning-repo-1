@@ -9,6 +9,7 @@ from config import SERVER_PORT, SERVER_IP
 
 from PyQt5.QtNetwork import QTcpSocket, QUdpSocket
 from PyQt5.QtCore import QObject, pyqtSignal,QCoreApplication
+from ai_to_main import AitoMain
 import json
 import struct
 
@@ -16,6 +17,7 @@ class Client(QObject) :
     responseReceived = pyqtSignal()
     def __init__(self):
         super().__init__()
+        self.AiSocket = AitoMain()
         self.socket = QTcpSocket()                              # 1. create socket 
         self.socket.connectToHost(SERVER_IP, SERVER_PORT)       # 2. connect to server 
         self.socket.connected.connect(self.on_connected)        # 3. send data 
@@ -36,6 +38,7 @@ class Client(QObject) :
             print("서버 응답 : ",self.data)
             #print(type(response))
             #print(self.response['status'])
+            
             if self.data['command'] == 'FR':
                 self.result = int(self.data['status'])
                 self.responseReceived.emit()
@@ -43,6 +46,10 @@ class Client(QObject) :
                 self.result = int(self.data['status'])
                 self.responseReceived.emit()
             elif self.data['command'] == 'RR':
+                self.result = int(self.data['status'])
+                self.responseReceived.emit()
+            elif self.data['command'] == 'CT':
+                print(self.data['status'])
                 self.result = int(self.data['status'])
                 self.responseReceived.emit()
             # self.receive_data.emit(data)

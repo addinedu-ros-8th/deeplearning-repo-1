@@ -1,18 +1,20 @@
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../client')))
 import signal
 from PyQt5.QtCore import QCoreApplication
 from PyQt5.QtNetwork import QTcpServer, QHostAddress, QTcpSocket
 from config import SERVER_PORT
 from database import FAAdb
-import json
+from ai_to_main import AitoMain
 import struct
 
 class FAAServer(QTcpServer):
     def __init__(self):
         super(FAAServer, self).__init__()
         self.client_list = []
+        self.ai_server = AitoMain()
         self.db = FAAdb()
         self.cur = self.db.conn.cursor()
 
@@ -30,6 +32,7 @@ class FAAServer(QTcpServer):
         self.client_socket.disconnected.connect(lambda: self.disconnected(self.client_socket))
 
         self.client_list.append(self.client_socket)
+        print(self.client_list)
 
     def receive_data(self, client_socket):
         while client_socket.bytesAvailable() > 0:
@@ -49,6 +52,10 @@ class FAAServer(QTcpServer):
             elif self.data['command'] == "RS":
                  print("회원가입")
                  self.register() 
+            elif self.data['command'] == "CT":
+                 print("카운팅")
+                 self.counting(self.data['data']) 
+            
     
     def unpack_data(self, binary_data):
         offset = 0
@@ -234,6 +241,10 @@ class FAAServer(QTcpServer):
             data = self.pack_data("RR",status='0')
                
         self.send_data(self.client_socket,data)
+    
+    def counting(self,count):
+        data = self.pack_data("CT",status=count)
+        self.send_data(self.client_list[2],data)
     
 
 if __name__ == "__main__":
