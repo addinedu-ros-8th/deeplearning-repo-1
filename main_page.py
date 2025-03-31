@@ -37,7 +37,18 @@ class MainWindow(QMainWindow, from_class):
         self.current_gesture = None
         self.gesture_start_time = None
         self.selection_confirmed = False
+        
+        self.tiers = cons.TIERS  # ["Bronze", "Silver", "Gold"]
+        self.tier_names = list(self.tiers.keys())
+        self.current_tier_index = 0
 
+        self.workout_buttons = [
+            self.btn_workout_1,
+            self.btn_workout_2,
+            self.btn_workout_3,
+            self.btn_workout_4,
+        ] 
+    
         # Gui btn
         self.btn_workout.setCheckable(True)
         self.btn_record.setCheckable(True)
@@ -115,28 +126,31 @@ class MainWindow(QMainWindow, from_class):
         self.view.set_button_action("start", self.handle_start)
         self.view.set_button_action("exit", self.handle_exit)
         self.view.set_button_action("lookup", self.handle_lookup)
-        
+        self.update_workout_buttons() # default = Bronze
+
         # lookup btns
         self.workout_group = QButtonGroup()
-        self.workout_group.addButton(self.btn_flunge)
-        self.workout_group.addButton(self.btn_slunge)
-        self.workout_group.addButton(self.btn_squat)
+        self.workout_group.addButton(self.btn_workout_1)
+        self.workout_group.addButton(self.btn_workout_2)
+        self.workout_group.addButton(self.btn_workout_3)
+        self.workout_group.addButton(self.btn_workout_4)
         self.workout_group.setExclusive(True)
 
-        self.btn_flunge.clicked.connect(lambda: self.play_workout_video("./Asset/front-lunge.mp4"))
-        self.btn_slunge.clicked.connect(lambda: self.play_workout_video("./Asset/side-lunge.mp4"))
-        self.btn_squat.clicked.connect(lambda: self.play_workout_video("./Asset/squat.mp4"))
-   
-    def play_selected_workout(self, index):
-        videos = {
-            1: "./Asset/front-lunge.mp4",
-            2: "./Asset/side-lunge.mp4",
-            3: "./Asset/squat.mp4"
-        }
-        if index in videos:
-            self.play_workout_video(videos[index])
-        else:
-            print(f"❌ {index}번 운동은 정의되지 않았습니다.")
+        # self.btn_workout_1.clicked.connect(lambda: self.play_workout_video("./Asset/front-lunge.mp4"))
+        # self.btn_workout_2.clicked.connect(lambda: self.play_workout_video("./Asset/side-lunge.mp4"))
+        # self.btn_workout_3.clicked.connect(lambda: self.play_workout_video("./Asset/squat.mp4"))
+        # self.btn_workout_4.clicked.connect(lambda: self.play_workout_video("./Asset/squat.mp4"))
+
+    # def play_selected_workout(self, index):
+    #     videos = {
+    #         1: "./Asset/front-lunge.mp4",
+    #         2: "./Asset/side-lunge.mp4",
+    #         3: "./Asset/squat.mp4"
+    #     }
+    #     if index in videos:
+    #         self.play_workout_video(videos[index])
+    #     else:
+    #         print(f"❌ {index}번 운동은 정의되지 않았습니다.")
 
     def play_workout_video(self, video_path):
         # 이전 재생 중이면 중단
@@ -179,7 +193,7 @@ class MainWindow(QMainWindow, from_class):
                 cv2.putText(frame, f' {number}', (cons.window_width - 100, 50),
                             cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
 
-                if 1 <= number <= 5:
+                if 1 <= number <= 4:
                     if self.current_gesture != number:
                         self.current_gesture = number
                         self.gesture_start_time = time.time()
@@ -210,6 +224,29 @@ class MainWindow(QMainWindow, from_class):
             qt_img = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888)
 
             self.lb_cam.setPixmap(QPixmap.fromImage(qt_img))
+    
+    def update_workout_buttons(self):
+        tier_name = self.tier_names[self.current_tier_index]
+        print(f"🔄 현재 티어: {tier_name}")
+
+        # 버튼 텍스트 변경
+        if self.view and "next" in self.view.buttons:
+            self.view.buttons["next"].label.text = self.tier_names[(self.current_tier_index + 1) % len(self.tier_names)].upper()
+
+        workouts = self.tiers[tier_name]
+
+        for i, btn in enumerate(self.workout_buttons, start=1):
+            if i in workouts:
+                btn.setText(workouts[i]["name"])
+                # QApplication.processEvents()
+                btn.repaint()
+                try:
+                    btn.clicked.disconnect()
+                except TypeError:
+                    pass
+
+                # 핵심: i=i 로 캡처
+                btn.clicked.connect(lambda _, i=i: self.play_workout_video(workouts[i]["video"]))
 
     def handle_start(self):
         print("🟢 START button tapped!")
@@ -233,9 +270,9 @@ class MainWindow(QMainWindow, from_class):
         self.is_lookup = True
         self.view.set_mode("lookup")
 
-        self.view.set_button_action("show", self.handle_show)
         self.view.set_button_action("back", self.handle_back_to_main)
-
+        self.view.set_button_action("next", self.handle_next) 
+        self.update_workout_buttons()
     def handle_pause(self):
         print("⏸️ PAUSE button tapped!")
 
@@ -244,10 +281,18 @@ class MainWindow(QMainWindow, from_class):
         self.modal_pause_view.bttn_continue.action = self.handle_continue_button
 
     def handle_next(self):
-        print("Next button tapped!")
-        """
-        Need to implement 
-        """
+        print("🔁 Next Tier")
+
+        self.current_tier_index = (self.current_tier_index + 1) % len(self.tier_names)
+        tier_name = self.tier_names[self.current_tier_index]
+
+        if "next" in self.view.buttons:
+            next_tier_name = self.tier_names[(self.current_tier_index + 1) % len(self.tier_names)]
+            self.view.buttons["next"].label.text = next_tier_name.upper()
+
+        self.update_workout_buttons()
+
+
     def handle_back_to_main(self):
         print("🔙 BACK button tapped!")
         # hide workout list 

@@ -41,7 +41,7 @@ class ViewMain(View):
                 label=ViewLabel(text="BACK"), center_label=True)
             self.buttons["next"] = ViewButton(
                 x=220, y=50, x_end=370, y_end=130,
-                label=ViewLabel(text="NEXT"), center_label=True)
+                label=ViewLabel(text="Silver"), center_label=True)
        
         for btn in self.buttons.values():
             self.add_subview(btn)

@@ -146,22 +146,25 @@ modal_btn_y = int(window_height * 0.4)
 
 ######################################
 
-workouts_by_tier = {
-    "bronze": {
-        1: ("Knee up", "./Asset/knee-up.mp4"),
-        2: ("Sholder press", "./Asset/sholder-press.mp4"),
-        3: ("Squat", "./Asset/squat.mp4"),
-        4: ("Front lunge", "./Asset/front-lunge.mp4")
+TIERS = {
+    "Bronze": {
+        1: {"name": "Front-Lunge", "video": "./Asset/front-lunge.mp4"},
+        2: {"name": "Sholder-press", "video": "./Asset/sholder-press.mp4"},
+        3: {"name": "Squat", "video": "./Asset/squat.mp4"},
+        4: {"name": "Knee-up", "video": "./Asset/knee-up.mp4"}
     },
-    "silver": {
-        1: ("Push Up", "./Asset/push-up.mp4"),
-        2: ("Bridge", "./Asset/bridge.mp4"),
-        3: ("Standing bicycle", "./Asset/standing-bicycle.mp4"),
-        4: ("Side lunge", "./Asset/standing-bicycle.mp4"),
+    
+    "Silver": {
+        1: {"name": "Push-up", "video": "./Asset/push-up.mp4"},
+        2: {"name": "Bridge", "video": "./Asset/bridge.mp4"},
+        3: {"name": "Standing-bicycle", "video": "./Asset/standing-bicycle.mp4"},
+        4: {"name": "Side-lunge", "video": "./Asset/side-lunge.mp4"}
     },
+
     "gold": {
-        1: ("Pistol Squat", "./Asset/pistol-squat.mp4"),
-        2: ("Handstand Push Up", "./Asset/handstand-pushup.mp4"),
-        3: ("L-Sit", "./Asset/l-sit.mp4")
+        1: {"name": "Sit-up", "video": "./Asset/sit-up.mp4"},
+        2: {"name": "Side-Plank", "video": "./Asset/side-plank.mp4"},
+        3: {"name": "V-up", "video": "./Asset/v-up.mp4"},
+        4: {"name": "Jumping-jack", "video": "./Asset/jumping-jack.mp4"}
     }
 }
