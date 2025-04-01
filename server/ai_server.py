@@ -9,7 +9,14 @@ from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget
 from PyQt5.QtGui import QImage, QPixmap
 import mediapipe as mp
 import struct
-from counting import Counting
+from counting import ExerciseClassifier
+from collections import deque, Counter
+from keras.models import load_model
+import threading
+import time
+import tempfile
+from gtts import gTTS
+from file_client import FileClient
 #from socket_client import Client
 from ai_to_main import AitoMain
 
@@ -24,8 +31,8 @@ class AiServer(QWidget):
         self.udp_socket.readyRead.connect(self.receive_data)
 
         self.tcp = AitoMain()
-        self.counting = Counting(self.on_counter_increase)
-        # self.file_server = FileClient()
+        self.counting = ExerciseClassifier()
+        self.file_server = FileClient()
 
         print(f"[UDP Server] Listening for video on port {port}...")
 
@@ -37,14 +44,8 @@ class AiServer(QWidget):
         layout.addWidget(self.label)
         self.setLayout(layout)
         
-        # self.file_server = FileClient()
-        # self.write_status=False
-
-    def on_counter_increase(self, count):
-        """ 카운터가 증가할 때 실행될 함수 """
-        print(f"[AiServer] 카운트 증가 감지! 현재 카운트: {count}")
-        command = self.pack_data("CT",data=str(count))
-        self.tcp.sendData(command)
+        self.file_server = FileClient()
+        self.write_status=False
         
     def receive_data(self):
         while self.udp_socket.hasPendingDatagrams():
@@ -64,32 +65,32 @@ class AiServer(QWidget):
                 print("[UDP Server] Failed to decode frame")
                 return
 
-            frame = self.counting.process_pose(frame)
+            frame = self.counting.process_frame(frame)
             self.display_frame(frame)
 
 
             # 바로 파일 서버로 전송
-            # if self.write_status == True:
-            #     self.send_video_to_server(frame)
+            if self.write_status == True:
+                self.send_video_to_server(frame)
 
         except Exception as e:
             print(f"[UDP Server] Error processing frame: {e}")
     
-    # def send_video_to_server(self, frame):
-    #     """ 프레임을 파일 서버로 직접 전송 """
-    #     try:
-    #         # OpenCV frame을 JPEG 형식으로 인코딩하여 바이트 데이터로 변환
-    #         ret, encoded_frame = cv2.imencode('.jpg', frame)
+    def send_video_to_server(self, frame):
+        """ 프레임을 파일 서버로 직접 전송 """
+        try:
+            # OpenCV frame을 JPEG 형식으로 인코딩하여 바이트 데이터로 변환
+            ret, encoded_frame = cv2.imencode('.jpg', frame)
 
-    #         if ret:
-    #             frame_bytes = encoded_frame.tobytes()
+            if ret:
+                frame_bytes = encoded_frame.tobytes()
 
-    #             # 파일 서버로 전송
-    #             #self.file_server.send_video(frame_bytes)  # send_video()는 비디오 데이터를 서버로 전송하는 메서드
-    #             self.write_status=False
+                # 파일 서버로 전송
+                self.file_server.send_video(frame_bytes)  # send_video()는 비디오 데이터를 서버로 전송하는 메서드
+                self.write_status=False
 
-    #     except Exception as e:
-    #         print(f"[UDP Server] Error sending video to server: {e}")
+        except Exception as e:
+            print(f"[UDP Server] Error sending video to server: {e}")
     
     def display_frame(self, frame):
         """ OpenCV 프레임을 QLabel에 표시 """

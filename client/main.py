@@ -10,10 +10,24 @@ from config import SERVER_PORT, SERVER_PORT
 from socket_client import Client
 from udp_client import UdpClient
 from server.database import FAAdb
+
+from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
+from PyQt5.QtMultimediaWidgets import QVideoWidget
+
 import json
 import struct
 from camera import Camera
+from Video import Video
+import Controller.Hands as hands
+import Controller.Detector as Detector
+
+from View.ViewModal import ViewModalPause,ViewModalExit
+from View.ViewMain import ViewMain
+import Constants as cons
+
 import cv2
+import time
+
 
 main_class = uic.loadUiType("/home/sang/dev_ws/save_file/client/ui/auth.ui")[0]
 second_class = uic.loadUiType("/home/sang/dev_ws/save_file/client/ui/real_real_main_page.ui")[0]
@@ -247,6 +261,16 @@ class secondWindow(QMainWindow, second_class):
         self.btn_record.setCheckable(True)
         self.btn_rank.setCheckable(True)
 
+        self.is_lookup = False
+        self.hand_detector = Detector.handDetector()
+        self.modal_pause_view = None
+        self.modal_exit_view = None
+        self.video_thread = None
+        
+        self.current_gesture = None
+        self.gesture_start_time = None
+        self.selection_confirmed = False
+
         # 버튼 그룹으로 묶어서 exclusive 설정
         # self.tab_group = QButtonGroup()
         # self.tab_group.addButton(self.btn_workout)
@@ -265,6 +289,8 @@ class secondWindow(QMainWindow, second_class):
 
         self.btn_start.clicked.connect(self.go2workout)
 
+        self.btn_work_to_main.clicked.connect(self.back_work_to_main)
+
         self.count_up = 0
 
         # 프로필 계정 유무확인후 버튼 활성화
@@ -282,94 +308,29 @@ class secondWindow(QMainWindow, second_class):
                 icon_list.append(n[1])
         #print(cnt)
 
-        if cnt == 0: 
-            self.btn_profile1.setVisible(False)
-            self.btn_profile2.setVisible(False)
-            self.btn_profile3.setVisible(False)
-            self.btn_profile4.setVisible(False)
-        elif cnt == 1:
+        buttons = [self.btn_profile1, self.btn_profile2, self.btn_profile3, self.btn_profile4]
+        labels = [self.label_profile1, self.label_profile2, self.label_profile3, self.label_profile4]
+
+        # 모든 버튼과 라벨 숨기기
+        for btn, label in zip(buttons, labels):
+            btn.setVisible(False)
+            label.setText("")
+
+        if cnt == 0:
+            return  # 프로필이 없을 경우 종료
+
+        icon_size = 200  # 아이콘 크기 설정
+        for i in range(cnt):
             pixmap = QPixmap()
-            pixmap.loadFromData(icon_list[0])  # 바이너리 데이터를 QPixmap으로 변환
-            # 버튼 스타일을 border-image 대신 QIcon으로 설정
-            icon_size = 200  # 버튼 크기
-            self.btn_profile1.setIcon(QIcon(pixmap))
-            self.btn_profile1.setIconSize(QSize(icon_size, icon_size))
-            self.label_profile1.setText(name_list[0])
-            self.btn_profile1.setVisible(True)
-            self.btn_profile2.setVisible(False)
-            self.btn_profile3.setVisible(False)
-            self.btn_profile4.setVisible(False)
-            self.profile_cnt = 1
-        elif cnt == 2:
-            pixmap = QPixmap()
-            pixmap.loadFromData(icon_list[0])  # 바이너리 데이터를 QPixmap으로 변환
-            # 버튼 스타일을 border-image 대신 QIcon으로 설정
-            icon_size = 200  # 버튼 크기
-            self.btn_profile1.setIcon(QIcon(pixmap))
-            self.btn_profile1.setIconSize(QSize(icon_size, icon_size))
-            self.label_profile1.setText(name_list[0])
-            self.btn_profile1.setVisible(True)
+            pixmap.loadFromData(icon_list[i])  # 바이너리 데이터를 QPixmap으로 변환
             
-            pixmap.loadFromData(icon_list[1])
-            self.btn_profile2.setIcon(QIcon(pixmap))
-            self.btn_profile2.setIconSize(QSize(icon_size, icon_size))
-            self.label_profile2.setText(name_list[1])
-            self.btn_profile2.setVisible(True)
+            buttons[i].setIcon(QIcon(pixmap))
+            buttons[i].setIconSize(QSize(icon_size, icon_size))
+            labels[i].setText(name_list[i])
+            buttons[i].setVisible(True)
 
-            self.btn_profile3.setVisible(False)
-            self.btn_profile4.setVisible(False)
-            self.profile_cnt = 2
-        elif cnt == 3:
-            pixmap = QPixmap()
-            pixmap.loadFromData(icon_list[0])  # 바이너리 데이터를 QPixmap으로 변환
-            # 버튼 스타일을 border-image 대신 QIcon으로 설정
-            icon_size = 200  # 버튼 크기
-            self.btn_profile1.setIcon(QIcon(pixmap))
-            self.btn_profile1.setIconSize(QSize(icon_size, icon_size))
-            self.label_profile1.setText(name_list[0])
-            self.btn_profile1.setVisible(True)
-            
-            pixmap.loadFromData(icon_list[1])
-            self.btn_profile2.setIcon(QIcon(pixmap))
-            self.btn_profile2.setIconSize(QSize(icon_size, icon_size))
-            self.label_profile2.setText(name_list[1])
-            self.btn_profile2.setVisible(True)
-
-            pixmap.loadFromData(icon_list[2])
-            self.btn_profile3.setIcon(QIcon(pixmap))
-            self.btn_profile3.setIconSize(QSize(icon_size, icon_size))
-            self.label_profile3.setText(name_list[2])
-            self.btn_profile3.setVisible(True)
-            self.btn_profile4.setVisible(False)
-            self.profile_cnt = 3
-        elif cnt == 4:
-            pixmap = QPixmap()
-            pixmap.loadFromData(icon_list[0])  # 바이너리 데이터를 QPixmap으로 변환
-            # 버튼 스타일을 border-image 대신 QIcon으로 설정
-            icon_size = 200  # 버튼 크기
-            self.btn_profile1.setIcon(QIcon(pixmap))
-            self.btn_profile1.setIconSize(QSize(icon_size, icon_size))
-            self.label_profile1.setText(name_list[0])
-            
-            pixmap.loadFromData(icon_list[1])
-            self.btn_profile2.setIcon(QIcon(pixmap))
-            self.btn_profile2.setIconSize(QSize(icon_size, icon_size))
-            self.label_profile2.setText(name_list[1])
-            self.btn_profile2.setVisible(True)
-
-            pixmap.loadFromData(icon_list[2])
-            self.btn_profile3.setIcon(QIcon(pixmap))
-            self.btn_profile3.setIconSize(QSize(icon_size, icon_size))
-            self.label_profile3.setText(name_list[2])
-            self.btn_profile3.setVisible(True)
-
-            pixmap.loadFromData(icon_list[3])
-            self.btn_profile4.setIcon(QIcon(pixmap))
-            self.btn_profile4.setIconSize(QSize(icon_size, icon_size))
-            self.label_profile4.setText(name_list[3])
-            self.btn_profile4.setVisible(True)
-            self.btn_plus_profile.setEnabled(False)
-            self.profile_cnt = 4
+        self.profile_cnt = cnt
+        self.btn_plus_profile.setEnabled(cnt < 4)  # 최대 4개까지 추가 가능
         
         # 계정 생성 버튼 이벤트 연결
         self.btn_plus_profile.clicked.connect(self.plus_profile)
@@ -525,16 +486,157 @@ class secondWindow(QMainWindow, second_class):
         self.lb_name.setText(name)
     
     def go2workout(self):
-        self.stackedWidget_big.setCurrentWidget(self.workout_page)
-        self.lb_cam = self.workout_page.findChild(QLabel, "lb_cam")
+        self.modal_exit_view = None
+        self.modal_pause_view = None
+        self.lb_cam.clear()
+        # QApplication.processEvents()
 
+        # 1. Page switch
+        self.stackedWidget_big.setCurrentWidget(self.workout_page)
+        self.showFullScreen()
+        self.lb_cam = self.workout_page.findChild(QLabel, "lb_cam")
+        self.lb_cam.setScaledContents(True)
+        
+        # Hide widget which contains workout list 
+        #self.workout_list_widget.hide()
+        # 2. Video widget 
+        self.video_player = QMediaPlayer(None, QMediaPlayer.VideoSurface)
+        self.video_widget = QVideoWidget()
+        self.video_player.setVideoOutput(self.video_widget)
+        
+        #self.workout_list.layout().addWidget(self.video_widget)
+        self.video_widget.hide()
+
+        # 3. Camera 시작 
         self.camera = Camera()
         self.camera.start()
 
-        self.timer = QTimer(self)  # 명확히 parent 설정
+        self.timer = QTimer()
         self.timer.timeout.connect(self.update_gui)
         self.timer.start(30)
         
+        # 4. bttn View 구성 
+        self.view = ViewMain()
+        self.view.set_mode("main")
+        self.view.set_button_action("start", self.handle_start)
+        self.view.set_button_action("exit", self.handle_exit)
+        self.view.set_button_action("lookup", self.handle_lookup)
+        
+        # # lookup btns
+        # self.workout_group = QButtonGroup()
+        # self.workout_group.addButton(self.btn_flunge)
+        # self.workout_group.addButton(self.btn_slunge)
+        # self.workout_group.addButton(self.btn_squat)
+        # self.workout_group.setExclusive(True)
+
+        # self.btn_flunge.clicked.connect(lambda: self.play_workout_video("./Asset/front-lunge.mp4"))
+        # self.btn_slunge.clicked.connect(lambda: self.play_workout_video("./Asset/side-lunge.mp4"))
+        # self.btn_squat.clicked.connect(lambda: self.play_workout_video("./Asset/squat.mp4"))
+    
+    def back_work_to_main(self):
+        self.stackedWidget_big.setCurrentWidget(self.big_main_page)
+        self.showNormal()
+
+    def play_selected_workout(self, index):
+        videos = {
+            1: "./Asset/front-lunge.mp4",
+            2: "./Asset/side-lunge.mp4",
+            3: "./Asset/squat.mp4"
+        }
+        if index in videos:
+            self.play_workout_video(videos[index])
+        else:
+            print(f"❌ {index}번 운동은 정의되지 않았습니다.")
+
+    def play_workout_video(self, video_path):
+        # 이전 재생 중이면 중단
+        if self.video_thread and self.video_thread.isRunning():
+            self.video_thread.stop()
+            self.video_thread.wait()
+
+        self.lb_cam.clear()
+        self.lb_cam.hide()
+        self.timer.stop()
+
+        self.video_thread = Video(video_path)
+        self.video_thread.frame_ready.connect(self.display_video_frame)
+        self.video_thread.finished.connect(self.resume_camera)
+        self.video_thread.start()
+
+    def handle_start(self):
+        print("🟢 START button tapped!")
+        self.view.set_mode("working")
+        self.view.set_button_action("pause", self.handle_pause)
+        self.view.set_button_action("next", self.handle_next)
+
+    def handle_exit(self):
+        print("EXIT button tapped!")
+
+        self.modal_exit_view = ViewModalExit()
+        self.modal_exit_view.bttn_yes.action = self.handle_close_button
+        self.modal_exit_view.bttn_no.action = self.handle_back_to_main
+
+    def handle_lookup(self):
+        print(" Lookup button tapped!")
+        # show workout list 
+        #self.workout_list_widget.show()
+
+        self.mode = "lookup"
+        self.is_lookup = True
+        self.view.set_mode("lookup")
+
+        self.view.set_button_action("show", self.handle_show)
+        self.view.set_button_action("back", self.handle_back_to_main)
+
+    def handle_pause(self):
+        print("⏸️ PAUSE button tapped!")
+
+        self.modal_pause_view = ViewModalPause()
+        self.modal_pause_view.bttn_back.action = self.handle_back_to_main
+        self.modal_pause_view.bttn_continue.action = self.handle_continue_button
+
+    def handle_next(self):
+        print("Next button tapped!")
+        """
+        Need to implement 
+        """
+    def handle_back_to_main(self):
+        print("🔙 BACK button tapped!")
+        # hide workout list 
+        #self.workout_list_widget.hide()
+        self.is_paused = False
+        self.is_lookup = False
+        self.modal_pause_view = None
+        self.modal_exit_view = None
+        
+        self.view.set_mode("main")
+        self.view.set_button_action("start",  self.handle_start)
+        self.view.set_button_action("exit",   self.handle_exit)
+        self.view.set_button_action("lookup", self.handle_lookup)
+
+
+    def handle_continue_button(self):
+        print("▶️ CONTINUE button tapped!")
+        self.modal_pause_view = None
+
+        self.view.set_mode("working")
+        self.view.set_button_action("pause", self.handle_pause)
+        self.view.set_button_action("next", self.handle_next)
+
+    def handle_close_button(self):
+        print("🔴 Close!")
+        self.camera.stop()
+        self.stackedWidget_big.setCurrentWidget(self.big_main_page)
+        self.showNormal()
+
+        # self.close()
+
+    def handle_show(self):
+        print("show button tapped! ")
+        """
+        Need to implement 
+        """
+
     def count(self):
         if client.tcp.result == 'up':
             #print(self.tcp.result)
@@ -542,24 +644,51 @@ class secondWindow(QMainWindow, second_class):
 
     def update_gui(self):
         if self.camera.frame is not None:
-            # OpenCV 영상에 텍스트 추가
-            cv2.putText(self.camera.frame, f"Repetition : {client.tcp.result}", 
-                        (20, 120), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+            frame_copy = self.camera.frame.copy()
+            # 1. Mediapipe로 손 키포인트 추출
+            frame = self.hand_detector.findHands(self.camera.frame, draw=False)
+            lmList = self.hand_detector.findPosition(frame, draw=False)
+            Detector.analyze_user(frame)
 
-            # OpenCV BGR → PyQt RGB 변환
-            img = cv2.cvtColor(self.camera.frame, cv2.COLOR_BGR2RGB)
+            hands.set()
+            # 👆 손가락 제스처로 운동 선택
+            if self.is_lookup:
+                number = self.hand_detector.count_fingers(lmList)
+                cv2.putText(frame, f' {number}', (cons.window_width - 100, 50),
+                            cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
 
-            # QImage 변환 (stride 값 추가)
-            qt_img = QImage(img.data, img.shape[1], img.shape[0], img.shape[1] * 3, QImage.Format_RGB888)
+                if 1 <= number <= 5:
+                    if self.current_gesture != number:
+                        self.current_gesture = number
+                        self.gesture_start_time = time.time()
+                        self.selection_confirmed = False
+                        print(f"⏳ 숫자 {number} 인식됨. 유지 중...")
 
-            # QPixmap 변환 및 크기 조정
-            pixmap = QPixmap.fromImage(qt_img)
-            scaled_pixmap = pixmap.scaled(self.lb_cam.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                    elif not self.selection_confirmed and time.time() - self.gesture_start_time >= 5:
+                        print(f"🎯 숫자 {number} 확정됨! 운동 시작.")
+                        self.selection_confirmed = True
+                        self.play_selected_workout(number)
 
-            # QLabel 업데이트
-            self.lb_cam.setPixmap(scaled_pixmap)
-            self.udp.send_video(self.camera.frame)
+                else:
+                    # 손가락이 0개이거나 범위 바깥이면 초기화
+                    self.current_gesture = None
+                    self.gesture_start_time = None
+                    self.selection_confirmed = False
+
+            # 2. 버튼 그리기
+            if self.view:
+                self.view.appear(frame)
+            if self.modal_pause_view :
+                self.modal_pause_view.appear(frame)
+            if self.modal_exit_view is not None:
+                self.modal_exit_view.appear(frame) 
+
+            # 3. PyQt에 이미지 보여주기
+            img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            qt_img = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888)
+
+            self.lb_cam.setPixmap(QPixmap.fromImage(qt_img))
+            self.udp.send_video(frame_copy)
     def save_video(self):
         self.udp.video_writer=True
 
