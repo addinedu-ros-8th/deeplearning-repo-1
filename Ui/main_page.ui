@@ -16,7 +16,7 @@
   <widget class="QStackedWidget" name="stackedWidget_big">
    <property name="geometry">
     <rect>
-     <x>30</x>
+     <x>50</x>
      <y>0</y>
      <width>1821</width>
      <height>881</height>
@@ -170,12 +170,12 @@
       <rect>
        <x>160</x>
        <y>70</y>
-       <width>571</width>
-       <height>281</height>
+       <width>1001</width>
+       <height>741</height>
       </rect>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="main_page">
       <widget class="QWidget" name="gridLayoutWidget">
@@ -373,17 +373,15 @@
         </item>
        </layout>
       </widget>
-      <widget class="QStackedWidget" name="stackedGraphs">
+      <widget class="QWidget" name="graph_container" native="true">
        <property name="geometry">
         <rect>
          <x>20</x>
          <y>80</y>
-         <width>471</width>
-         <height>181</height>
+         <width>941</width>
+         <height>611</height>
         </rect>
        </property>
-       <widget class="QWidget" name="line_graph"/>
-       <widget class="QWidget" name="pie_graph"/>
       </widget>
      </widget>
      <widget class="QWidget" name="rank_page">

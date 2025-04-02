@@ -2,7 +2,7 @@ import os
 import cv2
 import mediapipe as mp
 import logging
-
+from enum import Enum 
 logging.basicConfig(level=logging.DEBUG)
 
 # Formats
@@ -168,3 +168,16 @@ TIERS = {
         4: {"name": "Jumping-jack", "video": "./Asset/jumping-jack.mp4"}
     }
 }
+
+class HourOfDay(Enum):
+    H00 = "00:00"; H03 = "03:00"; H06 = "06:00"; H09 = "09:00"; 
+    H12 = "12:00"; H15 = "15:00"; H18 = "18:00"; H21 = "21:00"; 
+
+class DayOfweek(Enum):
+    MON = "Mon"; TUE = "Tue"; WED = "Wed"; THU = "Thu"
+    FRI = "Fri"; SAT = "Sat" ;SUN = "Sun"
+class Month(Enum):
+    JAN = "Jan";FEB = "Feb";MAR = "Mar"
+    APR = "Apr";MAY = "May";JUN = "Jun"
+    JUL = "Jul";AUG = "Aug";SEP = "Sep"
+    OCT = "Oct";NOV = "Nov";DEC = "Dec"

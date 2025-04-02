@@ -19,7 +19,7 @@ import Controller.Detector as Detector
 from View.ViewModal import ViewModalPause,ViewModalExit
 from View.ViewMain import ViewMain
 import Constants as cons
-
+from Record import RecordGraph
 from_class = uic.loadUiType("./Ui/main_page.ui")[0]
 
 class MainWindow(QMainWindow, from_class):
@@ -49,7 +49,7 @@ class MainWindow(QMainWindow, from_class):
             self.btn_workout_4,
         ] 
     
-        # Gui btn
+        # main page btn 
         self.btn_workout.setCheckable(True)
         self.btn_record.setCheckable(True)
         self.btn_rank.setCheckable(True)
@@ -67,6 +67,16 @@ class MainWindow(QMainWindow, from_class):
 
         self.btn_workout.setChecked(True)
         self.stackedWidget_small.setCurrentWidget(self.main_page)
+
+        # record page btn
+        self.graph_container_layout = QVBoxLayout(self.graph_container)
+        self.graph_day = RecordGraph("day")
+        self.graph_week = RecordGraph("week")
+        self.graph_month = RecordGraph("month")
+        
+        self.graph_container_layout.addWidget(self.graph_day)
+        self.current_graph = self.graph_day
+
         
     def page_main(self):
         self.stackedWidget_small.setCurrentWidget(self.main_page)
@@ -74,20 +84,30 @@ class MainWindow(QMainWindow, from_class):
     def page_record(self):
         self.stackedWidget_small.setCurrentWidget(self.record_page)
         self.radio_day.setChecked(True)
-        self.radio_day.toggled.connect(self.switch_page)
-        self.radio_week.toggled.connect(self.switch_page)
-        self.radio_month.toggled.connect(self.switch_page)
+        self.radio_day.toggled.connect(self.switch_radio)
+        self.radio_week.toggled.connect(self.switch_radio)
+        self.radio_month.toggled.connect(self.switch_radio)
+
+    def switch_graph(self, new_graph):
+        self.graph_container_layout.removeWidget(self.current_graph)
+        self.current_graph.setParent(None)
+        self.graph_container_layout.addWidget(new_graph)
+        self.current_graph = new_graph
+
+    def switch_radio(self):
+        if self.radio_day.isChecked():
+            self.switch_graph(self.graph_day)
+            self.graph_day.set_mode("day")
+        elif self.radio_week.isChecked():
+            self.switch_graph(self.graph_week)
+            self.graph_week.set_mode("week")
+        elif self.radio_month.isChecked():
+            self.switch_graph(self.graph_month)
+            self.graph_month.set_mode("month")
+
 
     def page_rank(self):
         self.stackedWidget_small.setCurrentWidget(self.rank_page)
-
-    def switch_page(self):
-        if self.radio_day.isChecked():
-            self.stackedGraphs.setCurrentIndex(0)
-        elif self.radio_week.isChecked():
-            self.stackedGraphs.setCurrentIndex(1)
-        elif self.radio_month.isChecked():
-            self.stackedGraphs.setCurrentIndex(2)
 
     def go2workout(self):
         self.modal_exit_view = None
@@ -95,24 +115,13 @@ class MainWindow(QMainWindow, from_class):
         self.lb_cam.clear()
         QApplication.processEvents()
         
-        # 1. Page switch 
+        # Page switch 
         self.stackedWidget_big.setCurrentWidget(self.page_workout)
         self.lb_cam = self.page_workout.findChild(QLabel, "lb_cam")
         self.lb_cam.setScaledContents(True)
-        
         # Hide widget which contains workout list 
         self.workout_list_widget.hide()
-        # 2. Video widget 
-        self.video_player = QMediaPlayer(None, QMediaPlayer.VideoSurface)
-        self.video_widget = QVideoWidget()
-        self.video_player.setVideoOutput(self.video_widget)
-        
-        self.workout_list.layout().addWidget(self.video_widget)
-        self.video_widget.hide()
-        # self.showMaximized()
-        # self.lb_cam.setGeometry(0, 0, self.width(), self.height())
-
-        # 3. Camera 시작 
+        # Camera 시작 
         self.camera = Camera()
         self.camera.start()
 
@@ -120,7 +129,7 @@ class MainWindow(QMainWindow, from_class):
         self.timer.timeout.connect(self.update_gui)
         self.timer.start(30)
         
-        # 4. bttn View 구성 
+        # bttn View 구성 
         self.view = ViewMain()
         self.view.set_mode("main")
         self.view.set_button_action("start", self.handle_start)
@@ -135,22 +144,6 @@ class MainWindow(QMainWindow, from_class):
         self.workout_group.addButton(self.btn_workout_3)
         self.workout_group.addButton(self.btn_workout_4)
         self.workout_group.setExclusive(True)
-
-        # self.btn_workout_1.clicked.connect(lambda: self.play_workout_video("./Asset/front-lunge.mp4"))
-        # self.btn_workout_2.clicked.connect(lambda: self.play_workout_video("./Asset/side-lunge.mp4"))
-        # self.btn_workout_3.clicked.connect(lambda: self.play_workout_video("./Asset/squat.mp4"))
-        # self.btn_workout_4.clicked.connect(lambda: self.play_workout_video("./Asset/squat.mp4"))
-
-    # def play_selected_workout(self, index):
-    #     videos = {
-    #         1: "./Asset/front-lunge.mp4",
-    #         2: "./Asset/side-lunge.mp4",
-    #         3: "./Asset/squat.mp4"
-    #     }
-    #     if index in videos:
-    #         self.play_workout_video(videos[index])
-    #     else:
-    #         print(f"❌ {index}번 운동은 정의되지 않았습니다.")
 
     def play_workout_video(self, video_path):
         # 이전 재생 중이면 중단
@@ -265,8 +258,6 @@ class MainWindow(QMainWindow, from_class):
         print(" Lookup button tapped!")
         # show workout list 
         self.workout_list_widget.show()
-
-        self.mode = "lookup"
         self.is_lookup = True
         self.view.set_mode("lookup")
 
@@ -321,13 +312,6 @@ class MainWindow(QMainWindow, from_class):
         self.camera.stop()
         self.stackedWidget_big.setCurrentWidget(self.page)
         # self.close()
-
-    def handle_show(self):
-        print("show button tapped! ")
-        """
-        Need to implement 
-        """
-
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
