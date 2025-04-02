@@ -168,14 +168,14 @@
     <widget class="QStackedWidget" name="stackedWidget_small">
      <property name="geometry">
       <rect>
-       <x>160</x>
+       <x>170</x>
        <y>70</y>
        <width>1001</width>
        <height>741</height>
       </rect>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>3</number>
      </property>
      <widget class="QWidget" name="main_page">
       <widget class="QWidget" name="gridLayoutWidget">
@@ -319,7 +319,7 @@
            </sizepolicy>
           </property>
           <property name="text">
-           <string>schedule</string>
+           <string>calendar</string>
           </property>
          </widget>
         </item>
@@ -661,7 +661,97 @@
        </layout>
       </widget>
      </widget>
-     <widget class="QWidget" name="challenge_page"/>
+     <widget class="QWidget" name="calendar_page">
+      <widget class="QFrame" name="frame">
+       <property name="geometry">
+        <rect>
+         <x>580</x>
+         <y>20</y>
+         <width>381</width>
+         <height>381</height>
+        </rect>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::StyledPanel</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Raised</enum>
+       </property>
+       <widget class="QFrame" name="frame_5">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>10</y>
+          <width>361</width>
+          <height>80</height>
+         </rect>
+        </property>
+        <property name="frameShape">
+         <enum>QFrame::StyledPanel</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Raised</enum>
+        </property>
+        <widget class="QLabel" name="label_2">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>20</y>
+           <width>151</width>
+           <height>51</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>2025-04-05 </string>
+         </property>
+        </widget>
+        <widget class="QLabel" name="label_3">
+         <property name="geometry">
+          <rect>
+           <x>200</x>
+           <y>10</y>
+           <width>151</width>
+           <height>61</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>운동기록</string>
+         </property>
+        </widget>
+       </widget>
+       <widget class="QWidget" name="verticalLayoutWidget_6">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>100</y>
+          <width>351</width>
+          <height>261</height>
+         </rect>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <widget class="QListWidget" name="record_list"/>
+         </item>
+         <item>
+          <widget class="QListWidget" name="record_list_3"/>
+         </item>
+         <item>
+          <widget class="QListWidget" name="record_list_2"/>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+      <widget class="QCalendarWidget" name="calendarWidget">
+       <property name="geometry">
+        <rect>
+         <x>40</x>
+         <y>20</y>
+         <width>509</width>
+         <height>381</height>
+        </rect>
+       </property>
+      </widget>
+     </widget>
     </widget>
    </widget>
    <widget class="QWidget" name="page_workout">

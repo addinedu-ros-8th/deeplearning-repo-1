@@ -77,7 +77,10 @@ class MainWindow(QMainWindow, from_class):
         self.graph_container_layout.addWidget(self.graph_day)
         self.current_graph = self.graph_day
 
-        
+        self.btn_calendar.clicked.connect(self.calendar)
+    def calendar(self):
+         self.stackedWidget_small.setCurrentWidget(self.calendar_page)
+    
     def page_main(self):
         self.stackedWidget_small.setCurrentWidget(self.main_page)
     
