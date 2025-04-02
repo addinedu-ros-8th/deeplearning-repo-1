@@ -82,7 +82,8 @@ mp4 - video
 
 ## 설계
 ### 시나리오
-#### 1) Simple Diagram
+#### 1) Sequence Diagram
+![Image](https://github.com/user-attachments/assets/65cebba6-c939-4ffb-96d8-bb6966fd189d)
 #### 2) State Diagram 
 
 ### Workout list
@@ -99,7 +100,6 @@ mp4 - video
 | Gold |Side-plank|<img src="https://github.com/user-attachments/assets/d10ed58e-d8c4-468b-b2c6-9f7ae036c877" width="250" height="200">|  
 | Gold |One-leg-knee-up|<img src="https://github.com/user-attachments/assets/21235710-f7d0-45aa-8e98-de98786791c0" width="250" height="200">| 
 | Gold |V-up|<img src="https://github.com/user-attachments/assets/bd2f1997-ab37-4f33-a336-bcec9089bd99" width="250" height="200">| 
-
 
 ### Architecture  
 #### 1) SW
