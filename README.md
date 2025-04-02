@@ -95,11 +95,13 @@ mp4 - video
 | Bronze | Front-lunge |<img src="https://github.com/user-attachments/assets/e043a262-e350-4472-a08f-83c30f68440e" width="230" height="200">| silver| Side lunge |<img src="https://github.com/user-attachments/assets/e127fadd-b4bc-4498-b52d-681b0251f387" width="250" height="200">| 
 
 
+
+
 |  Tier  |  이름  | 설명 |
 |:--------:|--------|------|
 | Gold |Sit-up|<img src="https://github.com/user-attachments/assets/71533531-f640-41a6-a9a8-8a0c02339610" width="250" height="200">|    
 | Gold |Side-plank|<img src="https://github.com/user-attachments/assets/d10ed58e-d8c4-468b-b2c6-9f7ae036c877" width="250" height="200">|  
-| Gold |leg-raise|<img src="https://github.com/user-attachments/assets/8cdd9045-1ef8-47f4-8d72-ed93433cc6e2" width="250" height="200">| 
+| Gold |leg-raise|<img src="https://github.com/user-attachments/assets/beee0275-f334-4c4e-abc4-03919dab8375" width="250" height="200">| 
 | Gold |V-up|<img src="https://github.com/user-attachments/assets/bd2f1997-ab37-4f33-a336-bcec9089bd99" width="250" height="200">| 
 
 ### Architecture  
