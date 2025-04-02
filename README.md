@@ -30,12 +30,13 @@ AI 기반 스마트 피트니스 트레이닝 시스템
 mp4 - video
 
 <br>
-|        | name | job |
-|--------|------|-----|
-| leader | 황한문 |  Hand gesture 반응형 UI, 운동 모델 기능 구현, GUI 설계|   
-| worker | 남상기 |  서버 구축 및 연동, 운동 counting |   
-| worker | 신동철 |  운동 판별, 자세 feedback, 가이드라인|    
-| worker | 박세린 |  GUI 구현, 운동데이터 수집|    
+
+| position | name | job |
+|:-----:|------|-----|
+| leader | 황한문 |  Hand gesture 반응형 UI, 운동 모델 기능 구현, GUI 설계 |   
+| worker | 남상기 |  서버 구축 및 연동, 운동 counting, GUI 구현 |   
+| worker | 신동철 |  운동 판별, 자세 feedback, 가이드라인 |    
+| worker | 박세린 |  GUI 구현, 운동데이터 수집 |    
 
 ## Instructions
 ### Environment   
