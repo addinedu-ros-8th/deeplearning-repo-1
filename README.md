@@ -82,9 +82,8 @@ mp4 - video
 
 ## 설계
 ### 시나리오
-#### 1) Sequence Diagram
+#### Sequence Diagram
 ![Image](https://github.com/user-attachments/assets/65cebba6-c939-4ffb-96d8-bb6966fd189d)
-#### 2) State Diagram 
 
 ### Workout list
 |  Tier  |  이름  | 설명 | Tier  |  이름  | 설명 
@@ -93,9 +92,6 @@ mp4 - video
 | Bronze | Shoulder-press | <img src="https://github.com/user-attachments/assets/e1858e72-ae25-48f2-b574-f3ac9a97defd" width="230" height="200">| silver | Bridge| <img src="https://github.com/user-attachments/assets/9c3e0b79-951d-47f4-8413-c83d87ef68ac" width="250" height="200">|
 | Bronze | Squat |<img src="https://github.com/user-attachments/assets/491558c9-faaa-4b01-8d36-5a93c5eb2b85" width="230" height="200">| silver| Standing Bicycle |<img src="https://github.com/user-attachments/assets/67b59edf-f230-487e-92e9-16ef001b4ae0" width="250" height="200">|
 | Bronze | Front-lunge |<img src="https://github.com/user-attachments/assets/e043a262-e350-4472-a08f-83c30f68440e" width="230" height="200">| silver| Side lunge |<img src="https://github.com/user-attachments/assets/e127fadd-b4bc-4498-b52d-681b0251f387" width="250" height="200">| 
-
-
-
 
 |  Tier  |  이름  | 설명 |
 |:--------:|--------|------|
