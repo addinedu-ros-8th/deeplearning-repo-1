@@ -4,7 +4,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../clie
 import numpy as np
 import cv2
 from PyQt5.QtNetwork import QUdpSocket, QHostAddress, QTcpSocket
-from PyQt5.QtCore import QByteArray
+from PyQt5.QtCore import QByteArray, pyqtSignal, QEventLoop
 from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget
 from PyQt5.QtGui import QImage, QPixmap
 import struct
@@ -13,7 +13,7 @@ import time
 from file_client import FileClient
 from ai_to_main import AitoMain
 from exercise_model import ExerciseClassifier
-from counting import ExerciseCounter
+#from counting import ExerciseCounter
 
 class AiServer(QWidget):
     def __init__(self, port=12345, record_duration=5):
@@ -24,7 +24,6 @@ class AiServer(QWidget):
 
         self.tcp = AitoMain()
         self.model = ExerciseClassifier()
-        #self.file_server = FileClient()
         self.recording = False
         self.video_writer = None
         self.record_duration = record_duration  # 녹화 간격 (초)
@@ -45,8 +44,17 @@ class AiServer(QWidget):
         while self.udp_socket.hasPendingDatagrams():
             data, sender, sender_port = self.udp_socket.readDatagram(self.udp_socket.pendingDatagramSize())
 
-            # 받은 데이터를 프레임으로 변환
-            self.process_video_frame(data)
+            # QEventLoop가 한 번만 실행되도록 플래그 사용
+            if not hasattr(self, 'loop_ran'):  # loop_ran이 없으면 실행
+                loop = QEventLoop()
+                self.tcp.responseReceived.connect(loop.quit)  # 응답 받으면 이벤트 루프 종료
+                loop.exec_()
+                self.loop_ran = True  # 한 번 실행 후 플래그 설정
+            print(self.tcp.result)
+            if self.tcp.result == "True":
+                self.process_video_frame(data)
+            if self.tcp.result == "False":
+                self.loop_ran = False
 
     def process_video_frame(self, frame_bytes):
         """ 수신한 비디오 프레임을 디코딩 후 화면에 표시 및 녹화 """

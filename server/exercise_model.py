@@ -11,6 +11,7 @@ from keras.models import load_model
 from gtts import gTTS
 from pydub import AudioSegment
 from pydub.playback import play
+from counting import AngleGuidThreaded
 
 mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
@@ -32,6 +33,8 @@ class ExerciseClassifier:
         self.last_exercise = None
         self.consistent_frames = 0
         self.required_frames = 33 # 10프레임 이상 지속되어야 인식
+
+        self.angle_counter = AngleGuidThreaded("squat")  # 초기 운동 설정
         
         self.predict_thread = threading.Thread(target=self.run_prediction, daemon=True)
         self.predict_thread.start()
@@ -76,20 +79,21 @@ class ExerciseClassifier:
             predict_class = int(np.argmax(self.result))
             predicted_label = self.exercise_list[predict_class]
 
-            # 같은 운동이 연속적으로 감지되었을 때만 업데이트
             if predicted_label == self.last_exercise:
                 self.consistent_frames += 1
             else:
-                self.consistent_frames = 0  # 다른 운동이면 초기화
+                self.consistent_frames = 0
 
             if self.consistent_frames >= self.required_frames:
-                self.label = predicted_label  # 10프레임 이상 지속된 운동만 표시
+                self.label = predicted_label
+                self.angle_counter.set_exercise(self.label.lower().replace(" ", ""))
             self.last_exercise = predicted_label
 
             if self.label:
-                print(self.label)
                 cv2.putText(frame, f"{self.label}", (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 3)
         
+        self.angle_counter.draw(frame, results.pose_landmarks.landmark)
+        cv2.putText(frame, f"Count: {self.angle_counter.get_count()}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
         mp_drawing.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
         return frame
 

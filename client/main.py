@@ -172,6 +172,12 @@ class mainWindow(QMainWindow, main_class):
         self.count_up = 0
         self.tier=0
 
+        self.tab_group = QButtonGroup()
+        self.tab_group.addButton(self.btn_workout)
+        self.tab_group.addButton(self.btn_record)
+        self.tab_group.addButton(self.btn_rank)
+        self.tab_group.setExclusive(True)
+
         # 프로필 계정 유무확인후 버튼 활성화
         self.cur.execute("select count(name) from user")
         cnt = self.cur.fetchall()
@@ -499,7 +505,8 @@ class mainWindow(QMainWindow, main_class):
         print("🟢 START button tapped!")
         self.view.set_mode("working")
         self.lookup_frame.hide()
-        self.save_video()
+        data=self.pack_data("RC",data='True')
+        self.tcp.sendData(data)
         QApplication.processEvents()
         self.view.set_button_action("pause", self.handle_pause)
         self.view.set_button_action("next", self.handle_next)
@@ -541,7 +548,10 @@ class mainWindow(QMainWindow, main_class):
 
     def handle_pause(self):
         print("⏸️ PAUSE button tapped!")
-
+        
+        data=self.pack_data("RC",data='False')
+        self.tcp.sendData(data)
+        
         self.modal_pause_view = ViewModalPause()
         self.modal_pause_view.bttn_back.action = self.handle_back_to_main
         self.modal_pause_view.bttn_continue.action = self.handle_continue_button
@@ -581,6 +591,8 @@ class mainWindow(QMainWindow, main_class):
     def handle_continue_button(self):
         print("▶️ CONTINUE button tapped!")
         self.modal_pause_view = None
+        data=self.pack_data("RC",data='True')
+        self.tcp.sendData(data)
 
         self.view.set_mode("working")
         self.lookup_frame.hide()
@@ -674,8 +686,8 @@ class mainWindow(QMainWindow, main_class):
     
     def save_video(self):
         self.udp.video_writer=True
-        data=self.pack_data("RC",data='True')
-        self.tcp.sendData(data)
+        # data=self.pack_data("RC",data='True')
+        # self.tcp.sendData(data)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
