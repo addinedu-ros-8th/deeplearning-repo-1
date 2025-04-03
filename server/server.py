@@ -39,28 +39,24 @@ class FAAServer(QTcpServer):
             data = client_socket.readAll().data()
             self.data = self.unpack_data(data)
             print(f"[Server] 클라이언트 메세지 : {self.data}")
-            # response = b"Server Received Your Message"
-            # client_socket.write(response)
-            # client_socket.flush()
-            # print(self.data['command'])
-            if self.data['command'] == "FI":
-                 print("아이디찾기")
-                 self.find_id()
-            elif self.data['command'] == "LI":
+            if self.data['command'] == "LI":
                  print("로그인")
                  self.login()  
-            elif self.data['command'] == "RS":
+            elif self.data['command'] == "RG":
                  print("회원가입")
                  self.register() 
             elif self.data['command'] == "CT":
                  print("카운팅")
                  self.counting(self.data['data']) 
+            elif self.data['command'] == "RC":
+                 print("녹화시작")
+                 self.record_start() 
             
     
     def unpack_data(self, binary_data):
         offset = 0
         
-        # 명령어 언패킹
+        # 명령어 언팩 (길이 + 데이터)
         command_len = struct.unpack_from('I', binary_data, offset)[0]
         offset += 4
         command = binary_data[offset:offset + command_len].decode('utf-8')
@@ -76,22 +72,32 @@ class FAAServer(QTcpServer):
                 return value
             return None
         
-        # 각 필드 언패킹
-        id = unpack_string()
+        # 각 필드 언팩
         pw = unpack_string()
         name = unpack_string()
-        email = unpack_string()
+        height = unpack_string()  # 높이
+        weight = unpack_string()  # 몸무게
         data = unpack_string()
         content = unpack_string()
+
+        # 이미지 데이터 언팩 (이미지 파일을 바이너리로 읽어 반환)
+        image_data_len = struct.unpack_from('I', binary_data, offset)[0]
+        offset += 4
+        if image_data_len > 0:
+            image_data = binary_data[offset:offset + image_data_len]
+            offset += image_data_len
+        else:
+            image_data = None
         
         return {
             'command': command,
-            'id': id,
             'pw': pw,
             'name': name,
-            'email': email,
+            'height': height,
+            'weight': weight,
             'data': data,
-            'content': content
+            'content': content,
+            'image_data': image_data
         }
 
     def pack_data(self, command, status=None, name=None, err=None, id=None, list_data=None, routine_number=None, total_day=None, total_time=None,email=None):
@@ -170,81 +176,39 @@ class FAAServer(QTcpServer):
             print("[Server] Client disconnected:", client_socket.peerAddress().toString())
         client_socket.deleteLater()  # 안전하게 객체 삭제
     
-    def find_id(self):
-        if self.data['id'] == None:
-            self.cur.execute("SELECT login_id FROM user where email = %s",(self.data['email'],))
-            rows = self.cur.fetchall()
-            if len(rows) == 0:
-                print('없어용')
-                #data = {"command":"FIND_ID_RESULT","status":1,}
-                data = self.pack_data("FR",status='1')
-                #QMessageBox.about(self, "아이디 찾기", "일치하는 정보가 없습니다.")
-            else:
-                #QMessageBox.about(self, "아이디 찾기", f"아이디는 {rows[0][0]}입니다.")
-                #self.stackedWidget.setCurrentWidget(self.login_page)
-                print(rows[0][0])
-                #data = {"command":"FIND_ID_RESULT","status":0,'id':rows[0][0]}
-                data = self.pack_data("FR",status='0',id=rows[0][0])
-        else:
-            self.cur.execute("SELECT login_id FROM user where login_id = %s and email = %s",(self.data['id'],self.data['email'],))
-            rows = self.cur.fetchall()
-            if len(rows) == 0:
-                print('없어용')
-                #data = {"command":"FIND_ID_RESULT","status":1,}
-                data = self.pack_data("FR",status='1')
-                #QMessageBox.about(self, "아이디 찾기", "일치하는 정보가 없습니다.")
-            else:
-                #QMessageBox.about(self, "아이디 찾기", f"아이디는 {rows[0][0]}입니다.")
-                #self.stackedWidget.setCurrentWidget(self.login_page)
-                print(rows[0][0])
-                #data = {"command":"FIND_ID_RESULT","status":0,'id':rows[0][0]}
-                data = self.pack_data("FR",status='0',id=rows[0][0])
-        
-        self.send_data(self.client_socket,data)
-    
     def login(self):
-        self.cur.execute("SELECT login_id FROM user where login_id = %s and password = %s",(self.data['id'],self.data['pw']))
+        self.cur.execute("SELECT password FROM user where name = %s and password = %s",(self.data['name'],self.data['pw']))
         rows = self.cur.fetchall()
         #print(rows)
         if len(rows) == 0:
             print('로그인정보가 틀렸습니다.')
-            #data = {"command":"LOGIN_RESULT","status":1,"err":"Invalid credentials"}
-            data = self.pack_data("LR",status='1',err="Invalid credentials")
-
-
-            #QMessageBox.about(self, "아이디 찾기", "일치하는 정보가 없습니다.")
+            data = self.pack_data("LI",status='1',err="Invalid credentials")
         else:
-            #QMessageBox.about(self, "아이디 찾기", f"아이디는 {rows[0][0]}입니다.")
-            #self.stackedWidget.setCurrentWidget(self.login_page)
             print(rows[0][0])
-            #data = {"command":"LOGIN_RESULT","status":0,'login_id':rows[0][0]}
-            data = self.pack_data("LR",status='0',id=rows[0][0])
+            data = self.pack_data("LI",status='0')
         self.send_data(self.client_socket,data)
     
     def register(self):
-        self.cur.execute("SELECT EXISTS(SELECT 1 FROM user WHERE login_id = %s)",(self.data['id'],))
-        duplication_id= int(self.cur.fetchall()[0][0])
+        self.cur.execute("SELECT EXISTS(SELECT 1 FROM user WHERE name = %s)",(self.data['name'],))
+        duplication_name = int(self.cur.fetchall()[0][0])
 
-        self.cur.execute("SELECT EXISTS(SELECT 1 FROM user WHERE email = %s)",(self.data['email'],))
-        duplication_email= int(self.cur.fetchall()[0][0])
-        print(duplication_id)
-        print(duplication_email)
-        if duplication_id == 1:
-            data = self.pack_data("RR",status='1')
+        print(duplication_name)
+        if duplication_name == 1:
+            data = self.pack_data("RG",status='1')
         
-        if duplication_email == 1:
-            data = self.pack_data("RR",status='2')
-        
-        if duplication_id == 0 and duplication_email == 0:
-            self.cur.execute("insert into user(login_id, password, email) values(%s, %s, %s)",(self.data['id'],self.data['pw'],self.data['email']))
+        if duplication_name == 0:
+            self.cur.execute("insert into user(name, height, weight, user_icon, password) values(%s, %s, %s, %s, %s)",(self.data['name'],int(self.data['height']),int(self.data['weight']),self.data['image_data'], self.data['pw']))
             self.db.commit()
-            data = self.pack_data("RR",status='0')
+            data = self.pack_data("RG",status='0')
                
         self.send_data(self.client_socket,data)
     
     def counting(self,count):
         data = self.pack_data("CT",status=count)
         self.send_data(self.client_list[2],data)
+    def record_start(self):
+        data = self.pack_data("RC",status='True')
+        self.send_data(self.client_list[1],data)
     
 
 if __name__ == "__main__":

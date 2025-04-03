@@ -50,6 +50,8 @@ class AitoMain(QObject) :
                 self.responseReceived.emit()
             elif self.data['command'] == 'CT':
                 self.result = 'up'
+            elif self.data['command'] == 'RC':
+                self.result = 'up'
                 
                 self.responseReceived.emit()
             # self.receive_data.emit(data)

@@ -11,8 +11,10 @@ class ViewMain(View):
         super().__init__()
         self.buttons = {}
         self.set_mode("main")
-        
+        self.tier=0
+
     def set_mode(self, mode):
+        print(f"모드 변경: {mode}") 
         self.clear_subviews()
         self.buttons.clear()
         if mode == "main":
@@ -39,9 +41,18 @@ class ViewMain(View):
             self.buttons["back"] = ViewButton(
                 x=50, y=50, x_end=200, y_end=130,
                 label=ViewLabel(text="BACK"), center_label=True)
-            self.buttons["next"] = ViewButton(
-                x=220, y=50, x_end=370, y_end=130,
-                label=ViewLabel(text="NEXT"), center_label=True)
+            if self.tier == 0:
+                self.buttons["next"] = ViewButton(
+                    x=250, y=50, x_end=500, y_end=130,
+                    label=ViewLabel(text="SHOW_SILVER"), center_label=True)
+            elif self.tier == 1:
+                self.buttons["next"] = ViewButton(
+                    x=250, y=50, x_end=500, y_end=130,
+                    label=ViewLabel(text="SHOW_GOLD"), center_label=True)
+            elif self.tier == 2:
+                self.buttons["next"] = ViewButton(
+                    x=250, y=50, x_end=500, y_end=130,
+                    label=ViewLabel(text="SHOW_BRONZE"), center_label=True)
        
         for btn in self.buttons.values():
             self.add_subview(btn)

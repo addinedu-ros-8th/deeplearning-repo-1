@@ -42,14 +42,15 @@ def analyze_user(frame):
     try:
         if results.pose_landmarks:
             h, w, _ = frame.shape
+            lmks = {}  # lmks를 항상 초기화
             for idx, lm in enumerate(results.pose_landmarks.landmark):
                 cx, cy, cz = int(lm.x * w), int(lm.y * h), int(lm.z * w)
                 lmks[idx] = [cx, cy, cz]
         else:
-            lmks = None
+            lmks = {}
     except Exception as e:
         logging.debug(f'Something goes wrong in analyze_user(): {e}')
-        lmks = None
+        lmks = {}
 
 
 """

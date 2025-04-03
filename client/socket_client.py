@@ -39,13 +39,10 @@ class Client(QObject) :
             #print(type(response))
             #print(self.response['status'])
             
-            if self.data['command'] == 'FR':
+            if self.data['command'] == 'LI':
                 self.result = int(self.data['status'])
                 self.responseReceived.emit()
-            elif self.data['command'] == 'LR':
-                self.result = int(self.data['status'])
-                self.responseReceived.emit()
-            elif self.data['command'] == 'RR':
+            elif self.data['command'] == 'RG':
                 self.result = int(self.data['status'])
                 self.responseReceived.emit()
             elif self.data['command'] == 'CT':

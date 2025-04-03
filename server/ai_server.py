@@ -7,32 +7,29 @@ from PyQt5.QtNetwork import QUdpSocket, QHostAddress, QTcpSocket
 from PyQt5.QtCore import QByteArray
 from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget
 from PyQt5.QtGui import QImage, QPixmap
-import mediapipe as mp
 import struct
-from counting import ExerciseClassifier
-from collections import deque, Counter
-from keras.models import load_model
 import threading
 import time
-import tempfile
-from gtts import gTTS
 from file_client import FileClient
-#from socket_client import Client
 from ai_to_main import AitoMain
-
-# from file_client import FileClient
-
+from exercise_model import ExerciseClassifier
+from counting import ExerciseCounter
 
 class AiServer(QWidget):
-    def __init__(self, port=12345):
+    def __init__(self, port=12345, record_duration=5):
         super().__init__()
         self.udp_socket = QUdpSocket()
         self.udp_socket.bind(QHostAddress.Any, port)
         self.udp_socket.readyRead.connect(self.receive_data)
 
         self.tcp = AitoMain()
-        self.counting = ExerciseClassifier()
-        self.file_server = FileClient()
+        self.model = ExerciseClassifier()
+        #self.file_server = FileClient()
+        self.recording = False
+        self.video_writer = None
+        self.record_duration = record_duration  # 녹화 간격 (초)
+        self.start_time = None
+        self.video_filename = None
 
         print(f"[UDP Server] Listening for video on port {port}...")
 
@@ -43,10 +40,7 @@ class AiServer(QWidget):
         layout = QVBoxLayout()
         layout.addWidget(self.label)
         self.setLayout(layout)
-        
-        self.file_server = FileClient()
-        self.write_status=False
-        
+
     def receive_data(self):
         while self.udp_socket.hasPendingDatagrams():
             data, sender, sender_port = self.udp_socket.readDatagram(self.udp_socket.pendingDatagramSize())
@@ -55,103 +49,93 @@ class AiServer(QWidget):
             self.process_video_frame(data)
 
     def process_video_frame(self, frame_bytes):
-        """ 수신한 비디오 프레임을 디코딩 후 화면에 표시 """
+        """ 수신한 비디오 프레임을 디코딩 후 화면에 표시 및 녹화 """
         try:
-            # bytes → numpy 배열 변환 후 디코딩
             frame_array = np.frombuffer(frame_bytes, dtype=np.uint8)
             frame = cv2.imdecode(frame_array, cv2.IMREAD_COLOR)
 
             if frame is None:
                 print("[UDP Server] Failed to decode frame")
                 return
-
-            frame = self.counting.process_frame(frame)
+            # if self.start == True:
+            frame = self.model.process_frame(frame)
             self.display_frame(frame)
-
-
-            # 바로 파일 서버로 전송
-            if self.write_status == True:
-                self.send_video_to_server(frame)
+            self.record_video(frame)
 
         except Exception as e:
             print(f"[UDP Server] Error processing frame: {e}")
-    
-    def send_video_to_server(self, frame):
-        """ 프레임을 파일 서버로 직접 전송 """
+
+    def record_video(self, frame):
+        """ 프레임을 저장하여 녹화 파일 생성 """
+        if not self.recording:
+            self.start_new_recording(frame)
+
+        self.video_writer.write(frame)
+
+        if time.time() - self.start_time >= self.record_duration:
+            self.stop_and_send_recording()
+
+    def start_new_recording(self, frame):
+        """ 새로운 비디오 파일 생성하여 녹화 시작 """
+        self.recording = True
+        self.start_time = time.time()
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
+        self.video_filename = f"recorded_{timestamp}.mp4"
+
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        height, width, _ = frame.shape
+        self.video_writer = cv2.VideoWriter(self.video_filename, fourcc, 20.0, (width, height))
+
+        print(f"[UDP Server] Started new recording: {self.video_filename}")
+
+    def stop_and_send_recording(self):
+        """ 녹화 종료 후 서버로 전송 """
+        if self.recording:
+            self.recording = False
+            self.video_writer.release()
+            self.video_writer = None
+
+            print(f"[UDP Server] Stopped recording. Sending {self.video_filename} to server...")
+
+            # 녹화된 파일을 서버로 전송
+            self.send_video_to_server(self.video_filename)
+
+    def send_video_to_server(self, video_path):
+        """ 녹화된 비디오 파일을 서버로 전송 후 삭제 """
         try:
-            # OpenCV frame을 JPEG 형식으로 인코딩하여 바이트 데이터로 변환
-            ret, encoded_frame = cv2.imencode('.jpg', frame)
+            if not os.path.exists(video_path):
+                print(f"[UDP Server] Error: File {video_path} not found.")
+                return
 
-            if ret:
-                frame_bytes = encoded_frame.tobytes()
+            print(f"[UDP Server] Initializing FileClient to send {video_path}...")
 
-                # 파일 서버로 전송
-                self.file_server.send_video(frame_bytes)  # send_video()는 비디오 데이터를 서버로 전송하는 메서드
-                self.write_status=False
+            # 파일 전송을 별도 스레드에서 실행하여 비동기 처리
+            threading.Thread(target=self._send_video, args=(video_path,)).start()
 
         except Exception as e:
             print(f"[UDP Server] Error sending video to server: {e}")
-    
+
+    def _send_video(self, video_path):
+        """파일 전송 실행 및 삭제"""
+        try:
+            file_client = FileClient(file_path=video_path)
+            file_client.send_video()
+
+            print(f"[UDP Server] Successfully sent {video_path} to server.")
+            os.remove(video_path)  # 전송 완료 후 파일 삭제
+
+        except Exception as e:
+            print(f"[UDP Server] Error during file transmission: {e}")
+
     def display_frame(self, frame):
         """ OpenCV 프레임을 QLabel에 표시 """
-        # OpenCV에서 읽어온 BGR 이미지를 RGB로 변환
-        
         rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         height, width, channel = rgb_image.shape
         bytes_per_line = channel * width
         q_img = QImage(rgb_image.data, width, height, bytes_per_line, QImage.Format_RGB888)
-        
-        # QLabel에 QPixmap을 설정
+
         self.label.setPixmap(QPixmap.fromImage(q_img))
         self.label.repaint()  # 화면 갱신
-    
-    def pack_data(self, command, id=None,pw=None,name=None,email=None,data=None,content=None):
-        packed_data = b''
-        
-        # 명령어 패킹 (길이 + 데이터)
-        packed_data += struct.pack('I', len(command)) + command.encode('utf-8')
-        
-        # ID 패킹 (길이 + 데이터)
-        if id is not None:
-            packed_data += struct.pack('I', len(id)) + id.encode('utf-8')
-        else:
-            packed_data += struct.pack('I', 0)
-        
-        # 비밀번호 패킹 (길이 + 데이터)
-        if pw is not None:
-            packed_data += struct.pack('I', len(pw)) + pw.encode('utf-8')
-        else:
-            packed_data += struct.pack('I', 0)
-        
-        # 이름 패킹 (길이 + 데이터)
-        if name is not None:
-            packed_data += struct.pack('I', len(name.encode('utf-8'))) + name.encode('utf-8')
-        else:
-            packed_data += struct.pack('I', 0)
-        
-        # 이메일 패킹 (길이 + 데이터)
-        if email is not None:
-            packed_data += struct.pack('I', len(email)) + email.encode('utf-8')
-        else:
-            packed_data += struct.pack('I', 0)
-        
-        # 데이터 패킹
-        if data is not None:
-            data_bytes = data.encode('utf-8')
-            packed_data += struct.pack('I', len(data_bytes)) + data_bytes
-        else:
-            packed_data += struct.pack('I', 0)
-        
-        # 콘텐트 패킹
-        if content is not None:
-            content_bytes = content.encode('utf-8')
-            packed_data += struct.pack('I', len(content_bytes)) + content_bytes
-        else:
-            packed_data += struct.pack('I', 0)
-        
-        
-        return packed_data
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

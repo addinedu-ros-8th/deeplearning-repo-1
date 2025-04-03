@@ -16,7 +16,7 @@ def set():
             l_x, l_y, _ = detector.lmks[cons.RIGHT_INDEX]
             r_x, r_y, _ = detector.lmks[cons.LEFT_INDEX]
         except:
-            logging.debug('Cant set hands coordinates in set() -> Hands')
+            logging.debug(f'Cant set hands coordinates in set() -> Hands: {e}')
             pass
         
 def point_between(point, between):

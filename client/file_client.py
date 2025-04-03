@@ -1,40 +1,54 @@
 from PyQt5.QtNetwork import QTcpSocket, QHostAddress
-from PyQt5.QtCore import QCoreApplication, QFile, QIODevice
+from PyQt5.QtCore import QCoreApplication
 import sys
+import signal
+import struct
+import os
 
 class FileClient:
-    def __init__(self, server_ip="127.0.0.1", server_port=12346, file_path="sample.txt"):
+    def __init__(self, server_ip="127.0.0.1", server_port=8888, file_path=None):
         self.socket = QTcpSocket()
-        self.socket.connected.connect(self.send_file)
-        self.socket.disconnected.connect(self.on_disconnected)
-        self.socket.errorOccurred.connect(self.on_error)
-
         self.server_ip = QHostAddress(server_ip)
         self.server_port = server_port
         self.file_path = file_path
 
-        print("[FileClient] Connecting to server...")
+        print(f"[FileClient] Connecting to server {server_ip}:{server_port}...")
         self.socket.connectToHost(self.server_ip, self.server_port)
 
-    def send_file(self):
-        """서버에 연결되면 파일 전송"""
-        print("[FileClient] Connected to server, sending file...")
-
-        file = QFile(self.file_path)
-        if not file.open(QIODevice.ReadOnly):
-            print("[FileClient] Failed to open file for reading.")
+        if not self.socket.waitForConnected(5000):  # 서버 연결 대기 (최대 5초)
+            print(f"[FileClient] Error: Unable to connect to server ({self.socket.errorString()})")
             return
 
-        data = file.readAll()
-        self.socket.write(data)
-        self.socket.flush()
-        file.close()
+        self.send_video()
 
-        print(f"[FileClient] Sent {len(data)} bytes.")
-        self.socket.disconnectFromHost()  # 전송 후 연결 종료
+    def send_video(self):
+        """파일 크기를 먼저 보내고, 그 후 파일을 전송"""
+        if not self.file_path or not os.path.exists(self.file_path):
+            print("[FileClient] File not found.")
+            return
+
+        file_size = os.path.getsize(self.file_path)
+
+        try:
+            with open(self.file_path, "rb") as f:
+                print(f"[FileClient] Sending file: {self.file_path} ({file_size} bytes)")
+
+                # 1. 파일 크기 먼저 전송 (8바이트)
+                self.socket.write(struct.pack("!Q", file_size))
+
+                # 2. 파일 데이터 전송
+                while chunk := f.read(4096):
+                    self.socket.write(chunk)
+
+                self.socket.flush()
+                print("[FileClient] File sent successfully!")
+
+        except Exception as e:
+            print(f"[FileClient] Error sending file: {e}")
+
+        self.socket.disconnectFromHost()
 
     def on_disconnected(self):
-        """파일 전송 후 연결이 끊어지면 종료"""
         print("[FileClient] Disconnected from server.")
 
     def on_error(self, error):
@@ -42,5 +56,9 @@ class FileClient:
 
 if __name__ == "__main__":
     app = QCoreApplication(sys.argv)
-    client = FileClient(file_path="/home/sang/dev_ws/mediapipe/data/donguk.MOV")
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+    file_path = "/home/sang/dev_ws/save_file/recorded_20250402_121312.mp4"  # 전송할 파일 경로
+    client = FileClient(file_path=file_path)
+
     sys.exit(app.exec_())
