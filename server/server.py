@@ -7,7 +7,7 @@ from PyQt5.QtCore import QCoreApplication
 from PyQt5.QtNetwork import QTcpServer, QHostAddress, QTcpSocket
 from config import SERVER_PORT
 from database import FAAdb
-from ai_to_main import AitoMain
+from client.ai_to_main import AitoMain
 import struct
 
 class FAAServer(QTcpServer):

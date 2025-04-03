@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>703</width>
-    <height>571</height>
+    <width>685</width>
+    <height>513</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -33,7 +33,7 @@
        <item>
         <widget class="QStackedWidget" name="stackedWidget_big">
          <property name="currentIndex">
-          <number>2</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="profile_page">
           <layout class="QGridLayout" name="gridLayout_3">
@@ -867,7 +867,7 @@ color: white;</string>
                   </widget>
                  </item>
                  <item>
-                  <widget class="QFrame" name="lookup_frame">
+                  <widget class="QFrame" name="frame_43">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
                      <horstretch>0</horstretch>
@@ -952,44 +952,12 @@ color: white;</string>
                      </widget>
                     </item>
                     <item>
-                     <widget class="QFrame" name="frame_43">
-                      <property name="frameShape">
-                       <enum>QFrame::StyledPanel</enum>
-                      </property>
-                      <property name="frameShadow">
-                       <enum>QFrame::Raised</enum>
-                      </property>
-                      <layout class="QHBoxLayout" name="horizontalLayout_26">
-                       <item>
-                        <widget class="QLabel" name="label_tier">
-                         <property name="font">
-                          <font>
-                           <pointsize>25</pointsize>
-                          </font>
-                         </property>
-                         <property name="text">
-                          <string>TextLabel</string>
-                         </property>
-                         <property name="alignment">
-                          <set>Qt::AlignCenter</set>
-                         </property>
-                        </widget>
-                       </item>
-                      </layout>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QListWidget" name="workout_list">
+                     <widget class="QListWidget" name="listWidget">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
                         <horstretch>0</horstretch>
                         <verstretch>0</verstretch>
                        </sizepolicy>
-                      </property>
-                      <property name="font">
-                       <font>
-                        <pointsize>30</pointsize>
-                       </font>
                       </property>
                      </widget>
                     </item>
@@ -1611,7 +1579,7 @@ color: white;</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>703</width>
+     <width>685</width>
      <height>24</height>
     </rect>
    </property>
