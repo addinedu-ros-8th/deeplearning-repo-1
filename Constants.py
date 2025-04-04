@@ -145,27 +145,32 @@ modal_btn_y = int(window_height * 0.4)
 
 
 ######################################
-
-workouts_by_tier = {
-    "bronze": {
-        1: ("Knee up", "./Asset/knee-up.mp4"),
-        2: ("Sholder press", "./Asset/sholder-press.mp4"),
-        3: ("Squat", "./Asset/squat.mp4"),
-        4: ("Front lunge", "./Asset/front-lunge.mp4")
+videos = {
+    0: {
+        1: "./save_file/Asset/front-lunge.mp4",
+        2: "./save_file/Asset/squat.mp4",
+        3: "./save_file/Asset/shoulder_press.mp4",
+        4: "./save_file/Asset/knee-up.mp4"
     },
-    "silver": {
-        1: ("Push Up", "./Asset/push-up.mp4"),
-        2: ("Bridge", "./Asset/bridge.mp4"),
-        3: ("Standing bicycle", "./Asset/standing-bicycle.mp4"),
-        4: ("Side lunge", "./Asset/standing-bicycle.mp4"),
+    1: {
+        1: "./save_file/Asset/push-up.mp4",
+        2: "./save_file/Asset/bridge.mp4",
+        3: "./save_file/Asset/standing-bicycle.mp4",
+        4: "./save_file/Asset/side-lunge.mp4"
     },
-    "gold": {
-        1: ("Pistol Squat", "./Asset/pistol-squat.mp4"),
-        2: ("Handstand Push Up", "./Asset/handstand-pushup.mp4"),
-        3: ("L-Sit", "./Asset/l-sit.mp4")
+    2: {
+        1: "./save_file/Asset/front-lunge.mp4",
+        2: "./save_file/Asset/squat.mp4",
+        3: "./save_file/Asset/shoulder_press.mp4",
+        4: "./save_file/Asset/knee-up.mp4"
     }
 }
 
+TIER_ICONS = {
+    1: "./image_folder/bronze-medal.png",
+    2: "./image_folder/silver-medal.png",
+    3: "./image_folder/gold-medal.png"
+}
 
 class HourOfDay(Enum):
     H00 = "00:00"; H03 = "03:00"; H06 = "06:00"; H09 = "09:00"; 

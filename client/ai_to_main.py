@@ -23,9 +23,6 @@ class AitoMain(QObject) :
         self.socket.readyRead.connect(self.readData)            # 4. read data 
 
         self.udp_socket = QUdpSocket()
-
-        
-
         self.result = None
         
     def on_connected(self):
