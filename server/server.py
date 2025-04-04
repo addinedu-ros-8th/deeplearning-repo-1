@@ -252,8 +252,8 @@ class FAAServer(QTcpServer):
         # add single routine in routine_workout table 
         for workout_id, workout_name, reps in selected_workouts:
             sets = random.randint(3, 5)
-            self.cur.execute("INSERT INTO routine_workout (routine_id, workout_id, sets, status) VALUES (%s, %s, %s, %s)",
-                            (routine_id, workout_id, sets, 0)) 
+            self.cur.execute("INSERT INTO routine_workout (user_id, routine_id, workout_id, sets, status) VALUES (%s, %s, %s, %s, %s)",
+                            (user_id,routine_id, workout_id, sets, 0)) 
 
         self.db.commit()
         print("Routine 생성 완료")

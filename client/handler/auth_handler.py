@@ -1,7 +1,9 @@
 # auth_handler.py
-from PyQt5.QtWidgets import QMessageBox, QInputDialog, QMainWindow
+from PyQt5.QtWidgets import QMessageBox, QInputDialog, QFileDialog
 from network.packer import pack_data
 from PyQt5.QtCore import QEventLoop
+from PyQt5.QtGui import QPixmap
+
 
 class AuthHandler:
     def __init__(self, main_window):
@@ -37,6 +39,7 @@ class AuthHandler:
             print("로그인 성공")
             self.main_window.username = name
             self.main_window.set_user_name(name)
+            self.main_window.set_profile_icon(name)
             # tier 가져오기 
             self.cur.execute("SELECT tier FROM user WHERE name = %s", (name,))
             tier_result = self.cur.fetchone()

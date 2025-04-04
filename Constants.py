@@ -167,9 +167,15 @@ videos = {
 }
 
 TIER_ICONS = {
-    1: "./image_folder/bronze-medal.png",
-    2: "./image_folder/silver-medal.png",
-    3: "./image_folder/gold-medal.png"
+    0: "./image_folder/bronze-medal.png",
+    1: "./image_folder/silver-medal.png",
+    2: "./image_folder/gold-medal.png"
+}
+
+TIER_TIMES = {
+    0: 120,
+    1: 90,
+    2: 60
 }
 
 class HourOfDay(Enum):

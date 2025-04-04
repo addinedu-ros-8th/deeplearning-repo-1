@@ -101,8 +101,26 @@ class WorkoutHandler:
             lmList = main_window.hand_detector.findPosition(frame, draw=False)
             Detector.analyze_user(frame)
             hands.set()
+            if main_window.is_workout:
+                # 시간 갱신 
+                if main_window.remaining_time > 0:
+                    current_time = time.time()
+                    elapsed = current_time - main_window.last_tick_time
 
-            if main_window.is_lookup:
+                    if elapsed >= 1 :
+                        main_window.remaining_time -= 1
+                        main_window.last_tick_time = current_time
+                cv2.putText(frame, f"{main_window.remaining_time}", (cons.window_width - 250, 50),
+                                        cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 255), 3)
+                if main_window.remaining_time <= 0:
+                    main_window.is_workout = False
+                    """
+                        다음 운동 
+                    """
+                    # cv2.putText(frame, "✔ 운동 완료!", (cons.window_width - 100, 50),
+                    #             cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 200, 0), 3)
+
+            elif main_window.is_lookup:
                 number = main_window.hand_detector.count_fingers(lmList)
                 cv2.putText(frame, f' {number}', (cons.window_width - 100, 50),
                             cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
@@ -121,6 +139,7 @@ class WorkoutHandler:
                     main_window.current_gesture = None
                     main_window.gesture_start_time = None
                     main_window.selection_confirmed = False
+            
 
             if main_window.view:
                 main_window.view.appear(frame)
@@ -184,12 +203,17 @@ class WorkoutHandler:
         print("START button tapped!")
         main_window.view.set_mode("working")
         main_window.lookup_frame.hide()
-        main_window.Routine_frame.show()
+        main_window.routine_frame.show()
         WorkoutHandler.save_video(main_window)
         QApplication.processEvents()
 
         data = pack_data(command="GR", name=main_window.username)
         main_window.tcp.sendData(data)
+
+        main_window.remaining_time = cons.TIER_TIMES.get(main_window.tier, 80)
+        main_window.last_tick_time = time.time()
+        main_window.is_workout = True
+
 
         main_window.view.set_button_action("pause", lambda: WorkoutHandler.handle_pause(main_window))
         main_window.view.set_button_action("next", lambda: WorkoutHandler.handle_next(main_window))
@@ -255,6 +279,7 @@ class WorkoutHandler:
         main_window.is_lookup = False
         main_window.modal_pause_view = None
         main_window.modal_exit_view = None
+        main_window.is_workout = False
 
         main_window.view.set_mode("main")
         main_window.lookup_frame.hide()

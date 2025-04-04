@@ -29,6 +29,9 @@ class MainWindow(QMainWindow, main_class):
         self.udp = UdpClient()
         self.camera = None
         self.profile_cnt = 0
+        self.remaining_time = 0
+        self.last_tick_time= 0
+        self.is_workout = False
         self.is_lookup = False
         self.hand_detector = Detector.handDetector()
         self.modal_pause_view = None
@@ -54,6 +57,7 @@ class MainWindow(QMainWindow, main_class):
         UISetupHelper.buttons(self)
         UISetupHelper.button_stylers(self)
         self.displayScore()
+
     # Login
     def plus_profile(self):
         self.second=AuthWindow()
@@ -90,6 +94,18 @@ class MainWindow(QMainWindow, main_class):
     def set_user_name(self,name):
         self.lb_name.setText(name)
         self.lb_name_2.setText(name)        # account name 
+    def set_profile_icon(self, username):
+        self.cur.execute("SELECT user_icon FROM user WHERE name = %s", (username,))
+        result = self.cur.fetchone()
+        
+        if result and result[0]:
+            pixmap = QPixmap()
+            pixmap.loadFromData(result[0])
+            self.btn_profile.setIcon(QIcon(pixmap))
+            self.btn_profile.setIconSize(QSize(80, 80))
+        else:
+            self.btn_profile.setIcon(QIcon("./image_folder/User.png"))
+
     def back2login(self):
         self.stackedWidget_big.setCurrentWidget(self.profile_page)
     def go2account(self):
@@ -134,7 +150,7 @@ class MainWindow(QMainWindow, main_class):
         else:
             print(f"[DEBUG] 티어 아이콘 경로가 잘못되었거나 존재하지 않음: {tier_icon_path}")
 
-            
+
     # def on_item_click(self, item):
     #     # 클릭된 항목에 따라 재생할 비디오 경로 지정
     #     video_map = {

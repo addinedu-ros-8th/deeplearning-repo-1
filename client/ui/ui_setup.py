@@ -1,9 +1,8 @@
-
+#ui.uisetup.py
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import QSize
 from PyQt5.QtWidgets import QButtonGroup
 from handler.workout_handler import WorkoutHandler
-
 
 class UISetupHelper:
     @staticmethod
@@ -91,8 +90,13 @@ class UISetupHelper:
         # main_window.btn_todayrecord.clicked.connect(main_window.show_todayrecord)
         main_window.btn_config.clicked.connect(main_window.show_config)
         main_window.btn_modify.setChecked(True)
+        ## Account-modify
+        # main_window.btn_select_profile_img_2.clicked.connect(lambda: select_icon(main_window.label_profile_icon_2, 
+        #                                                                          main_window.btn_select_profile_img_2))
+        # main_window.btn_profile_save_2.clicked.connect(lambda: profile_save(main_window))
 
-  
+        
+        ## Account-config 
         main_window.btn_add_workout.clicked.connect(lambda: WorkoutHandler.add_workout_to_table(main_window))
         main_window.btn_delete_workout.clicked.connect(lambda: WorkoutHandler.delete_selected_workout(main_window))
  
@@ -109,8 +113,10 @@ class UISetupHelper:
             border: none;
             padding: 0px;
             margin: 0px;
+            text-align: left;                                 
         }
         """)
+        
         # 목표설정 Button
         main_window.btn_goal.setIcon(QIcon("./image_folder/goal.png"))
         main_window.btn_goal.setIconSize(main_window.btn_goal.sizeHint())
@@ -119,6 +125,7 @@ class UISetupHelper:
             border: none;
             padding: 0px;
             margin: 0px;
+            text-align: left;            
         }
         """)
         # 운동설정 Button
@@ -129,6 +136,7 @@ class UISetupHelper:
             border: none;
             padding: 0px;
             margin: 0px;
+            text-align: left;            
         }
         """)
         # Back Button
@@ -148,6 +156,7 @@ class UISetupHelper:
             background-color: white;
         }
         """)
+        
         # Account Button
         main_window.btn_profile.setIcon(QIcon("./image_folder/User.png"))
         main_window.btn_profile.setIconSize(main_window.btn_plus_profile.sizeHint()*1.5)

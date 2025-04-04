@@ -10,6 +10,7 @@ from network.socket_client import Client
 
 from PyQt5 import uic
 
+
 auth_class = uic.loadUiType("client/ui/auth.ui")[0]
 
 class AuthWindow(QMainWindow, auth_class):
@@ -26,10 +27,11 @@ class AuthWindow(QMainWindow, auth_class):
         self.stackedWidget.setCurrentWidget(self.add_profile_page)
 
         #프로필 설정 화면 버튼 이벤트
-        self.btn_select_profile_img.clicked.connect(self.select_icon)
+        # self.btn_select_profile_img.clicked.connect(select_icon)
         self.btn_profile_save.clicked.connect(self.profile_save)
 
     def select_icon(self):
+        self.image_data = select_profile_image(self.label, self.btn_select_profile_img)
         file_path, _ = QFileDialog.getOpenFileName(self, "이미지 선택", "/save_file/profile_icon", "Images (*.png *.jpg *.jpeg *.bmp *.gif)")
 
         if file_path:
