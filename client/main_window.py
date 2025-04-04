@@ -1,4 +1,4 @@
-
+# main_window.py
 import sys
 import os 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -21,8 +21,11 @@ import time, cv2
 from PyQt5 import uic
 from network.socket_client import Client
 from auth_window import AuthWindow
+from Record import RecordGraph
+from ui.ui_setup import UISetupHelper
 
-main_class = uic.loadUiType("client/ui/real_real_main_page.ui")[0]
+
+main_class = uic.loadUiType("client/ui/main_page.ui")[0]
 class MainWindow(QMainWindow, main_class):
     def __init__(self):
         super().__init__()
@@ -33,7 +36,7 @@ class MainWindow(QMainWindow, main_class):
 
         self.tcp = Client()
         self.udp = UdpClient()
-
+        self.camera = None
         self.profile_cnt = 0
         self.is_lookup = False
         self.hand_detector = Detector.handDetector()
@@ -45,111 +48,33 @@ class MainWindow(QMainWindow, main_class):
         self.gesture_start_time = None
         
         self.selection_confirmed = False
-        self.setup_profiles()
-        self.setup_buttons()
-        
-    def setup_profiles(self):   # DB에서 프로필 불러오고 버튼 셋업
-        self.count_up = 0
-        self.tier=0
-        
-        # 프로필 계정 유무확인후 버튼 활성화
-        self.cur.execute("select count(name) from user")
-        # cnt = self.cur.fetchone()[0]  # ← fetchone()으로 처리
-        cnt = self.cur.fetchall()
-        cnt = int(cnt[0][0])
-        
-        self.cur.execute("select name,user_icon from user where name is not null")
-        name = self.cur.fetchall()
+        UISetupHelper.profiles(self)
+        UISetupHelper.buttons(self)
+        UISetupHelper.button_stylers(self)
+        self.displayScore()
 
-        name_list=[]
-        icon_list=[]
-        if len(name) != 0:
-            for n in name:
-                name_list.append(n[0])
-                icon_list.append(n[1])
+    def displayScore(self):
+        current_score = 4720
+        max_score = 10000
+        text = f"{current_score} / {max_score} (next tier)"
+        self.lb_score.setText(text)
 
-        buttons = [self.btn_profile1, self.btn_profile2, self.btn_profile3, self.btn_profile4]
-        labels = [self.label_profile1, self.label_profile2, self.label_profile3, self.label_profile4]
-        
-        # 모든 버튼과 라벨 숨기기
-        for btn, label in zip(buttons, labels):
-            btn.setVisible(False)
-            label.setText("")
-
-        if cnt == 0: return  # 프로필이 없을 경우 종료
-
-        icon_size = 200  # 아이콘 크기 설정
-        for i in range(cnt):
-            pixmap = QPixmap()
-            pixmap.loadFromData(icon_list[i])  # 바이너리 데이터를 QPixmap으로 변환
-            
-            buttons[i].setIcon(QIcon(pixmap))
-            buttons[i].setIconSize(QSize(icon_size, icon_size))
-            labels[i].setText(name_list[i])
-            buttons[i].setVisible(True)
-        self.profile_cnt = cnt
-        self.btn_plus_profile.setEnabled(cnt < 4)
-
-
-        # 버튼 아이콘 설정
-        self.btn_plus_profile.setIcon(QIcon("/save_file/image_folder/plus.png"))  # 아이콘 설정
-        self.btn_plus_profile.setIconSize(self.btn_plus_profile.sizeHint())  # 아이콘 크기를 버튼 크기의 절반으로 설정
-        self.btn_plus_profile.setStyleSheet("""
-        QPushButton {
-            border: 2px solid #ccc;
-            background-color: white;
-        }
-        """)
-
-        # 계정 버튼 아이콘 설정
-        self.btn_profile.setIcon(QIcon("/save_file/image_folder/profil_icon.png"))  # 아이콘 설정
-        self.btn_profile.setIconSize(self.btn_plus_profile.sizeHint()*1.5)
-        self.btn_profile.setStyleSheet("""
-        QPushButton {
-            border: 2px solid #ccc;
-            background-color: white;
-        }
-        """)
-
-    def setup_buttons(self): # 탭 버튼 이벤트 연결 및 기본 화면 설정
-        # 탭 버튼들을 Toggle 가능하게 만들기
-        self.btn_workout.setCheckable(True)
-        self.btn_record.setCheckable(True)
-        self.btn_rank.setCheckable(True)
-        
-        self.tab_group = QButtonGroup()
-        self.tab_group.addButton(self.btn_workout)
-        self.tab_group.addButton(self.btn_record)
-        self.tab_group.addButton(self.btn_rank)
-        self.tab_group.setExclusive(True)
-        # 탭 페이지 전환 연결  
-        self.btn_workout.clicked.connect(self.show_main)
-        self.btn_record.clicked.connect(self.show_record)
-        self.btn_rank.clicked.connect(self.show_rank)
-        # 메인 → 운동 페이지 이동 버튼
-        self.btn_start.clicked.connect(self.go2workout)
-        
-        # 기본 화면 설정 
-        self.btn_workout.setChecked(True)
+    def back2login(self):
         self.stackedWidget_big.setCurrentWidget(self.profile_page)
-        self.stackedWidget_small.setCurrentWidget(self.main_page)
+
+    def go2account(self):
+        self.stackedWidget_big.setCurrentWidget(self.account_page)
+        self.btn_back2main_2.clicked.connect(self.back_work_to_main)
         
-        # 프로필 추가 버튼 연결 
-        self.btn_plus_profile.clicked.connect(self.plus_profile)
-        
-        # 프로필 선택 버튼 이벤트 연결
-        self.btn_profile1.clicked.connect(self.clicked_profile_1)
-        self.btn_profile2.clicked.connect(self.clicked_profile_2)
-        self.btn_profile3.clicked.connect(self.clicked_profile_3)
-        self.btn_profile4.clicked.connect(self.clicked_profile_4)
-        
-        # 운동 화면 → 메인 화면으로 돌아가기
-        self.btn_work_to_main.clicked.connect(self.back_work_to_main)
-        #영상 저장 명령버튼
-        self.btn_save.clicked.connect(self.save_video)
-    
+
+    def go2calendar(self):
+        self.stackedWidget_big.setCurrentWidget(self.calendar_page)
+        self.btn_back2main.clicked.connect(self.back_work_to_main)
 
     def go2workout(self):
+        self.btn_work_to_main.clicked.connect(self.back_work_to_main)   # 운동 화면 → 메인 화면으로 돌아가기
+        self.btn_save.clicked.connect(self.save_video)                  # Video save 명령버튼
+        
         self.modal_exit_view = None
         self.modal_pause_view = None
         self.lb_cam.clear()
@@ -159,19 +84,10 @@ class MainWindow(QMainWindow, main_class):
         self.stackedWidget_big.setCurrentWidget(self.workout_page)
         self.showFullScreen()
         self.lookup_frame.hide()
+        self.routine_frame.hide()
         self.lb_cam = self.workout_page.findChild(QLabel, "lb_cam")
         self.lb_cam.setScaledContents(True)
-        
-        # Hide widget which contains workout list 
-        #self.workout_list_widget.hide()
-        # 2. Video widget 
-        # self.video_player = QMediaPlayer(None, QMediaPlayer.VideoSurface)
-        # self.video_widget = QVideoWidget()
-        # self.video_player.setVideoOutput(self.video_widget)
-        
-        #self.workout_list.layout().addWidget(self.video_widget)
-        # self.video_widget.hide()
-
+    
         # Camera 시작 
         self.camera = Camera()
         self.camera.start()
@@ -209,7 +125,7 @@ class MainWindow(QMainWindow, main_class):
                         self.selection_confirmed = False
                         print(f"⏳ 숫자 {number} 인식됨. 유지 중...")
 
-                    elif not self.selection_confirmed and time.time() - self.gesture_start_time >= 5:
+                    elif not self.selection_confirmed and time.time() - self.gesture_start_time >= 3:
                         print(f"🎯 숫자 {number} 확정됨! 운동 시작.")
                         self.selection_confirmed = True
                         self.play_selected_workout(number, self.tier)
@@ -235,31 +151,110 @@ class MainWindow(QMainWindow, main_class):
             self.lb_cam.setPixmap(QPixmap.fromImage(qt_img))
             if self.camera.is_active == True:
                 self.udp.send_video(frame_copy)
-
+    # Main 
     def show_main(self):
         self.stackedWidget_small.setCurrentWidget(self.main_page)
-
     def show_record(self):
         self.stackedWidget_small.setCurrentWidget(self.record_page)
 
         self.radio_day.setChecked(True)
-        self.radio_day.toggled.connect(self.switch_graph)
-        self.radio_week.toggled.connect(self.switch_graph)
-        self.radio_month.toggled.connect(self.switch_graph)    
-    def switch_graph(self):
+        self.radio_day.toggled.connect(self.switch_radio)
+        self.radio_week.toggled.connect(self.switch_radio)
+        self.radio_month.toggled.connect(self.switch_radio)
+   
+    def switch_graph(self, new_graph):
+        self.graph_container_layout.removeWidget(self.current_graph)
+        self.current_graph.setParent(None)
+        self.graph_container_layout.addWidget(new_graph)
+        self.current_graph = new_graph
+
+    def switch_radio(self):
         if self.radio_day.isChecked():
-            self.stackedGraphs.setCurrentIndex(0)
+            self.switch_graph(self.graph_day)
+            self.graph_day.set_mode("day")
         elif self.radio_week.isChecked():
-            self.stackedGraphs.setCurrentIndex(1)
+            self.switch_graph(self.graph_week)
+            self.graph_week.set_mode("week")
         elif self.radio_month.isChecked():
-            self.stackedGraphs.setCurrentIndex(2)
+            self.switch_graph(self.graph_month)
+            self.graph_month.set_mode("month")
     def show_rank(self):
         self.stackedWidget_small.setCurrentWidget(self.rank_page)
 
+    # Account 
+    def show_modify(self):
+        self.stackedWidget_small_2.setCurrentWidget(self.pg_modify)
+    def show_goal(self):
+        self.stackedWidget_small_2.setCurrentWidget(self.pg_goal)
+    def show_todayrecord(self):
+        self.stackedWidget_small_2.setCurrentWidget(self.pg_record)
+    def show_config(self):
+        self.stackedWidget_small_2.setCurrentWidget(self.pg_config)
+        
+  
+    def add_workout2table(self):
+        workout = self.workout_text.text().strip()
+        tier = self.combo_tier.currentText()
+
+        if not workout:
+            QMessageBox.warning(self, "입력오류", "운동 이름을 입력해주세요.")
+            return 
+        # DB에 저장 
+        try: 
+            self.cur.execute(
+                "INSERT INTO workout (name, tier, reps) VALUES (%s, %s, %s)",
+                (workout, tier, 20)  # reps는 고정값 20
+            )
+            self.db.commit()
+        except Exception as e:
+            QMessageBox.critical(self, "DB 오류", f"운동 추가 중 오류 발생: {e}")
+            return
+        
+        row_position = self.tableWidget.rowCount()
+        self.tableWidget.insertRow(row_position)
+        self.tableWidget.setItem(row_position, 0, QTableWidgetItem(workout))
+        self.tableWidget.setItem(row_position, 1, QTableWidgetItem(tier))
+
+        self.workout_text.clear()
+        self.combo_tier.setCurrentIndex(0)
+    def remove_selected_workout(self):
+        selected_row = self.tableWidget.currentRow()
+        
+        if selected_row < 0:
+            QMessageBox.information(self, "선택 없음", "삭제할 운동을 먼저 선택하세요.")
+            return
+
+        workout_item = self.tableWidget.item(selected_row, 0)
+        tier_item = self.tableWidget.item(selected_row, 1)
+
+        if workout_item is None or tier_item is None:
+            return
+
+        workout = workout_item.text()
+        tier = tier_item.text()
+
+        reply = QMessageBox.question(self, "운동 삭제", f"'{workout}' 운동을 삭제할까요?",
+                                    QMessageBox.Yes | QMessageBox.No)
+        if reply == QMessageBox.No:
+            return
+
+        try:
+            self.cur.execute(
+                "DELETE FROM workout WHERE workout_name = %s AND tier = %s LIMIT 1",
+                (workout, tier)
+            )
+            self.db.commit()
+        except Exception as e:
+            QMessageBox.critical(self, "DB 오류", f"운동 삭제 중 오류 발생: {e}")
+            return
+
+        self.tableWidget.removeRow(selected_row)
+
+
     def plus_profile(self):
-            self.second=AuthWindow()
-            self.second.show()
-            self.second.stackedWidget.setCurrentWidget(self.second.add_profile_page)
+        self.second=AuthWindow()
+        self.second.show()
+        self.second.stackedWidget.setCurrentWidget(self.second.add_profile_page)
         
     def add_profile(self, profile_cnt):
         self.db.conn.reconnect(attempts=3, delay=2) #db 새로고침
@@ -273,7 +268,6 @@ class MainWindow(QMainWindow, main_class):
             (self.btn_profile3, self.label_profile3),
             (self.btn_profile4, self.label_profile4)
         ]
-        
         icon_size = 200  # 버튼 크기 설정
         
         for i in range(min(profile_cnt, len(profiles))):
@@ -286,7 +280,7 @@ class MainWindow(QMainWindow, main_class):
             btn.setIconSize(QSize(icon_size, icon_size))
             label.setText(name)
             btn.setVisible(True)
-    
+
         self.btn_plus_profile.setEnabled(profile_cnt < 4)
         
     def clicked_profile_1(self):
@@ -324,6 +318,9 @@ class MainWindow(QMainWindow, main_class):
             print("로그인 성공")
             self.stackedWidget_big.setCurrentWidget(self.big_main_page)
             self.set_user_name(name)
+            # 루틴 생성 요청
+            data = pack_data(command="RR", name=name)
+            self.tcp.sendData(data)
         else:
             QMessageBox.warning(self, "계정 비밀번호", "로그인 정보가 틀렸습니다.")
     
@@ -349,7 +346,8 @@ class MainWindow(QMainWindow, main_class):
         print(f"Playing workout video: {video_path}")
 
     def back_work_to_main(self):
-        self.camera.stop()
+        if self.camera is not None:
+            self.camera.stop()
         self.stackedWidget_big.setCurrentWidget(self.big_main_page)
         self.showNormal()
 
@@ -385,7 +383,6 @@ class MainWindow(QMainWindow, main_class):
         if self.video_thread and self.video_thread.isRunning():
             self.video_thread.stop()
             self.video_thread.wait()
-
         self.lb_cam.clear()
         self.timer.stop()
 
@@ -398,10 +395,17 @@ class MainWindow(QMainWindow, main_class):
         print("🟢 START button tapped!")
         self.view.set_mode("working")
         self.lookup_frame.hide()
+        self.Routine_frame.show()
         self.save_video()
         QApplication.processEvents()
+
+        # Routine 조회 
+        data = pack_data(command="GR", name=self.username)
+        self.tcp.sendData(data)
+
         self.view.set_button_action("pause", self.handle_pause)
         self.view.set_button_action("next", self.handle_next)
+
 
     def handle_exit(self):
         print("EXIT button tapped!")
@@ -423,10 +427,10 @@ class MainWindow(QMainWindow, main_class):
         self.total_work_list.append(silver_work_list)
         self.total_work_list.append(gold_work_list)
 
-        self.mode = "lookup"
         self.is_lookup = True
         self.view.set_mode("lookup")
         # lookup btns
+        self.routine_frame.hide()
         self.lookup_frame.show()
         self.workout_list.clear()
         self.label_tier.setText(self.tier_list[self.tier])
@@ -464,7 +468,6 @@ class MainWindow(QMainWindow, main_class):
     def handle_back_to_main(self):
         print("🔙 BACK button tapped!")
         # hide workout list 
-        #self.workout_list_widget.hide()
         self.is_paused = False
         self.is_lookup = False
         self.modal_pause_view = None
@@ -472,10 +475,10 @@ class MainWindow(QMainWindow, main_class):
         
         self.view.set_mode("main")
         self.lookup_frame.hide()
+        self.routine_frame.show()
         self.view.set_button_action("start",  self.handle_start)
         self.view.set_button_action("exit",   self.handle_exit)
         self.view.set_button_action("lookup", self.handle_lookup)
-
 
     def handle_continue_button(self):
         print("▶️ CONTINUE button tapped!")
@@ -483,6 +486,7 @@ class MainWindow(QMainWindow, main_class):
 
         self.view.set_mode("working")
         self.lookup_frame.hide()
+        self.routine_frame.show()
         self.view.set_button_action("pause", self.handle_pause)
         self.view.set_button_action("next", self.handle_next)
 
@@ -492,13 +496,6 @@ class MainWindow(QMainWindow, main_class):
         self.stackedWidget_big.setCurrentWidget(self.big_main_page)
         self.showNormal()
 
-        # self.close()
-
-    def handle_show(self):
-        print("show button tapped! ")
-        """
-        Need to implement 
-        """
     def display_video_frame(self, img):
         if isinstance(img, QImage):  # img가 QImage인 경우
             pixmap = QPixmap.fromImage(img)
@@ -518,12 +515,11 @@ class MainWindow(QMainWindow, main_class):
         self.timer.start(30)
 
     def count(self):
-        if client.tcp.result == 'up':
-            #print(self.tcp.result)
+        if self.tcp.result == 'up':
             self.count_up+=1
     def save_video(self):
         self.udp.video_writer=True
-        data=self.pack_data("RC",data='True')
+        data=pack_data("RC",data='True')
         self.tcp.sendData(data)
 
 if __name__ == "__main__":

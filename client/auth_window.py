@@ -30,7 +30,7 @@ class AuthWindow(QMainWindow, auth_class):
         self.btn_profile_save.clicked.connect(self.profile_save)
 
     def select_icon(self):
-        file_path, _ = QFileDialog.getOpenFileName(self, "이미지 선택", "/home/sang/dev_ws/save_file/profile_icon", "Images (*.png *.jpg *.jpeg *.bmp *.gif)")
+        file_path, _ = QFileDialog.getOpenFileName(self, "이미지 선택", "/save_file/profile_icon", "Images (*.png *.jpg *.jpeg *.bmp *.gif)")
 
         if file_path:
             pixmap = QPixmap(file_path)

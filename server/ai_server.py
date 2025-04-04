@@ -7,11 +7,10 @@ from PyQt5.QtNetwork import QUdpSocket, QHostAddress, QTcpSocket
 from PyQt5.QtCore import QByteArray
 from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget
 from PyQt5.QtGui import QImage, QPixmap
-import struct
 import threading
 import time
-from file_client import FileClient
-from ai_to_main import AitoMain
+from client.file_client import FileClient
+from client.ai_to_main import AitoMain
 from exercise_model import ExerciseClassifier
 from counting import ExerciseCounter
 
