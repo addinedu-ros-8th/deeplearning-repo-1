@@ -23,6 +23,7 @@ class AitoMain(QObject) :
         self.socket.readyRead.connect(self.readData)            # 4. read data 
 
         self.udp_socket = QUdpSocket()
+
         self.result = None
         
     def on_connected(self):
@@ -48,9 +49,9 @@ class AitoMain(QObject) :
             elif self.data['command'] == 'CT':
                 self.result = 'up'
             elif self.data['command'] == 'RC':
-                self.result = 'up'
+                self.result = self.data['status']
                 
-                self.responseReceived.emit()
+            self.responseReceived.emit()
             # self.receive_data.emit(data)
     
     def unpack_data(self, binary_data):

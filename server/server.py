@@ -215,8 +215,12 @@ class FAAServer(QTcpServer):
         data = self.pack_data("CT",status=count)
         self.send_data(self.client_list[2],data)
     def record_start(self):
-        data = self.pack_data("RC",status='True')
-        self.send_data(self.client_list[1],data)
+        if self.data['data'] == 'True':
+            data = self.pack_data("RC",status='True')
+            self.send_data(self.client_list[1],data)
+        elif self.data['data'] == 'False':
+            data = self.pack_data("RC",status='False')
+            self.send_data(self.client_list[1],data)
     
     def create_routine(self):
         name = self.data['name']   
