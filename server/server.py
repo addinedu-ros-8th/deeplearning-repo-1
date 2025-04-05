@@ -22,6 +22,9 @@ class FAAServer(QTcpServer):
         self.db = FAAdb()
         self.cur = self.db.conn.cursor()
 
+        self.name=None
+        self.score = 0
+
     def start_server(self):
         if self.listen(QHostAddress.Any, SERVER_PORT): print(f"Server listening on port {SERVER_PORT}")
         else: print(f"Failed to listen on port {SERVER_PORT}")
@@ -50,6 +53,17 @@ class FAAServer(QTcpServer):
                     if json_data.get('command') == 'PI':
                         print(f"[Server] [JSON - PI 명령 수신]: {json_data}")
                         self.send_data(self.client_list[3],data)
+                        current_count = json_data.get('count')
+
+                        # 이전 count와 비교해서 20 -> 0으로 떨어졌는지 확인
+                        if hasattr(self, 'prev_count') and self.prev_count == 20 and current_count == 0:
+                            self.score += 10
+                            self.cur.execute("UPDATE user SET score = %s WHERE name = %s", (self.score, self.name))
+                            self.db.commit()
+                            print(f"[Server] 🎯 점수 증가! 현재 점수: {self.score}")
+
+                        # 현재 count 값을 다음 비교를 위해 저장
+                        self.prev_count = current_count
                     else:
                         print(f"[Server] [무시된 JSON 명령]: {json_data.get('command')}")
                     return
@@ -225,6 +239,7 @@ class FAAServer(QTcpServer):
         client_socket.deleteLater()  # 안전하게 객체 삭제
     
     def login(self):
+        self.name=self.data['name']
         self.cur.execute("SELECT password FROM user where name = %s and password = %s",(self.data['name'],self.data['pw']))
         rows = self.cur.fetchall()
         #print(rows)
