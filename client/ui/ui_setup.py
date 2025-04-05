@@ -74,7 +74,8 @@ class UISetupHelper:
         main_window.btn_back2main.clicked.connect(main_window.back2main)
         # Workout
         main_window.btn_work_to_main.clicked.connect(main_window.back2main)
-        
+        main_window.btn_next.clicked.connect(main_window.handle_next_workout)
+
         # Account 
         main_window.tab_group_2 = QButtonGroup()
         main_window.tab_group_2.addButton(main_window.btn_modify)
@@ -176,4 +177,12 @@ class UISetupHelper:
             padding: 0px;
             margin: 0px;
         }
+        """)
+
+        # Routine list 
+        main_window.routine_list.setStyleSheet("""
+            QListWidget::item:selected {
+                background-color: #87CEFA;   /* 연한 파랑 */
+                color: black;
+            }
         """)

@@ -7,7 +7,7 @@ from PyQt5.QtCore import QCoreApplication
 from PyQt5.QtNetwork import QTcpServer, QHostAddress, QTcpSocket
 from config import SERVER_PORT
 from database import FAAdb
-from ai_to_main import AitoMain
+from client.ai_to_main import AitoMain
 import struct
 import random 
 import datetime 
@@ -20,7 +20,7 @@ class FAAServer(QTcpServer):
         self.client_list = []
         #self.ai_server = AitoMain()
         self.db = FAAdb()
-        self.cur = self.db.conn.cursor()
+        self.cur = self.db.conn.cursor(buffered=True)
 
         self.name=None
         self.score = 0
@@ -117,8 +117,8 @@ class FAAServer(QTcpServer):
         command = unpack_string()
         pw = unpack_string()
         name = unpack_string()
-        height = unpack_string()
-        weight = unpack_string()
+        height = unpack_string()  # 키
+        weight = unpack_string()  # 몸무게
         data = unpack_string()
         content = unpack_string()
 
@@ -285,7 +285,7 @@ class FAAServer(QTcpServer):
         self.cur.execute("SELECT id, tier FROM user WHERE name = %s", (name,))
         result = self.cur.fetchone()
         if not result: 
-            data = self.pack_data("RR", status='1')
+            data = self.pack_data("RR", status='1')         # no user 
             print("no user in db")
             self.send_data(self.client_list[3], data)
             return 
@@ -294,6 +294,17 @@ class FAAServer(QTcpServer):
         print(f"DEBUG, ID: {user_id}, 티어: {tier}")
 
         # insert routine
+        today = datetime.datetime.now().date()  # 현재 날짜 
+        # search the routine that is same date with today 
+        self.cur.execute("SELECT id FROM routine WHERE user_id = %s AND DATE(date) = %s", 
+                                                    (user_id, today))
+        existing = self.cur.fetchone()
+        if existing:
+            print("금일 routine 이미 존재")
+            data = self.pack_data("RR", status='1')         # duplicate 
+            self.send_data(self.client_socket, data)
+            return 
+    
         self.cur.execute("INSERT INTO routine (user_id, status, date) VALUES (%s, %s, %s)",
                                                     (user_id, 0, datetime.datetime.now()))
         routine_id = self.cur.lastrowid
@@ -308,17 +319,16 @@ class FAAServer(QTcpServer):
             return 
         # select workout randomly 
         selected_workouts = workout_list
-
         # add single routine in routine_workout table 
         for workout_id, workout_name, reps in selected_workouts:
-            sets = random.randint(3, 5)
-            self.cur.execute("INSERT INTO routine_workout (routine_id, workout_id, sets, status) VALUES (%s, %s, %s, %s)",
-                            (routine_id, workout_id, sets, 0)) 
+            sets = random.randint(3, 5) 
+            self.cur.execute("INSERT INTO routine_workout (user_id, routine_id, workout_id, sets, status) VALUES (%s, %s, %s, %s, %s)",
+                            (user_id,routine_id, workout_id, sets, 0)) 
 
         self.db.commit()
         print("Routine 생성 완료")
-        # data = self.pack_data("RR", status='0')
-        # self.send_data(self.client_socket, data)
+        data = self.pack_data("RR", status='0')
+        self.send_data(self.client_socket, data)
 
     def send_routine(self):
         name = self.data['name']
@@ -326,6 +336,7 @@ class FAAServer(QTcpServer):
         # 1. user ID 조회
         self.cur.execute("SELECT id FROM user WHERE name = %s", (name,))
         result = self.cur.fetchone()
+
         if not result:
             print("❌ User 없음")
             data = self.pack_data("GR", status='1', err="User를 찾을 수 없습니다.")
@@ -338,7 +349,7 @@ class FAAServer(QTcpServer):
         self.cur.execute("SELECT id FROM routine WHERE user_id = %s ORDER BY date DESC LIMIT 1", (user_id,))
         result = self.cur.fetchone()
         if not result:
-            print("❌ Routine 없음")
+            print("Routine 없음")
             data = self.pack_data("GR", status='1', err="Routine 정보가 없습니다.")
             self.send_data(self.client_list[3], data)
             return
@@ -355,17 +366,18 @@ class FAAServer(QTcpServer):
         routine_data = self.cur.fetchall()
 
         if not routine_data:
-            print("❌ Routine 내용 없음")
+            print(" Routine 내용 없음")
             data = self.pack_data("GR", status='1', err="Routine 상세 정보가 없습니다.")
             self.send_data(self.cclient_list[3], data)
             return
-
-        # 4. 문자열 포맷팅 후 전송
-        routine_text = '\n'.join([f"{name}: {sets}세트 x {reps}회" for name, sets, reps in routine_data])
-        print("Routine 전송:", routine_text)
-        data = self.pack_data("GR", status='0', list_data=routine_text)
+        
+        # 4. 문자열 포맷으로 보냄 (ex: "squat|3|15, push-up|4|12")
+        formatted = ",".join([f"{name}|{sets}|{reps}" for name, sets, reps in routine_data])
+        print("Routine 전송:", formatted)
+        data = self.pack_data("GR", status='0', list_data=formatted)
         self.send_data(self.client_list[3], data)
-    
+        self.send_data(self.client_socket, data)
+
     def draw_guidline(self):
         #print(self.data['joint'])
         left_joint = self.data['joint'][:3]
