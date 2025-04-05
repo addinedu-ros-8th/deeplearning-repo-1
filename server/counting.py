@@ -9,37 +9,28 @@ import tempfile
 import os
 from gtts import gTTS
 
-class PredictionThread(threading.Thread):
-    def __init__(self, model, sequence, lock):
-        super().__init__()
-        self.model = model
-        self.sequence = sequence
-        self.lock = lock
-        self.result = None
-        self.running = True
-
-    def run(self):
-        while self.running:
-            with self.lock:
-                if len(self.sequence) == 20:
-                    input_data = np.array(list(self.sequence)).reshape(1, 20, 24)
-                else:
-                    input_data = None
-
-            if input_data is not None:
-                prediction = self.model.predict(input_data, verbose=0)
-                self.result = prediction
-            else:
-                time.sleep(0.01)
-
-    def stop(self):
-        self.running = False
-
 class AngleGuid():
     def __init__(self, exercise):
         self.vectors = {0: None, 1: None}
         self.initialized = {0: False, 1: False}
         self.count = 0
+        self.up_angle=0
+        self.down_angle=0
+        self.limit_angle=0
+
+        self.lock = threading.Lock()
+
+        self.joint_map = {
+            "shoulder": [(12, 14, 16), (11, 13, 15)],
+            "squat": [(24, 26, 28), (23, 25, 27)],
+            "knee": [(24, 26, 28), (23, 25, 27)]
+        }
+
+        self.guide_angle = {
+            "shoulder": lambda idx: -120 * (1 if idx == 0 else -1),
+            "squat": lambda idx: 90 * (1 if idx == 1 else -1),
+            "knee": lambda idx: -98
+        }
 
         self.r = (0, 0, 255)
         self.g = (0, 255, 0)
@@ -59,6 +50,8 @@ class AngleGuid():
             self.shoulder_press_init()
         elif self.exercise == "knee":
             self.knee_raise_init()
+        else:
+            return
     
     def squat_init(self):
         self.up_angle = 160
@@ -138,27 +131,36 @@ class AngleGuid():
 
 
     def draw_exercise_line(self, frame, landmarks):
-        joint_map = {
+        self.joint_map = {
             "shoulder": [(12, 14, 16), (11, 13, 15)],
             "squat": [(24, 26, 28), (23, 25, 27)],
             "knee": [(24, 26, 28), (23, 25, 27)]
         }
 
-        guide_angle = {
+        self.guide_angle = {
             "shoulder": lambda idx: -120 * (1 if idx == 0 else -1),
             "squat": lambda idx: 90 * (1 if idx == 1 else -1),
             "knee": lambda idx: -98
         }
 
-        for idx, (a, b, c) in enumerate(joint_map[self.exercise]):
+        for idx, (a, b, c) in enumerate(self.joint_map[self.exercise]):
             passing = False
             pt1 = self.to_pixel(frame, a, landmarks)
             pt2 = self.to_pixel(frame, b, landmarks)
             pt3 = self.to_pixel(frame, c, landmarks)
 
+            if self.exercise == "squat":
+                self.squat_init()
+            elif self.exercise == "shoulder":
+                self.shoulder_press_init()
+            elif self.exercise == "knee":
+                self.knee_raise_init()
+            else:
+                return
+
             angle = self.calculate_angle(landmarks[a], landmarks[b], landmarks[c])
             if (landmarks[c].y > landmarks[a].y and self.exercise == "shoulder"):
-                passing = True
+               passing = True
 
             self.update(idx, angle, passing)
 
@@ -177,7 +179,7 @@ class AngleGuid():
 
             # 초기 가이드 벡터
             if not self.initialized[idx]:
-                self.vectors[idx] = self.get_point_by_angle(origin, center, point, guide_angle[self.exercise](idx))
+                self.vectors[idx] = self.get_point_by_angle(origin, center, point, self.guide_angle[self.exercise](idx))
                 self.initialized[idx] = True
 
             # 가이드 라인
@@ -204,32 +206,26 @@ class AngleGuid():
 
             cv2.putText(frame, str(int(angle)), (int(pt2[0]), int(pt2[1])), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
 
-
-class AngleGuidThreaded:
-    def __init__(self, exercise):
-        self.guid = AngleGuid(exercise)
-        self.lock = threading.Lock()
-
     def set_exercise(self, exercise):
         with self.lock:
             self.exercise = exercise
 
     def draw(self, frame, landmarks):
         with self.lock:
-            self.guid.draw_exercise_line(frame, landmarks)
+            self.draw_exercise_line(frame, landmarks)
 
     def get_count(self):
         with self.lock:
-            return self.guid.count
+            return self.count
     
     def set_count(self):
         with self.lock:
-            self.guid.count = 0
+            self.count = 0
 
     def get_current_angles(self):
         with self.lock:
-            return self.guid.current_angle
+            return self.current_angle
         
     def get_state(self):
         with self.lock:
-            return self.guid.state
+            return self.state

@@ -46,7 +46,6 @@ class Client(QObject) :
                 self.result = int(self.data['status'])
                 self.responseReceived.emit()
             elif self.data['command'] == 'CT':
-                print(self.data['status'])
                 self.result = int(self.data['status'])
                 self.responseReceived.emit()
             # self.receive_data.emit(data)

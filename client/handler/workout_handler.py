@@ -103,6 +103,7 @@ class WorkoutHandler:
             hands.set()
             if main_window.is_workout:
                 # 시간 갱신 
+                cv2.putText(frame, f"Count: {main_window.tcp.result}", (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
                 if main_window.remaining_time > 0:
                     current_time = time.time()
                     elapsed = current_time - main_window.last_tick_time
@@ -131,7 +132,7 @@ class WorkoutHandler:
                         main_window.gesture_start_time = time.time()
                         main_window.selection_confirmed = False
                         print(f"⏳ 숫자 {number} 인식됨. 유지 중...")
-                    elif not main_window.selection_confirmed and time.time() - main_window.gesture_start_time >= 5:
+                    elif not main_window.selection_confirmed and time.time() - main_window.gesture_start_time >= 3:
                         print(f"🎯 숫자 {number} 확정됨! 운동 시작.")
                         main_window.selection_confirmed = True
                         WorkoutHandler.play_selected_workout(main_window, number, main_window.tier)
@@ -139,6 +140,7 @@ class WorkoutHandler:
                     main_window.current_gesture = None
                     main_window.gesture_start_time = None
                     main_window.selection_confirmed = False
+
             
 
             if main_window.view:
@@ -252,6 +254,8 @@ class WorkoutHandler:
     @staticmethod
     def handle_pause(main_window):
         print("⏸️ PAUSE button tapped!")
+        data=pack_data("RC",data='False')
+        main_window.tcp.sendData(data)
         main_window.modal_pause_view = ViewModalPause()
         main_window.modal_pause_view.bttn_back.action = lambda: WorkoutHandler.handle_back_to_main(main_window)
         main_window.modal_pause_view.bttn_continue.action = lambda: WorkoutHandler.handle_continue_button(main_window)
@@ -283,7 +287,7 @@ class WorkoutHandler:
 
         main_window.view.set_mode("main")
         main_window.lookup_frame.hide()
-        main_window.routine_frame.show()
+        main_window.routine_frame.hide()
         main_window.view.set_button_action("start", lambda: WorkoutHandler.handle_start(main_window))
         main_window.view.set_button_action("exit", lambda: WorkoutHandler.handle_exit(main_window))
         main_window.view.set_button_action("lookup", lambda: WorkoutHandler.handle_lookup(main_window))
@@ -295,6 +299,8 @@ class WorkoutHandler:
         main_window.view.set_mode("working")
         main_window.lookup_frame.hide()
         main_window.routine_frame.show()
+        data=pack_data("RC",data='True')
+        main_window.tcp.sendData(data)
         main_window.view.set_button_action("pause", lambda: WorkoutHandler.handle_pause(main_window))
         main_window.view.set_button_action("next", lambda: WorkoutHandler.handle_next(main_window))
 

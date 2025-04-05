@@ -41,11 +41,18 @@ class FileClient:
                     self.socket.write(chunk)
 
                 self.socket.flush()
+
+                # 3. 모든 데이터가 송신될 때까지 대기
+                if not self.socket.waitForBytesWritten(5000):
+                    print("[FileClient] Warning: Timeout waiting for bytes to be written.")
+
                 print("[FileClient] File sent successfully!")
 
         except Exception as e:
             print(f"[FileClient] Error sending file: {e}")
 
+        # 4. 서버가 수신을 완료할 때까지 연결 유지
+        self.socket.waitForDisconnected(5000)
         self.socket.disconnectFromHost()
 
     def on_disconnected(self):

@@ -7,11 +7,14 @@ from PyQt5.QtNetwork import QUdpSocket, QHostAddress, QTcpSocket
 from PyQt5.QtCore import QByteArray, pyqtSignal, QEventLoop
 from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget
 from PyQt5.QtGui import QImage, QPixmap
+import struct
 import threading
 import time
-from client.file_client import FileClient
-from client.ai_to_main import AitoMain
+from file_client import FileClient
+from ai_to_main import AitoMain
 from exercise_model import ExerciseClassifier
+from counting import AngleGuid
+import itertools
 #from counting import ExerciseCounter
 
 class AiServer(QWidget):
@@ -28,6 +31,9 @@ class AiServer(QWidget):
         self.record_duration = record_duration  # 녹화 간격 (초)
         self.start_time = None
         self.video_filename = None
+
+        self.prev_count=0
+        self.prev_exercise=None
 
         print(f"[UDP Server] Listening for video on port {port}...")
 
@@ -49,7 +55,7 @@ class AiServer(QWidget):
                 self.tcp.responseReceived.connect(loop.quit)  # 응답 받으면 이벤트 루프 종료
                 loop.exec_()
                 self.loop_ran = True  # 한 번 실행 후 플래그 설정
-            print(self.tcp.result)
+            #print(self.tcp.result)
             if self.tcp.result == "True":
                 self.process_video_frame(data)
             if self.tcp.result == "False":
@@ -65,7 +71,10 @@ class AiServer(QWidget):
                 print("[UDP Server] Failed to decode frame")
                 return
             # if self.start == True:
+
             frame = self.model.process_frame(frame)
+            #self.guid = AngleGuid(exercise=None)
+            
             self.display_frame(frame)
             self.record_video(frame)
 
@@ -78,9 +87,30 @@ class AiServer(QWidget):
             self.start_new_recording(frame)
 
         self.video_writer.write(frame)
+        current_count = self.model.angle_counter.count
+        current_exercise = self.model.angle_counter.exercise
 
-        if time.time() - self.start_time >= self.record_duration:
+        if self.prev_count != current_count:
+            self.prev_count = current_count
+            data=self.tcp.pack_data(command='CT',data=str(self.model.angle_counter.count))
+            self.tcp.sendData(data)
+
+        if self.prev_exercise != current_exercise:
+            print(self.prev_exercise)
+            self.prev_exercise = current_exercise
+            print(self.prev_exercise)
+            joint=self.model.angle_counter.joint_map[self.model.angle_counter.exercise]
+            joint_list = list(itertools.chain(*joint))
+
+            data=self.tcp.pack_data(command='CR',joint=joint_list,
+                                    angle=self.model.angle_counter.guide_angle[self.model.angle_counter.exercise])
+            self.tcp.sendData(data)
+
+        if self.model.angle_counter.count >= 20:
             self.stop_and_send_recording()
+            self.model.angle_counter.count=0
+
+            print('녹화완료')
 
     def start_new_recording(self, frame):
         """ 새로운 비디오 파일 생성하여 녹화 시작 """

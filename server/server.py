@@ -7,16 +7,16 @@ from PyQt5.QtCore import QCoreApplication
 from PyQt5.QtNetwork import QTcpServer, QHostAddress, QTcpSocket
 from config import SERVER_PORT
 from database import FAAdb
-from client.ai_to_main import AitoMain
+from ai_to_main import AitoMain
 import struct
 import random 
 import datetime 
-
+from functools import partial
 class FAAServer(QTcpServer):
     def __init__(self):
         super(FAAServer, self).__init__()
         self.client_list = []
-        self.ai_server = AitoMain()
+        #self.ai_server = AitoMain()
         self.db = FAAdb()
         self.cur = self.db.conn.cursor()
 
@@ -25,15 +25,15 @@ class FAAServer(QTcpServer):
         else: print(f"Failed to listen on port {SERVER_PORT}")
 
     def incomingConnection(self, socketDescriptor):
-        self.client_socket = QTcpSocket(self)
-        self.client_socket.setSocketDescriptor(socketDescriptor)
-        print(f"클라이언트 연결됨: {self.client_socket.peerAddress().toString()}:{self.client_socket.peerPort()}")
+        client_socket = QTcpSocket(self)
+        client_socket.setSocketDescriptor(socketDescriptor)
+        print(f"클라이언트 연결됨: {client_socket.peerAddress().toString()}:{client_socket.peerPort()}")
 
-        # 클라이언트 연결 및 데이터 수신, 종료 핸들러 등록
-        self.client_socket.readyRead.connect(lambda: self.receive_data(self.client_socket))
-        self.client_socket.disconnected.connect(lambda: self.disconnected(self.client_socket))
+        # 각 소켓에 대해 개별적으로 처리되도록 설정
+        client_socket.readyRead.connect(partial(self.receive_data, client_socket))
+        client_socket.disconnected.connect(partial(self.disconnected, client_socket))
 
-        self.client_list.append(self.client_socket)
+        self.client_list.append(client_socket)
         print(self.client_list)
 
     def receive_data(self, client_socket):
@@ -42,34 +42,27 @@ class FAAServer(QTcpServer):
             self.data = self.unpack_data(data)
             print(f"[Server] 클라이언트 메세지 : {self.data}")
             if self.data['command'] == "LI":
-                print("로그인")
-                self.login()  
+                 print("로그인")
+                 self.login()  
             elif self.data['command'] == "RG":
-                print("회원가입")
-                self.register() 
+                 print("회원가입")
+                 self.register() 
             elif self.data['command'] == "CT":
-                print("카운팅")
-                self.counting(self.data['data']) 
+                 print("카운팅")
+                 self.counting(self.data['data']) 
             elif self.data['command'] == "RC":
-                print("녹화시작")
-                self.record_start() 
+                 print("녹화시작")
+                 self.record_start() 
             elif self.data['command'] == "RR":
                 print("루틴 생성 요청")
                 self.create_routine()
-            elif self.data['command'] == "GR":
-                print("루틴 조회 요청")
-                self.send_routine()
+            elif self.data['command'] == 'CR':
+                print(self.data['angle'](0))
+                self.draw_guidline()
             
-    
     def unpack_data(self, binary_data):
         offset = 0
-        
-        # 명령어 언팩 (길이 + 데이터)
-        command_len = struct.unpack_from('I', binary_data, offset)[0]
-        offset += 4
-        command = binary_data[offset:offset + command_len].decode('utf-8')
-        offset += command_len
-        
+
         def unpack_string():
             nonlocal offset
             length = struct.unpack_from('I', binary_data, offset)[0]
@@ -79,24 +72,43 @@ class FAAServer(QTcpServer):
                 offset += length
                 return value
             return None
-        
-        # 각 필드 언팩
+
+        # 명령어 언팩
+        command = unpack_string()
         pw = unpack_string()
         name = unpack_string()
-        height = unpack_string()  # 높이
-        weight = unpack_string()  # 몸무게
+        height = unpack_string()
+        weight = unpack_string()
         data = unpack_string()
         content = unpack_string()
 
-        # 이미지 데이터 언팩 (이미지 파일을 바이너리로 읽어 반환)
+        # 이미지 데이터 언팩
         image_data_len = struct.unpack_from('I', binary_data, offset)[0]
         offset += 4
-        if image_data_len > 0:
-            image_data = binary_data[offset:offset + image_data_len]
-            offset += image_data_len
+        image_data = binary_data[offset:offset + image_data_len] if image_data_len > 0 else None
+        offset += image_data_len if image_data_len > 0 else 0
+
+        # joint 리스트 언팩
+        joint_len = struct.unpack_from('I', binary_data, offset)[0]
+        offset += 4
+        joint = [struct.unpack_from('I', binary_data, offset + (i * 4))[0] for i in range(joint_len)]
+        offset += joint_len * 4
+
+        # ✅ angle 언팩 (람다로 변환하되, 출력 시 문자열 유지)
+        angle_str = unpack_string()
+        if angle_str:
+            try:
+                angle = eval(angle_str)  # 람다로 변환
+            except:
+                angle = angle_str  # 변환 실패하면 문자열 유지
         else:
-            image_data = None
-        
+            angle = None
+
+        # ✅ 로그 출력용 (람다 함수일 경우 문자열로 변환)
+        angle_display = angle_str if isinstance(angle, str) else f"lambda function ({angle_str})"
+
+        print(f"[Server] 클라이언트 메세지 : {{'command': {command}, 'angle': {angle_display}}}")
+
         return {
             'command': command,
             'pw': pw,
@@ -105,7 +117,9 @@ class FAAServer(QTcpServer):
             'weight': weight,
             'data': data,
             'content': content,
-            'image_data': image_data
+            'image_data': image_data,
+            'joint': joint,
+            'angle': angle
         }
 
     def pack_data(self, command, status=None, name=None, err=None, id=None, list_data=None, routine_number=None, total_day=None, total_time=None,email=None):
@@ -194,7 +208,7 @@ class FAAServer(QTcpServer):
         else:
             print(rows[0][0])
             data = self.pack_data("LI",status='0')
-        self.send_data(self.client_socket,data)
+        self.send_data(self.client_list[2],data)
     
     def register(self):
         self.cur.execute("SELECT EXISTS(SELECT 1 FROM user WHERE name = %s)",(self.data['name'],))
@@ -209,7 +223,7 @@ class FAAServer(QTcpServer):
             self.db.commit()
             data = self.pack_data("RG",status='0')
                
-        self.send_data(self.client_socket,data)
+        self.send_data(self.client_list[2],data)
     
     def counting(self,count):
         data = self.pack_data("CT",status=count)
@@ -217,10 +231,10 @@ class FAAServer(QTcpServer):
     def record_start(self):
         if self.data['data'] == 'True':
             data = self.pack_data("RC",status='True')
-            self.send_data(self.client_list[1],data)
+            self.send_data(self.client_list[0],data)
         elif self.data['data'] == 'False':
             data = self.pack_data("RC",status='False')
-            self.send_data(self.client_list[1],data)
+            self.send_data(self.client_list[0],data)
     
     def create_routine(self):
         name = self.data['name']   
@@ -231,7 +245,7 @@ class FAAServer(QTcpServer):
         if not result: 
             data = self.pack_data("RR", status='1')
             print("no user in db")
-            self.send_data(self.client_socket, data)
+            self.send_data(self.client_list[2], data)
             return 
         
         user_id, tier = result
@@ -248,7 +262,7 @@ class FAAServer(QTcpServer):
         if not workout_list :
             print("운동 없음")
             data = self.pack_data("RR", status='1')
-            self.send_data(self.client_socket, data)
+            self.send_data(self.client_list[2], data)
             return 
         # select workout randomly 
         selected_workouts = workout_list
@@ -256,8 +270,8 @@ class FAAServer(QTcpServer):
         # add single routine in routine_workout table 
         for workout_id, workout_name, reps in selected_workouts:
             sets = random.randint(3, 5)
-            self.cur.execute("INSERT INTO routine_workout (user_id, routine_id, workout_id, sets, status) VALUES (%s, %s, %s, %s, %s)",
-                            (user_id,routine_id, workout_id, sets, 0)) 
+            self.cur.execute("INSERT INTO routine_workout (routine_id, workout_id, sets, status) VALUES (%s, %s, %s, %s)",
+                            (routine_id, workout_id, sets, 0)) 
 
         self.db.commit()
         print("Routine 생성 완료")
@@ -273,7 +287,7 @@ class FAAServer(QTcpServer):
         if not result:
             print("❌ User 없음")
             data = self.pack_data("GR", status='1', err="User를 찾을 수 없습니다.")
-            self.send_data(self.client_socket, data)
+            self.send_data(self.client_list[2], data)
             return
 
         user_id = result[0]
@@ -284,7 +298,7 @@ class FAAServer(QTcpServer):
         if not result:
             print("❌ Routine 없음")
             data = self.pack_data("GR", status='1', err="Routine 정보가 없습니다.")
-            self.send_data(self.client_socket, data)
+            self.send_data(self.client_list[2], data)
             return
 
         routine_id = result[0]
@@ -309,7 +323,15 @@ class FAAServer(QTcpServer):
         print("Routine 전송:", routine_text)
         data = self.pack_data("GR", status='0', list_data=routine_text)
         self.send_data(self.client_socket, data)
-
+    
+    def draw_guidline(self):
+        #print(self.data['joint'])
+        left_joint = self.data['joint'][:3]
+        right_joint = self.data['joint'][3:]
+        joint = [tuple(left_joint), tuple(right_joint)]
+        print(joint)
+        
+    
 
 if __name__ == "__main__":
     app = QCoreApplication(sys.argv)

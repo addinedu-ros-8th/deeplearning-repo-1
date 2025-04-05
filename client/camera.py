@@ -19,6 +19,7 @@ class Camera:
         while not self.stopped:
             ret, frame = self.capture.read()
             if ret:
+                #frame = cv2.flip(frame, 1)
                 self.frame = frame
 
     def stop(self):
