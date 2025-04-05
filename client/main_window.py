@@ -40,6 +40,7 @@ class MainWindow(QMainWindow, main_class):
         self.current_gesture = None
         self.gesture_start_time = None
         self.selection_confirmed = False
+        self.prev_pi_data = None
         
         self.auth = AuthHandler(self)
         self.btn_profile1.clicked.connect(lambda: self.auth.login_user(self.label_profile1.text()))

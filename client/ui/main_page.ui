@@ -33,7 +33,7 @@
        <item>
         <widget class="QStackedWidget" name="stackedWidget_big">
          <property name="currentIndex">
-          <number>3</number>
+          <number>1</number>
          </property>
          <widget class="QWidget" name="profile_page">
           <layout class="QGridLayout" name="gridLayout_3">
@@ -668,12 +668,24 @@
                                <verstretch>0</verstretch>
                               </sizepolicy>
                              </property>
+                             <property name="font">
+                              <font>
+                               <family>Noto Sans CJK KR Medium</family>
+                               <pointsize>30</pointsize>
+                               <weight>50</weight>
+                               <italic>false</italic>
+                               <bold>false</bold>
+                               <underline>false</underline>
+                               <strikeout>false</strikeout>
+                               <kerning>true</kerning>
+                              </font>
+                             </property>
                              <property name="focusPolicy">
                               <enum>Qt::StrongFocus</enum>
                              </property>
                              <property name="styleSheet">
                               <string notr="true">background-color: rgb(135, 206, 235);
-color: white;</string>
+color: navy;</string>
                              </property>
                              <property name="text">
                               <string>Start</string>

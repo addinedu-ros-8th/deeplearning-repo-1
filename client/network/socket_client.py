@@ -27,18 +27,44 @@ class Client(QObject) :
         
 
         self.result = None
+        self.landmark = None
+
+        self.prev_pi_data = None
         
     def on_connected(self):
         print("[Client] Connected to server")
 
     def readData(self):
-        if self.socket.bytesAvailable()>0:
+        if self.socket.bytesAvailable() > 0:
             data = self.socket.readAll().data()
+
+            # JSON 형식인 경우
+            # JSON 형식 판단 (여러 개가 붙어올 수도 있음)
+            if data.startswith(b'{'):
+                try:
+                    json_str = data.decode('utf-8')
+                    json_list = json_str.strip().split('\n')  # '\n' 구분자로 분리
+
+                    for item in json_list:
+                        try:
+                            json_data = json.loads(item)
+                            if json_data.get('command') == 'PI':
+                                #print(f"[Client] [PI 명령 응답 수신]: {json_data}")
+                                self.landmark = json_data
+                                self.responseReceived.emit()
+                            else:
+                                print(f"[Client] [무시된 JSON 명령]: {json_data.get('command')}")
+                        except json.JSONDecodeError as e:
+                            print(f"[Client] [!] 개별 JSON 파싱 실패: {e}")
+                    return
+                except Exception as e:
+                    print(f"[Client] [!] 전체 JSON 파싱 실패: {e}")
+                    return
+
+            # 바이너리 형식 처리
             self.data = self.unpack_data(data)
-            print("서버 응답 : ",self.data)
-            #print(type(response))
-            #print(self.response['status'])
-            
+            print("서버 응답 : ", self.data)
+
             if self.data['command'] == 'LI':
                 self.result = int(self.data['status'])
                 self.responseReceived.emit()
@@ -48,7 +74,6 @@ class Client(QObject) :
             elif self.data['command'] == 'CT':
                 self.result = int(self.data['status'])
                 self.responseReceived.emit()
-            # self.receive_data.emit(data)
     
     def unpack_data(self, binary_data):
         offset = 0

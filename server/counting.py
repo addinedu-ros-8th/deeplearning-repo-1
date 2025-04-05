@@ -1,13 +1,11 @@
 import cv2
 import numpy as np
-import mediapipe as mp
-from collections import deque, Counter
-from keras.models import load_model
 import threading
-import time
-import tempfile
+import json
 import os
-from gtts import gTTS
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../client')))
+from send_landmark import LandmarkSender
 
 class AngleGuid():
     def __init__(self, exercise):
@@ -17,6 +15,8 @@ class AngleGuid():
         self.up_angle=0
         self.down_angle=0
         self.limit_angle=0
+        
+        self.sendLand = LandmarkSender()
 
         self.lock = threading.Lock()
 
@@ -148,6 +148,7 @@ class AngleGuid():
             pt1 = self.to_pixel(frame, a, landmarks)
             pt2 = self.to_pixel(frame, b, landmarks)
             pt3 = self.to_pixel(frame, c, landmarks)
+            pts = [pt1, pt2, pt3]
 
             if self.exercise == "squat":
                 self.squat_init()
@@ -184,6 +185,8 @@ class AngleGuid():
 
             # 가이드 라인
             cv2.line(frame, tuple(origin.astype(int)), tuple(self.vectors[idx].astype(int)), self.p, 2)
+            print(origin.astype(int))
+            print(self.vectors[idx].astype(int))
 
             # 관절 색
             if self.exercise == "shoulder":
@@ -200,12 +203,15 @@ class AngleGuid():
             cv2.line(frame, tuple(pt1.astype(int)), tuple(pt2.astype(int)), color, 2)
             cv2.line(frame, tuple(pt2.astype(int)), tuple(pt3.astype(int)), color, 2)
 
+
             # 점 & 각도 표시
             for pt in [pt1, pt2, pt3]:
                 cv2.circle(frame, tuple(pt.astype(int)), 4, self.b, -1)
 
             cv2.putText(frame, str(int(angle)), (int(pt2[0]), int(pt2[1])), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
-
+            
+            self.sendLand.send_pose_data(origin, self.vectors[idx], pts, self.count)
+    
     def set_exercise(self, exercise):
         with self.lock:
             self.exercise = exercise

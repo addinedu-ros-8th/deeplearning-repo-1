@@ -77,6 +77,7 @@ class WorkoutHandler:
         main_window.stackedWidget_big.setCurrentWidget(main_window.workout_page)
         main_window.showFullScreen()
         main_window.lookup_frame.hide()
+        main_window.routine_frame.hide()
         main_window.lb_cam = main_window.workout_page.findChild(QLabel, "lb_cam")
         main_window.lb_cam.setScaledContents(True)
 
@@ -102,8 +103,25 @@ class WorkoutHandler:
             Detector.analyze_user(frame)
             hands.set()
             if main_window.is_workout:
+                print(main_window.tcp.landmark)
+                if isinstance(main_window.tcp.landmark, dict) and main_window.tcp.landmark.get("command") == "PI":
+                    pi_data = main_window.tcp.landmark
+
+                    # origin
+                    ox, oy = pi_data['origin']['x'], pi_data['origin']['y']
+                    cv2.circle(frame, (ox, oy), 10, (0, 255, 255), -1)  # 노란 원
+
+                    # vector
+                    vx, vy = pi_data['vector']['x'], pi_data['vector']['y']
+                    cv2.arrowedLine(frame, (ox, oy), (vx, vy), (255, 0, 255), 3)  # 보라색 벡터 선
+
+                    # landmarks
+                    for pt in pi_data['landmarks']:
+                        lx, ly = pt['x'], pt['y']
+                        cv2.circle(frame, (lx, ly), 6, (0, 100, 255), -1)  # 주황색 점
                 # 시간 갱신 
-                cv2.putText(frame, f"Count: {main_window.tcp.result}", (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
+                    cv2.putText(frame, f"Count: {pi_data['count']}", (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
+                
                 if main_window.remaining_time > 0:
                     current_time = time.time()
                     elapsed = current_time - main_window.last_tick_time
@@ -206,6 +224,7 @@ class WorkoutHandler:
         main_window.view.set_mode("working")
         main_window.lookup_frame.hide()
         main_window.routine_frame.show()
+        print(main_window.lb_cam.size())
         WorkoutHandler.save_video(main_window)
         QApplication.processEvents()
 

@@ -12,6 +12,8 @@ import struct
 import random 
 import datetime 
 from functools import partial
+import json
+
 class FAAServer(QTcpServer):
     def __init__(self):
         super(FAAServer, self).__init__()
@@ -39,26 +41,50 @@ class FAAServer(QTcpServer):
     def receive_data(self, client_socket):
         while client_socket.bytesAvailable() > 0:
             data = client_socket.readAll().data()
-            self.data = self.unpack_data(data)
-            print(f"[Server] 클라이언트 메세지 : {self.data}")
-            if self.data['command'] == "LI":
-                 print("로그인")
-                 self.login()  
-            elif self.data['command'] == "RG":
-                 print("회원가입")
-                 self.register() 
-            elif self.data['command'] == "CT":
-                 print("카운팅")
-                 self.counting(self.data['data']) 
-            elif self.data['command'] == "RC":
-                 print("녹화시작")
-                 self.record_start() 
-            elif self.data['command'] == "RR":
-                print("루틴 생성 요청")
-                self.create_routine()
-            elif self.data['command'] == 'CR':
-                print(self.data['angle'](0))
-                self.draw_guidline()
+
+            # JSON 형식인 경우 예외적으로 로그만 찍고 무시
+            if data.startswith(b'{'):
+                try:
+                    json_str = data.decode('utf-8')
+                    json_data = json.loads(json_str)
+                    if json_data.get('command') == 'PI':
+                        print(f"[Server] [JSON - PI 명령 수신]: {json_data}")
+                        self.send_data(self.client_list[3],data)
+                    else:
+                        print(f"[Server] [무시된 JSON 명령]: {json_data.get('command')}")
+                    return
+                except Exception as e:
+                    print(f"[!] JSON 형식으로 보이지만 파싱 실패: {e}")
+                    return
+
+            # ✅ 나머지는 전부 바이너리라고 보고 기존 방식대로 처리
+            try:
+                self.data = self.unpack_data(data)
+                print(f"[Server] 클라이언트 바이너리 메시지: {self.data}")
+
+                if self.data['command'] == "LI":
+                    print("로그인")
+                    self.login()
+                elif self.data['command'] == "RG":
+                    print("회원가입")
+                    self.register()
+                elif self.data['command'] == "CT":
+                    print("카운팅")
+                    self.counting(self.data['data'])
+                elif self.data['command'] == "RC":
+                    print("녹화시작")
+                    self.record_start()
+                elif self.data['command'] == "RR":
+                    print("루틴 생성 요청")
+                    self.create_routine()
+                elif self.data['command'] == 'CR':
+                    print(self.data )
+                    self.draw_guidline()
+                elif self.data['command'] == 'GR':
+                    self.send_routine()
+
+            except Exception as e:
+                print(f"[✗] 바이너리 데이터 처리 오류: {e}")
             
     def unpack_data(self, binary_data):
         offset = 0
@@ -208,7 +234,7 @@ class FAAServer(QTcpServer):
         else:
             print(rows[0][0])
             data = self.pack_data("LI",status='0')
-        self.send_data(self.client_list[2],data)
+        self.send_data(self.client_list[3],data)
     
     def register(self):
         self.cur.execute("SELECT EXISTS(SELECT 1 FROM user WHERE name = %s)",(self.data['name'],))
@@ -223,11 +249,12 @@ class FAAServer(QTcpServer):
             self.db.commit()
             data = self.pack_data("RG",status='0')
                
-        self.send_data(self.client_list[2],data)
+        self.send_data(self.client_list[3],data)
     
     def counting(self,count):
         data = self.pack_data("CT",status=count)
-        self.send_data(self.client_list[2],data)
+        self.send_data(self.client_list[3],data)
+
     def record_start(self):
         if self.data['data'] == 'True':
             data = self.pack_data("RC",status='True')
@@ -245,7 +272,7 @@ class FAAServer(QTcpServer):
         if not result: 
             data = self.pack_data("RR", status='1')
             print("no user in db")
-            self.send_data(self.client_list[2], data)
+            self.send_data(self.client_list[3], data)
             return 
         
         user_id, tier = result
@@ -262,7 +289,7 @@ class FAAServer(QTcpServer):
         if not workout_list :
             print("운동 없음")
             data = self.pack_data("RR", status='1')
-            self.send_data(self.client_list[2], data)
+            self.send_data(self.client_list[3], data)
             return 
         # select workout randomly 
         selected_workouts = workout_list
@@ -287,7 +314,7 @@ class FAAServer(QTcpServer):
         if not result:
             print("❌ User 없음")
             data = self.pack_data("GR", status='1', err="User를 찾을 수 없습니다.")
-            self.send_data(self.client_list[2], data)
+            self.send_data(self.client_list[3], data)
             return
 
         user_id = result[0]
@@ -298,7 +325,7 @@ class FAAServer(QTcpServer):
         if not result:
             print("❌ Routine 없음")
             data = self.pack_data("GR", status='1', err="Routine 정보가 없습니다.")
-            self.send_data(self.client_list[2], data)
+            self.send_data(self.client_list[3], data)
             return
 
         routine_id = result[0]
@@ -315,14 +342,14 @@ class FAAServer(QTcpServer):
         if not routine_data:
             print("❌ Routine 내용 없음")
             data = self.pack_data("GR", status='1', err="Routine 상세 정보가 없습니다.")
-            self.send_data(self.client_socket, data)
+            self.send_data(self.cclient_list[3], data)
             return
 
         # 4. 문자열 포맷팅 후 전송
         routine_text = '\n'.join([f"{name}: {sets}세트 x {reps}회" for name, sets, reps in routine_data])
         print("Routine 전송:", routine_text)
         data = self.pack_data("GR", status='0', list_data=routine_text)
-        self.send_data(self.client_socket, data)
+        self.send_data(self.client_list[3], data)
     
     def draw_guidline(self):
         #print(self.data['joint'])

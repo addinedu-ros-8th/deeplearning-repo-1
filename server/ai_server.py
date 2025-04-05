@@ -90,10 +90,10 @@ class AiServer(QWidget):
         current_count = self.model.angle_counter.count
         current_exercise = self.model.angle_counter.exercise
 
-        if self.prev_count != current_count:
-            self.prev_count = current_count
-            data=self.tcp.pack_data(command='CT',data=str(self.model.angle_counter.count))
-            self.tcp.sendData(data)
+        # if self.prev_count != current_count:
+        #     self.prev_count = current_count
+        #     data=self.tcp.pack_data(command='CT',data=str(self.model.angle_counter.count))
+        #     self.tcp.sendData(data)
 
         if self.prev_exercise != current_exercise:
             print(self.prev_exercise)
