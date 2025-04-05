@@ -1,7 +1,6 @@
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../client')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../client')))
 import numpy as np
 import cv2
 from PyQt5.QtNetwork import QUdpSocket, QHostAddress, QTcpSocket

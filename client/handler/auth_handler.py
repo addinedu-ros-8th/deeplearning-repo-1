@@ -49,7 +49,7 @@ class AuthHandler:
                 print(f"user tier: {self.main_window.tier}")
             else: 
                 print("user tier 없음")
-        
+  
 
             self.main_window.stackedWidget_big.setCurrentWidget(self.main_window.big_main_page)     # page 이동 
             # Routine 생성 요청 (서버가 routine 생성만)

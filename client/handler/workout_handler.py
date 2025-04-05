@@ -1,7 +1,7 @@
 # workout_handler.py
 
 import time, cv2
-from PyQt5.QtCore import QTimer, QEventLoop
+from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QTableWidgetItem
 import Controller.Hands as hands
@@ -66,12 +66,6 @@ class WorkoutHandler:
             return
 
         self.main_window.tableWidget.removeRow(row)
-        
-    def load_user_routine(self):
-        self.cur.execute("SELECT workout_name FROM routine WHERE username = %s ORDER BY idx ASC", (self.main_window.username,))
-        rows = self.cur.fetchall()
-        self.routine = [row[0] for row in rows]
-        self.current_index = 0
 
     @staticmethod
     def go2workout(main_window):
@@ -84,7 +78,7 @@ class WorkoutHandler:
         main_window.showFullScreen()
         main_window.routine_frame.hide()
         main_window.lookup_frame.hide()
-        main_window.routine_frame.hide()
+
         main_window.lb_cam = main_window.workout_page.findChild(QLabel, "lb_cam")
         main_window.lb_cam.setScaledContents(True)
 
@@ -94,12 +88,7 @@ class WorkoutHandler:
         main_window.timer = QTimer()
         main_window.timer.timeout.connect(lambda: WorkoutHandler.update_gui(main_window))
         main_window.timer.start(30)
-        # call routine 
-        data = pack_data(command="GR", name=main_window.username)
-        main_window.tcp.sendData(data)
-        main_window.tcp.responseReceived.connect(lambda: WorkoutHandler.on_routine_ready(main_window))
 
-        
         main_window.view = ViewMain()
         main_window.view.set_mode("main")
         main_window.view.set_button_action("start", lambda: WorkoutHandler.handle_start(main_window))
@@ -229,6 +218,7 @@ class WorkoutHandler:
         main_window.udp.video_writer = True
         data = pack_data("RC", data='True')
         main_window.tcp.sendData(data)
+
     @staticmethod
     def handle_start(main_window):
         print("START button tapped!")
@@ -238,10 +228,9 @@ class WorkoutHandler:
         print(main_window.lb_cam.size())
         WorkoutHandler.save_video(main_window)
         QApplication.processEvents()
-        """
-            routine 부르기
-        """
 
+        data = pack_data(command="GR", name=main_window.username)
+        main_window.tcp.sendData(data)
 
         main_window.remaining_time = cons.TIER_TIMES.get(main_window.tier, 80)
         main_window.last_tick_time = time.time()
@@ -250,22 +239,6 @@ class WorkoutHandler:
 
         main_window.view.set_button_action("pause", lambda: WorkoutHandler.handle_pause(main_window))
         main_window.view.set_button_action("next", lambda: WorkoutHandler.handle_next(main_window))
-    @staticmethod
-    def on_routine_ready(main_window):
-        # GR에 대한 응답인지 확인
-        if main_window.tcp.data["command"] != "GR":
-            return
-        
-        print("✅ 루틴 수신 완료, workout 시작 준비")
-        main_window.routine_queue = main_window.tcp.routine_list.copy()
-        main_window.current_index = 0
-        main_window.set_current_workout()
-        main_window.display_routine_list()
-        # 이 연결은 한 번만 실행되도록 제거해주면 좋음
-        try:
-            main_window.tcp.responseReceived.disconnect()
-        except Exception as e:
-            print("disconnect 실패:", e)
 
     @staticmethod
     def handle_exit(main_window):
@@ -310,18 +283,17 @@ class WorkoutHandler:
     @staticmethod
     def handle_next(main_window):
         print("Next button tapped!")
-        main_window.is_ready = True 
-        # main_window.workout_list.clear()
-        # main_window.tier = (main_window.tier + 1) % 3
-        # main_window.view.tier = main_window.tier
-        # main_window.label_tier.setText(main_window.tier_list[main_window.tier])
+        main_window.workout_list.clear()
+        main_window.tier = (main_window.tier + 1) % 3
+        main_window.view.tier = main_window.tier
+        main_window.label_tier.setText(main_window.tier_list[main_window.tier])
 
-        # main_window.view.set_mode("lookup")
-        # for i in main_window.total_work_list[main_window.tier]:
-        #     main_window.workout_list.addItem(i)
+        main_window.view.set_mode("lookup")
+        for i in main_window.total_work_list[main_window.tier]:
+            main_window.workout_list.addItem(i)
         # main_window.workout_list.itemClicked.connect(main_window.on_item_click)
 
-        main_window.view.set_button_action("ready", lambda: WorkoutHandler.handle_next(main_window))
+        main_window.view.set_button_action("next", lambda: WorkoutHandler.handle_next(main_window))
         main_window.view.set_button_action("back", lambda: WorkoutHandler.handle_back_to_main(main_window))
 
     @staticmethod
@@ -358,4 +330,3 @@ class WorkoutHandler:
         main_window.camera.stop()
         main_window.stackedWidget_big.setCurrentWidget(main_window.big_main_page)
         main_window.showNormal()
-

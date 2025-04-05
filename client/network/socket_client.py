@@ -25,7 +25,7 @@ class Client(QObject) :
 
         self.udp_socket = QUdpSocket()
         
-        self.routine_list = []  # GR 응답으로 받은 routine 저장용
+
         self.result = None
         self.landmark = None
 

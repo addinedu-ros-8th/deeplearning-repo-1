@@ -145,20 +145,6 @@ modal_btn_y = int(window_height * 0.4)
 
 
 ######################################
-
-THUMBNAIL_PATH = "./Asset/thumbnails"
-
-THUMBNAIL = {
-    "스탠딩 니업": os.path.join(THUMBNAIL_PATH, "스탠딩 니업.gif"),
-    "숄더프레스": os.path.join(THUMBNAIL_PATH, "숄더프레스.gif"),
-    "스쿼트": os.path.join(THUMBNAIL_PATH, "스쿼트.gif"),
-    "프론트 런지": os.path.join(THUMBNAIL_PATH, "프론트 런지.gif"),
-
-
-    "standing-bicycle": os.path.join(THUMBNAIL_PATH, "standing-bicycle.gif"),
-    "side-lunge": os.path.join(THUMBNAIL_PATH, "side-lunge.gif")
-}
-
 videos = {
     0: {
         1: "./save_file/Asset/front-lunge.mp4",

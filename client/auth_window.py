@@ -27,7 +27,7 @@ class AuthWindow(QMainWindow, auth_class):
         self.stackedWidget.setCurrentWidget(self.add_profile_page)
 
         #프로필 설정 화면 버튼 이벤트
-        self.btn_select_profile_img.clicked.connect(select_icon)
+        # self.btn_select_profile_img.clicked.connect(select_icon)
         self.btn_profile_save.clicked.connect(self.profile_save)
 
     def select_icon(self):
