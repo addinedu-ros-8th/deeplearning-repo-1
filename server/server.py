@@ -96,7 +96,8 @@ class FAAServer(QTcpServer):
                     self.draw_guidline()
                 elif self.data['command'] == 'GR':
                     self.send_routine()
-
+                elif self.data['command'] == 'ME':
+                    self.modify_exercise()
             except Exception as e:
                 print(f"[✗] 바이너리 데이터 처리 오류: {e}")
             
@@ -223,6 +224,18 @@ class FAAServer(QTcpServer):
             packed_data += struct.pack('I', 0)
         
         return packed_data
+
+    def modify_exercise(self):
+        self.cur.execute("SELECT * from workout")
+        result = self.cur.fetchall()
+        if not result:
+            data = self.pack_data("ME", status='1', err="운동 정보가 없습니다.")
+            self.send_data(self.client_socket, data)
+            return
+        
+        print(result)
+        
+        self.send_data(self.pack_data("ME", status='0', list_data=result))
     
     def send_data(self,client_socket, response_data):
         if client_socket.state() == QTcpSocket.ConnectedState:
