@@ -1,6 +1,8 @@
+# Python bytecode
 __pycache__/
-/__pycache__
-/__pycache__/
-__pycache__
-.pyc
-recorded_202504
+*.pyc
+*.pyo
+*.pyd
+
+# 녹화 파일 예시
+recorded_*

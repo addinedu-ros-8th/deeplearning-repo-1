@@ -9,7 +9,7 @@ from config import SERVER_PORT, SERVER_IP
 
 from PyQt5.QtNetwork import QTcpSocket, QUdpSocket
 from PyQt5.QtCore import QObject, pyqtSignal,QCoreApplication
-from server.ai_to_main import AitoMain
+from client.ai_to_main import AitoMain
 import json
 import struct
 

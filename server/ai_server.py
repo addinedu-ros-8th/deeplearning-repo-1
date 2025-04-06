@@ -10,6 +10,7 @@ from PyQt5.QtGui import QImage, QPixmap
 import signal
 import threading
 import time
+import socket
 from client.file_client import FileClient
 from client.ai_to_main import AitoMain
 from exercise_model import ExerciseClassifier
@@ -45,6 +46,41 @@ class AiServer(QWidget):
         layout.addWidget(self.label)
         self.setLayout(layout)
 
+        # 루틴 전용 TCP 서버 실행
+        threading.Thread(target=self.start_routine_server, daemon=True).start()
+    
+    def start_routine_server(self, host='127.0.0.1', port=9999):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind((host, port))
+        s.listen(1)
+        print(f"[AI SERVER] 루틴 수신 대기중: {host}:{port}")
+        while True:
+            conn, addr = s.accept()
+            threading.Thread(target=self.handle_routine_connection, args=(conn,), daemon=True).start()
+    def handle_routine_connection(self, conn):
+        try:
+            data = conn.recv(2048).decode('utf-8')
+            print("[AI SERVER] 수신된 루틴 문자열:", data)
+            routine = []
+            for item in data.split(','):
+                parts = item.split('|')
+                if len(parts) == 3:
+                    name, sets, reps = parts
+                    routine.append({
+                        "name": name,
+                        "sets": int(sets),
+                        "reps": int(reps)
+                    })
+            if routine:
+                self.model.set_routine(routine)
+                print("[AI SERVER] 루틴 세팅 완료:", routine)
+            else:
+                print("[AI SERVER] 파싱된 루틴 없음")
+        except Exception as e:
+            print("[AI SERVER] 루틴 파싱 실패:", e)
+        finally:
+            conn.close()   
+            
     def receive_data(self):
         while self.udp_socket.hasPendingDatagrams():
             data, sender, sender_port = self.udp_socket.readDatagram(self.udp_socket.pendingDatagramSize())

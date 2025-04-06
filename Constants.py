@@ -189,7 +189,12 @@ TIER_TIMES = {
     1: 90,
     2: 60
 }
-
+EXERCISE_NAME_MAP = {
+    '스탠딩니업': 'knee',
+    '숄더프레스': 'shoulder',
+    '스쿼트': 'squat',
+    '프론트런지': 'lunge'
+}
 class HourOfDay(Enum):
     H00 = "00:00"; H03 = "03:00"; H06 = "06:00"; H09 = "09:00"; 
     H12 = "12:00"; H15 = "15:00"; H18 = "18:00"; H21 = "21:00"; 
@@ -202,3 +207,4 @@ class Month(Enum):
     APR = "Apr";MAY = "May";JUN = "Jun"
     JUL = "Jul";AUG = "Aug";SEP = "Sep"
     OCT = "Oct";NOV = "Nov";DEC = "Dec"
+    

@@ -15,7 +15,8 @@ import struct
 
 class AitoMain(QObject) :    
     responseReceived = pyqtSignal()
-    routineReceived = pyqtSignal(str) 
+    routineIndexUpdated = pyqtSignal(int)
+
     def __init__(self):
         super().__init__()
         self.socket = QTcpSocket()                              # 1. create socket 
@@ -35,25 +36,33 @@ class AitoMain(QObject) :
         if self.socket.bytesAvailable() > 0:
             data = self.socket.readAll().data()
 
+            # JSON이면 무시
+            if data.startswith(b'{'):
+                print("[AitoMain] JSON 메시지 수신됨 (AI 서버에서 처리할 예정)")
+                return
+
+            # ✅ 그 외는 바이너리로 해석
             try:
                 self.data = self.unpack_data(data)
                 print("서버 응답 : ", self.data)
-                print(f"[AitoMain] 받은 커맨드: {self.data['command']}")
 
-                command = self.data['command']
-                self.result_cmd = command
-
-                if command == 'EX':
-                    self.result = self.data['list_data']
-                elif command in ['FR', 'LR', 'RR']:
+                if self.data['command'] == 'FR':
                     self.result = int(self.data['status'])
-                elif command == 'RC':
+                    self.responseReceived.emit()
+                elif self.data['command'] == 'LR':
+                    self.result = int(self.data['status'])
+                    self.responseReceived.emit()
+                elif self.data['command'] == 'RR':
+                    self.result = int(self.data['status'])
+                    self.responseReceived.emit()
+                elif self.data['command'] == 'RC':
                     self.result = self.data['status']
-                    self.result = self.data['list_data']
+
                 self.responseReceived.emit()
 
             except Exception as e:
                 print("[AitoMain] 바이너리 패킷 파싱 실패:", e)
+
     
     def unpack_data(self, binary_data):
         offset = 0
@@ -140,7 +149,7 @@ class AitoMain(QObject) :
         else:
             packed_data += struct.pack('I', 0)
 
-        # angle 패킹 (람다 → 문자열 변환)
+        # ✅ angle 패킹 (람다 → 문자열 변환)
         if angle is not None:
             if callable(angle):  
                 angle_str = f"lambda idx: {angle(0)}"  # 실행 가능한 문자열로 변환

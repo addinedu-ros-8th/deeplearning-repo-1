@@ -14,6 +14,9 @@ from pydub.playback import play
 from counting import AngleGuid
 from tts import TextToSpeechThread
 import sys
+import  Constants as cons 
+
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
@@ -32,6 +35,10 @@ class ExerciseClassifier:
         self.frame_count = 0
         self.label = None
         
+        self.current_routine_idx = 0
+        self.current_set = 1
+        self.reps_done = 0
+
         # 같은 운동을 일정 프레임 이상 유지할 때 업데이트
         self.last_exercise = None
         self.consistent_frames = 0
@@ -41,6 +48,16 @@ class ExerciseClassifier:
         
         self.predict_thread = threading.Thread(target=self.run_prediction, daemon=True)
         self.predict_thread.start()
+        
+        self.routine_list = []
+
+    def set_routine(self, routine):
+        self.routine_list = routine
+        print("[Model] 루틴 저장됨:", self.routine_list)
+    def get_current_exercise(self):
+        if self.current_routine_idx < len(self.routine_list):
+            return self.routine_list[self.current_routine_idx]
+        return None
     
     def extract_pose_landmarks(self, results):
         xyz_list = []
@@ -67,18 +84,47 @@ class ExerciseClassifier:
                 self.result = prediction
             else:
                 time.sleep(0.01)
-    
+
+    def update_routine_index(self, index):
+        self.current_routine_idx = index
+        current = self.get_current_exercise()
+        if current:
+            kor_name = current["name"]
+            eng_name = cons.EXERCISE_NAME_MAP.get(kor_name)
+            if eng_name:
+                self.angle_counter.set_exercise(eng_name)
+                print(f"[Model] 현재 운동으로 변경됨: {eng_name}")
+            else:
+                print(f"⚠️ 운동 매핑 실패: {kor_name}")
+
     def process_frame(self, frame):
         image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = self.pose.process(image)
+       
+        # 현재 루틴에서 수행 중인 운동 가져오기
+        current_routine = self.get_current_exercise()
+        if not current_routine:
+            return frame
+       
+        kor_name = current_routine['name']
+        internal_name = cons.EXERCISE_NAME_MAP.get(kor_name)
         
-        exercise=['shoulder', 'squat', 'knee']
-        self.angle_counter.set_exercise(exercise=exercise[0])
-        if self.angle_counter.exercise != None:
+        if internal_name is None:
+            print(f"[UDP Server] 알 수 없는 운동 이름: {kor_name}")
+            return frame
+        
+        self.angle_counter.set_exercise(exercise=internal_name)
+        # exercise=['shoulder', 'squat', 'knee']
+        # self.angle_counter.set_exercise(exercise=exercise[0])
+        # if self.angle_counter.exercise != None:
+        #     self.angle_counter.draw(frame, results.pose_landmarks.landmark)
+        #     cv2.putText(frame, f"Count: {self.angle_counter.get_count()}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
+        # if results.pose_landmarks is None:
+        #     return frame
+        if self.angle_counter.exercise is not None and results.pose_landmarks:
             self.angle_counter.draw(frame, results.pose_landmarks.landmark)
             cv2.putText(frame, f"Count: {self.angle_counter.get_count()}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
-        if results.pose_landmarks is None:
-            return frame
+        if results.pose_landmarks is None: return frame
         
         landmarks = self.extract_pose_landmarks(results)
         with self.lock:
@@ -88,28 +134,42 @@ class ExerciseClassifier:
             predict_class = int(np.argmax(self.result))
             predicted_label = self.exercise_list[predict_class]
             try:
-                if self.exercise_count[predicted_label] != exercise[0]:
-                    #print(predicted_label)
+                if self.exercise_count.get(predicted_label) != internal_name:
                     self.consistent_frames += 1
                 else:
                     self.consistent_frames = 0
-
+                
                 if self.consistent_frames >= self.required_frames:
-                    # if self.label != predicted_label:  # 운동이 변경될 때 동작 수행
-                    #     self.label = predicted_label
                     self.consistent_frames = 0
-                    #print("다른운동하지마세요.")
-                    tts_thread = TextToSpeechThread("다른 운동 하지 마세요.")  # TTS 쓰레드 실행
+                    tts_thread = TextToSpeechThread("다른 운동 하지 마세요.")
                     tts_thread.start()
-            except:
-                a=1
-
-            cv2.putText(frame, f"{exercise[0]}", (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 3)
-        
-
-        
+            except Exception as e:
+                    print("[Predict Error]", e)
+            cv2.putText(frame, f"{internal_name}", (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 3)        
         mp_drawing.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
         return frame
+                # if self.exercise_count[predicted_label] != exercise[0]:
+                #     #print(predicted_label)
+                #     self.consistent_frames += 1
+                # else:
+                #     self.consistent_frames = 0
+
+        #         if self.consistent_frames >= self.required_frames:
+        #             # if self.label != predicted_label:  # 운동이 변경될 때 동작 수행
+        #             #     self.label = predicted_label
+        #             self.consistent_frames = 0
+        #             #print("다른운동하지마세요.")
+        #             tts_thread = TextToSpeechThread("다른 운동 하지 마세요.")  # TTS 쓰레드 실행
+        #             tts_thread.start()
+        #     except:
+        #         a=1
+
+        #     cv2.putText(frame, f"{exercise[0]}", (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 3)
+        
+
+        
+        # mp_drawing.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
+        # return frame
     
 
 if __name__ == "__main__":

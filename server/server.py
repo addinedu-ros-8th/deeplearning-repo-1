@@ -12,6 +12,7 @@ import random
 import datetime 
 from functools import partial
 import json
+import socket 
 
 class FAAServer(QTcpServer):
     def __init__(self):
@@ -23,7 +24,7 @@ class FAAServer(QTcpServer):
         
         self.name=None
         self.score = 0
-
+        self.ai_socket= None 
     def start_server(self):
         if self.listen(QHostAddress.Any, SERVER_PORT): print(f"Server listening on port {SERVER_PORT}")
         else: print(f"Failed to listen on port {SERVER_PORT}")
@@ -43,7 +44,12 @@ class FAAServer(QTcpServer):
     def receive_data(self, client_socket):
         while client_socket.bytesAvailable() > 0:
             data = client_socket.readAll().data()
-
+            # AI 서버가 자기소개 할 경우
+            if data == b'AI_HELLO':
+                self.ai_socket = client_socket
+                print(f"[Server] AI 서버로 등록됨: {client_socket.peerAddress().toString()}")
+                return
+            
             # JSON 형식인 경우 예외적으로 로그만 찍고 무시
             if data.startswith(b'{'):
                 try:
@@ -90,6 +96,7 @@ class FAAServer(QTcpServer):
                 elif self.data['command'] == "RR":
                     print("루틴 생성 요청")
                     self.create_routine()
+
                 elif self.data['command'] == 'GR':
                     self.send_routine()
                 elif self.data['command'] == 'CR':
@@ -99,7 +106,19 @@ class FAAServer(QTcpServer):
 
             except Exception as e:
                 print(f"[✗] 바이너리 데이터 처리 오류: {e}")
-            
+
+    def send_exercise_to_ai(self, exercise):
+        try:
+            if self.ai_socket and self.ai_socket.state() == QTcpSocket.ConnectedState:
+                json_msg = json.dumps({"command": "EX", "exercise": exercise})
+                self.ai_socket.write(json_msg.encode('utf-8'))
+                self.ai_socket.flush()
+                print(f"[Server] AI 서버에게 운동 전송: {exercise}")
+            else:
+                print("[Server] AI 소켓이 연결되지 않았습니다.")
+        except Exception as e:
+            print(f"[Server] AI 운동 전송 실패: {e}")        
+    
     def unpack_data(self, binary_data):
         offset = 0
 
@@ -326,9 +345,12 @@ class FAAServer(QTcpServer):
                             (routine_id, workout_id, sets, 0)) 
 
         self.db.commit()
+
         print("Routine 생성 완료")
         data = self.pack_data("RR", status='0')
         self.send_data(self.client_list[3], data)
+
+
 
     def send_routine(self):
         name = self.data['name']
@@ -370,11 +392,28 @@ class FAAServer(QTcpServer):
             self.send_data(self.client_list[3], data)
             return
 
-        # 4. 문자열 포맷팅 후 전송
+        # 4. 문자열 formatiing 후 client에게 전송
         formatted = ",".join([f"{name}|{sets}|{reps}" for name, sets, reps in routine_data])
         print("Routine 전송:", formatted)
+        ai_routine = ",".join([f"{name.lower().replace(' ', '')}|{sets}|{reps}" for name, sets, reps in routine_data])
+        self.send_routine_to_ai(ai_routine)
         data = self.pack_data("GR", status='0', list_data=formatted)
         self.send_data(self.client_list[3], data)
+
+
+    def send_routine_to_ai(self, routine_str):
+        try:
+            ai_ip = "127.0.0.1"
+            ai_port = 9999  # ai_server.py에서 열어둔 포트
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect((ai_ip, ai_port))
+            sock.send(routine_str.encode('utf-8'))
+            sock.close()
+            print("[Main Server] AI 서버에 루틴 전송 완료 (TCP):", routine_str)
+        except Exception as e:
+            print(f"[Main Server] 루틴 전송 실패: {e}")
+
+
     
     def draw_guidline(self):
         #print(self.data['joint'])
