@@ -18,7 +18,7 @@ class WorkoutHandler:
         self.main_window = main_window
         self.cur = self.main_window.cur
         self.db = self.main_window.db
-        
+
         print("💡 현재 username:", main_window.username)
     def add_workout_to_table(self):
         workout = self.main_window.workout_text.text().strip()
@@ -114,7 +114,7 @@ class WorkoutHandler:
             lmList = main_window.hand_detector.findPosition(frame, draw=False)
             Detector.analyze_user(frame)
             hands.set()
-            if main_window.is_workout:
+            if main_window.is_ready:
                 print(main_window.tcp.landmark)
                 if isinstance(main_window.tcp.landmark, dict) and main_window.tcp.landmark.get("command") == "PI":
                     pi_data = main_window.tcp.landmark
@@ -245,7 +245,7 @@ class WorkoutHandler:
         main_window.is_workout = True
 
         main_window.view.set_button_action("pause", lambda: WorkoutHandler.handle_pause(main_window))
-        main_window.view.set_button_action("next", lambda: WorkoutHandler.handle_next(main_window))
+        main_window.view.set_button_action("ready", lambda: WorkoutHandler.handle_ready(main_window))
     @staticmethod
     def on_routine_ready(main_window):
         # GR에 대한 응답인지 확인
@@ -262,7 +262,13 @@ class WorkoutHandler:
             main_window.tcp.responseReceived.disconnect()
         except Exception as e:
             print("disconnect 실패:", e)
+    @staticmethod
+    def handle_ready(main_window):
+        print("Ready button tapped!")
+        main_window.is_ready = True 
 
+        main_window.view.set_button_action("pause", lambda: WorkoutHandler.handle_pause(main_window))
+        main_window.view.set_button_action("ready", lambda: WorkoutHandler.handle_ready(main_window))
     @staticmethod
     def handle_exit(main_window):
         print("EXIT button tapped!")
@@ -345,7 +351,7 @@ class WorkoutHandler:
         data=pack_data("RC",data='True')
         main_window.tcp.sendData(data)
         main_window.view.set_button_action("pause", lambda: WorkoutHandler.handle_pause(main_window))
-        main_window.view.set_button_action("next", lambda: WorkoutHandler.handle_next(main_window))
+        main_window.view.set_button_action("ready", lambda: WorkoutHandler.handle_ready(main_window))
 
     @staticmethod
     def handle_close_button(main_window):

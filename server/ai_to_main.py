@@ -1,20 +1,21 @@
 
-# network in client sides 
+# ai_to_main 
 
 import sys
 import os 
 import signal 
+import json 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from config import SERVER_PORT, SERVER_IP
 
 from PyQt5.QtNetwork import QTcpSocket, QUdpSocket
 from PyQt5.QtCore import QObject, pyqtSignal,QCoreApplication
-import json
 import struct
 
 
 class AitoMain(QObject) :    
     responseReceived = pyqtSignal()
+    routineReceived = pyqtSignal(str) 
     def __init__(self):
         super().__init__()
         self.socket = QTcpSocket()                              # 1. create socket 
@@ -23,34 +24,36 @@ class AitoMain(QObject) :
         self.socket.readyRead.connect(self.readData)            # 4. read data 
 
         self.udp_socket = QUdpSocket()
-
         self.result = None
         
     def on_connected(self):
         print("[Client] Connected to server")
+        self.socket.write(b'AI_HELLO')
+        self.socket.flush()
 
     def readData(self):
-        if self.socket.bytesAvailable()>0:
+        if self.socket.bytesAvailable() > 0:
             data = self.socket.readAll().data()
-            self.data = self.unpack_data(data)
-            print("서버 응답 : ",self.data)
-            #print(type(response))
-            #print(self.response['status'])
-            #print(self.result)
-            if self.data['command'] == 'FR':
-                self.result = int(self.data['status'])
+
+            try:
+                self.data = self.unpack_data(data)
+                print("서버 응답 : ", self.data)
+                print(f"[AitoMain] 받은 커맨드: {self.data['command']}")
+
+                command = self.data['command']
+                self.result_cmd = command
+
+                if command == 'EX':
+                    self.result = self.data['list_data']
+                elif command in ['FR', 'LR', 'RR']:
+                    self.result = int(self.data['status'])
+                elif command == 'RC':
+                    self.result = self.data['status']
+                    self.result = self.data['list_data']
                 self.responseReceived.emit()
-            elif self.data['command'] == 'LR':
-                self.result = int(self.data['status'])
-                self.responseReceived.emit()
-            elif self.data['command'] == 'RR':
-                self.result = int(self.data['status'])
-                self.responseReceived.emit()
-            elif self.data['command'] == 'RC':
-                self.result = self.data['status']
-                
-            self.responseReceived.emit()
-            # self.receive_data.emit(data)
+
+            except Exception as e:
+                print("[AitoMain] 바이너리 패킷 파싱 실패:", e)
     
     def unpack_data(self, binary_data):
         offset = 0
@@ -137,7 +140,7 @@ class AitoMain(QObject) :
         else:
             packed_data += struct.pack('I', 0)
 
-        # ✅ angle 패킹 (람다 → 문자열 변환)
+        # angle 패킹 (람다 → 문자열 변환)
         if angle is not None:
             if callable(angle):  
                 angle_str = f"lambda idx: {angle(0)}"  # 실행 가능한 문자열로 변환
