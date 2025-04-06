@@ -27,13 +27,14 @@ class MainWindow(QMainWindow, main_class):
 
         self.tcp = Client()
         self.udp = UdpClient()
+        self.hand_detector = Detector.handDetector()
         self.camera = None
         self.profile_cnt = 0
         self.remaining_time = 0
         self.last_tick_time= 0
+        self.is_ready = False
         self.is_workout = False
         self.is_lookup = False
-        self.hand_detector = Detector.handDetector()
         self.modal_pause_view = None
         self.modal_exit_view = None
         self.video_thread = None
@@ -41,7 +42,8 @@ class MainWindow(QMainWindow, main_class):
         self.gesture_start_time = None
         self.selection_confirmed = False
         self.prev_pi_data = None
-        
+        self.current_workout = False 
+        self.username = None
         self.auth = AuthHandler(self)
         self.btn_profile1.clicked.connect(lambda: self.auth.login_user(self.label_profile1.text()))
         self.btn_profile2.clicked.connect(lambda: self.auth.login_user(self.label_profile2.text()))
@@ -95,6 +97,7 @@ class MainWindow(QMainWindow, main_class):
     def set_user_name(self,name):
         self.lb_name.setText(name)
         self.lb_name_2.setText(name)        # account name 
+        self.username = name  
     def set_profile_icon(self, username):
         self.cur.execute("SELECT user_icon FROM user WHERE name = %s", (username,))
         result = self.cur.fetchone()
@@ -134,6 +137,60 @@ class MainWindow(QMainWindow, main_class):
         self.stackedWidget_big.setCurrentWidget(self.big_main_page)
         self.showNormal()
 
+    def set_current_workout(self):
+        if self.current_index >= len(self.routine_queue):
+            self.lb_what.setText("운동 완료!")
+            self.lb_reps.setText("")
+            self.lb_sets.setText("")
+            self.lb_thumbnail.clear()
+            return
+        
+        # self.routine_queue = self.tcp.routine_list.copy()
+        if not self.routine_queue:
+            print("❌ 루틴이 비어 있습니다. 운동을 시작할 수 없습니다.")
+            self.lb_what.setText("routine x")
+            return
+        current = self.routine_queue[self.current_index]
+        # self.current_workout = current
+        # current = self.routine_queue.pop(0)
+        self.lb_what.setText(current["name"])
+        self.lb_reps.setText(str(current["reps"]))
+        self.lb_sets.setText(str(current["sets"]))
+        self.set_thumbnail(self.lb_thumbnail, current["name"])
+        self.routine_list.setCurrentRow(self.current_index)
+        QApplication.processEvents()
+        
+
+    def set_thumbnail(self, label: QLabel, workout_name: str):
+        gif_path = cons.THUMBNAIL.get(workout_name.lower())
+
+        if gif_path and os.path.exists(gif_path):
+            movie = QMovie(gif_path)            
+            # label.setFixedSize(250, 500)
+            movie.jumpToFrame(0)  # 첫 프레임 강제로 로딩
+            original_size = movie.currentPixmap().size()
+
+            scaled_size = QSize(original_size.width() // 3, original_size.height() // 3)
+            movie.setScaledSize(scaled_size)
+            label.setMovie(movie)
+            movie.start()
+        else:
+            print(f"⚠️ 썸네일 gif가 존재하지 않거나 등록되지 않음: {workout_name}")
+    
+    def display_routine_list(self):
+        self.routine_list.clear()
+        for idx, routine in enumerate(self.routine_queue):
+            name = routine["name"]
+            # sets = routine["sets"]
+            # reps = routine["reps"]
+            # item_text = f"{name} - {sets}세트 x {reps}회"
+            item = QListWidgetItem(name)
+            self.routine_list.addItem(item)
+        # self.routine_list.setCurrentRow(self.current_index)
+  
+    def handle_next_workout(self):
+        self.current_index += 1
+        self.set_current_workout()
     # Account 
     def show_modify(self):
         self.stackedWidget_small_2.setCurrentWidget(self.pg_modify)
@@ -150,25 +207,6 @@ class MainWindow(QMainWindow, main_class):
             self.lb_tier.setScaledContents(True)
         else:
             print(f"[DEBUG] 티어 아이콘 경로가 잘못되었거나 존재하지 않음: {tier_icon_path}")
-
-
-    # def on_item_click(self, item):
-    #     # 클릭된 항목에 따라 재생할 비디오 경로 지정
-    #     video_map = {
-    #         "Front Lunge": "/home/sang/dev_ws/save_file/Asset/front-lunge.mp4",
-    #         "Side Lunge": "/home/sang/dev_ws/save_file/Asset/side-lunge.mp4",
-    #         "Squat": "/home/sang/dev_ws/save_file/Asset/squat.mp4"
-    #     }
-        
-    #     # 클릭된 항목의 텍스트를 가져와서 해당 비디오 경로로 비디오 재생
-    #     video_path = video_map.get(item.text(), "")
-    #     print(video_path)
-    #     if video_path:
-    #         self.play_workout_video(video_path)
-    
-    # def play_workout_video(self, video_path):
-    #     # 비디오 재생 코드 (예시로 출력만 합니다)
-    #     print(f"Playing workout video: {video_path}")
 
     def count(self):
         if self.tcp.result == 'up':

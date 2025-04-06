@@ -19,7 +19,7 @@ class FAAServer(QTcpServer):
         self.client_list = []
         #self.ai_server = AitoMain()
         self.db = FAAdb()
-        self.cur = self.db.conn.cursor()
+        self.cur = self.db.conn.cursor(buffered=True)
         
         self.name=None
         self.score = 0
@@ -50,7 +50,7 @@ class FAAServer(QTcpServer):
                     json_str = data.decode('utf-8')
                     json_data = json.loads(json_str)
                     if json_data.get('command') == 'PI':
-                        print(f"[Server] [JSON - PI 명령 수신]: {json_data}")
+                        # print(f"[Server] [JSON - PI 명령 수신]: {json_data}")
                         self.send_data(self.client_list[3],data)
                         current_count = json_data.get('count')
 
@@ -228,7 +228,7 @@ class FAAServer(QTcpServer):
         if client_socket.state() == QTcpSocket.ConnectedState:
             client_socket.write(response_data)
             client_socket.flush()
-            print(f"[Server] 클라이언트로 응답 전송: {response_data}")
+            # print(f"[Server] 클라이언트로 응답 전송: {response_data}")
         else:
             print("[Server] 클라이언트와의 연결이 끊어져 응답을 전송할 수 없습니다.")
 

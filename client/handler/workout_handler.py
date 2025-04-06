@@ -19,6 +19,7 @@ class WorkoutHandler:
         self.cur = self.main_window.cur
         self.db = self.main_window.db
         
+        print("💡 현재 username:", main_window.username)
     def add_workout_to_table(self):
         workout = self.main_window.workout_text.text().strip()
         tier = self.main_window.combo_tier.currentText()
@@ -67,6 +68,12 @@ class WorkoutHandler:
 
         self.main_window.tableWidget.removeRow(row)
 
+    def load_user_routine(self):
+        self.cur.execute("SELECT workout_name FROM routine WHERE username = %s ORDER BY idx ASC", (self.main_window.username,))
+        rows = self.cur.fetchall()
+        self.routine = [row[0] for row in rows]
+        self.current_index = 0
+
     @staticmethod
     def go2workout(main_window):
         main_window.modal_exit_view = None
@@ -87,7 +94,12 @@ class WorkoutHandler:
         main_window.timer = QTimer()
         main_window.timer.timeout.connect(lambda: WorkoutHandler.update_gui(main_window))
         main_window.timer.start(30)
-
+        
+        # call routine 
+        data = pack_data(command="GR", name=main_window.username)
+        main_window.tcp.sendData(data)
+        main_window.tcp.responseReceived.connect(lambda: WorkoutHandler.on_routine_ready(main_window))
+        
         main_window.view = ViewMain()
         main_window.view.set_mode("main")
         main_window.view.set_button_action("start", lambda: WorkoutHandler.handle_start(main_window))
@@ -228,16 +240,28 @@ class WorkoutHandler:
         WorkoutHandler.save_video(main_window)
         QApplication.processEvents()
 
-        data = pack_data(command="GR", name=main_window.username)
-        main_window.tcp.sendData(data)
-
         main_window.remaining_time = cons.TIER_TIMES.get(main_window.tier, 80)
         main_window.last_tick_time = time.time()
         main_window.is_workout = True
 
-
         main_window.view.set_button_action("pause", lambda: WorkoutHandler.handle_pause(main_window))
         main_window.view.set_button_action("next", lambda: WorkoutHandler.handle_next(main_window))
+    @staticmethod
+    def on_routine_ready(main_window):
+        # GR에 대한 응답인지 확인
+        if main_window.tcp.data["command"] != "GR":
+            return
+        
+        print("✅ 루틴 수신 완료, workout 시작 준비")
+        main_window.routine_queue = main_window.tcp.routine_list.copy()
+        main_window.current_index = 0
+        main_window.set_current_workout()
+        main_window.display_routine_list()
+        # 이 연결은 한 번만 실행되도록 제거해주면 좋음
+        try:
+            main_window.tcp.responseReceived.disconnect()
+        except Exception as e:
+            print("disconnect 실패:", e)
 
     @staticmethod
     def handle_exit(main_window):
