@@ -13,12 +13,13 @@ from pydub import AudioSegment
 from pydub.playback import play
 from counting import AngleGuid
 from tts import TextToSpeechThread
-
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
 
 class ExerciseClassifier:
-    def __init__(self, model_path='/home/sang/dev_ws/git_ws/deeplearning-repo-1/exercise_classifier.h5'):
+    def __init__(self, model_path='./exercise_classifier.h5'):
         self.model = load_model(model_path)
         self.sequence = deque(maxlen=20)
         self.lock = threading.Lock()

@@ -1,17 +1,17 @@
 import sys
 import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../client')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import numpy as np
 import cv2
 from PyQt5.QtNetwork import QUdpSocket, QHostAddress, QTcpSocket
 from PyQt5.QtCore import QByteArray, pyqtSignal, QEventLoop
 from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget
 from PyQt5.QtGui import QImage, QPixmap
-import struct
+import signal
 import threading
 import time
-from file_client import FileClient
-from ai_to_main import AitoMain
+from client.file_client import FileClient
+from client.ai_to_main import AitoMain
 from exercise_model import ExerciseClassifier
 from counting import AngleGuid
 import itertools
@@ -176,6 +176,7 @@ class AiServer(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    signal.signal(signal.SIGINT, signal.SIG_DFL)  # Ctrl+C 핸들러
     server = AiServer(port=12345)
     server.show()
     sys.exit(app.exec_())

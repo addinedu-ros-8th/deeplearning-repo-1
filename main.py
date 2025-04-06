@@ -4,7 +4,7 @@ import signal
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "client")))
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
-from main_window import MainWindow
+from client.main_window import MainWindow
 from PyQt5.QtWidgets import QApplication
 
 if __name__ == "__main__":

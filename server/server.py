@@ -7,7 +7,6 @@ from PyQt5.QtCore import QCoreApplication
 from PyQt5.QtNetwork import QTcpServer, QHostAddress, QTcpSocket
 from config import SERVER_PORT
 from database import FAAdb
-from ai_to_main import AitoMain
 import struct
 import random 
 import datetime 
@@ -21,7 +20,7 @@ class FAAServer(QTcpServer):
         #self.ai_server = AitoMain()
         self.db = FAAdb()
         self.cur = self.db.conn.cursor()
-
+        
         self.name=None
         self.score = 0
 
@@ -91,11 +90,12 @@ class FAAServer(QTcpServer):
                 elif self.data['command'] == "RR":
                     print("루틴 생성 요청")
                     self.create_routine()
+                elif self.data['command'] == 'GR':
+                    self.send_routine()
                 elif self.data['command'] == 'CR':
                     print(self.data )
                     self.draw_guidline()
-                elif self.data['command'] == 'GR':
-                    self.send_routine()
+
 
             except Exception as e:
                 print(f"[✗] 바이너리 데이터 처리 오류: {e}")
@@ -293,7 +293,17 @@ class FAAServer(QTcpServer):
         user_id, tier = result
         print(f"DEBUG, ID: {user_id}, 티어: {tier}")
 
-        # insert routine
+        # does the routine duplicate ? 
+        today = datetime.datetime.now().date()  # 현재 날짜
+        self.cur.execute("SELECT id FROM routine WHERE user_id = %s AND DATE(date) = %s", 
+                                            (user_id, today))
+        existing = self.cur.fetchone()
+        if existing:
+            print("금일 routine 이미 존재")
+            data = self.pack_data("RR", status='1')         # duplicate 
+            self.send_data(self.client_list[3], data)
+            return 
+        
         self.cur.execute("INSERT INTO routine (user_id, status, date) VALUES (%s, %s, %s)",
                                                     (user_id, 0, datetime.datetime.now()))
         routine_id = self.cur.lastrowid
@@ -317,8 +327,8 @@ class FAAServer(QTcpServer):
 
         self.db.commit()
         print("Routine 생성 완료")
-        # data = self.pack_data("RR", status='0')
-        # self.send_data(self.client_socket, data)
+        data = self.pack_data("RR", status='0')
+        self.send_data(self.client_list[3], data)
 
     def send_routine(self):
         name = self.data['name']
@@ -357,13 +367,13 @@ class FAAServer(QTcpServer):
         if not routine_data:
             print("❌ Routine 내용 없음")
             data = self.pack_data("GR", status='1', err="Routine 상세 정보가 없습니다.")
-            self.send_data(self.cclient_list[3], data)
+            self.send_data(self.client_list[3], data)
             return
 
         # 4. 문자열 포맷팅 후 전송
-        routine_text = '\n'.join([f"{name}: {sets}세트 x {reps}회" for name, sets, reps in routine_data])
-        print("Routine 전송:", routine_text)
-        data = self.pack_data("GR", status='0', list_data=routine_text)
+        formatted = ",".join([f"{name}|{sets}|{reps}" for name, sets, reps in routine_data])
+        print("Routine 전송:", formatted)
+        data = self.pack_data("GR", status='0', list_data=formatted)
         self.send_data(self.client_list[3], data)
     
     def draw_guidline(self):
