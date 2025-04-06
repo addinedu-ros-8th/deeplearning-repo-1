@@ -1,6 +1,7 @@
 # main_window.py
 import sys
 import os 
+import time
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -30,8 +31,7 @@ class MainWindow(QMainWindow, main_class):
         self.hand_detector = Detector.handDetector()
         self.camera = None
         self.profile_cnt = 0
-        self.remaining_time = 0
-        self.last_tick_time= 0
+
         self.is_ready = False
         self.is_workout = False
         self.is_lookup = False
@@ -44,6 +44,13 @@ class MainWindow(QMainWindow, main_class):
         self.prev_pi_data = None
         self.current_workout = False 
         self.username = None
+ 
+        self.remaining_time = 0
+        self.last_tick_time = 0
+        self.is_break = False
+
+        self.reps_done = 0
+
         self.auth = AuthHandler(self)
         self.btn_profile1.clicked.connect(lambda: self.auth.login_user(self.label_profile1.text()))
         self.btn_profile2.clicked.connect(lambda: self.auth.login_user(self.label_profile2.text()))
@@ -61,6 +68,8 @@ class MainWindow(QMainWindow, main_class):
         UISetupHelper.button_stylers(self)
         self.displayScore()
 
+    def set_classifier(self, classifier):
+        self.classifier = classifier
     # Login
     def plus_profile(self):
         self.second=AuthWindow()
@@ -181,13 +190,19 @@ class MainWindow(QMainWindow, main_class):
         self.routine_list.clear()
         for idx, routine in enumerate(self.routine_queue):
             name = routine["name"]
-            # sets = routine["sets"]
-            # reps = routine["reps"]
+            sets = routine["sets"]
+            reps = routine["reps"]
             # item_text = f"{name} - {sets}세트 x {reps}회"
             item = QListWidgetItem(name)
             self.routine_list.addItem(item)
         # self.routine_list.setCurrentRow(self.current_index)
-  
+    
+    def start_break_timer(self):
+        self.remaining_time = cons.BREAK_TIME
+        self.last_tick_time = time.time()
+        self.is_break = True
+        self.lb_what.setText("휴식 중...")  # UI에 표시
+
     def handle_next_workout(self):
         self.current_index += 1
         self.set_current_workout()

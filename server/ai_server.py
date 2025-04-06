@@ -14,7 +14,7 @@ import socket
 from client.file_client import FileClient
 from client.ai_to_main import AitoMain
 from exercise_model import ExerciseClassifier
-from counting import AngleGuid
+# from counting import AngleGuid
 import itertools
 #from counting import ExerciseCounter
 
@@ -80,7 +80,7 @@ class AiServer(QWidget):
             print("[AI SERVER] 루틴 파싱 실패:", e)
         finally:
             conn.close()   
-            
+
     def receive_data(self):
         while self.udp_socket.hasPendingDatagrams():
             data, sender, sender_port = self.udp_socket.readDatagram(self.udp_socket.pendingDatagramSize())

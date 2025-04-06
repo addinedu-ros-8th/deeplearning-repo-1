@@ -73,6 +73,43 @@ class WorkoutHandler:
         rows = self.cur.fetchall()
         self.routine = [row[0] for row in rows]
         self.current_index = 0
+    
+    # def update_break_gui(self):
+    #     # break 상태일 경우 화면에 타이머 표시
+    #     if hasattr(self, 'classifier') and self.classifier.break_active:
+    #         remaining = int(30 - (time.time() - self.classifier.break_start_time))
+    #         if remaining >= 0:
+    #             cv2.putText(frame, f"Break Time: {remaining}s", (cons.window_width // 2 - 200, 80),
+    #                         cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 4)
+    #         if not self.classifier.check_break():
+    #             print("[Main] break 종료됨")
+    #             # break 종료 시 아무 것도 하지 않음 (exercise_model이 알아서 다음 세트 처리)
+    #     return frame
+
+    def next_set_or_workout(self):
+        model = self.main_window.classifier
+        current = model.get_current_exercise()
+
+        if current is None:
+            self.main_window.lb_what.setText("루틴 완료")
+            return
+
+        if model.reps_done < current['sets']:
+            print(f"➡️ 다음 세트 시작: {model.reps_done + 1}/{current['sets']}")
+        else:
+            print(f"✅ 운동 완료: {current['name']}")
+            model.reps_done = 0
+            model.current_routine_idx += 1
+            model.update_routine_index(model.current_routine_idx)
+
+        if model.current_routine_idx < len(model.routine_list):
+            self.main_window.remaining_time = 30
+            self.main_window.last_tick_time = time.time()
+            self.main_window.is_break = True
+        else:
+            print("🎉 루틴 전체 완료")
+            self.main_window.lb_what.setText("모든 운동 완료!")
+
 
     @staticmethod
     def go2workout(main_window):
@@ -105,86 +142,257 @@ class WorkoutHandler:
         main_window.view.set_button_action("start", lambda: WorkoutHandler.handle_start(main_window))
         main_window.view.set_button_action("exit", lambda: WorkoutHandler.handle_exit(main_window))
         main_window.view.set_button_action("lookup", lambda: WorkoutHandler.handle_lookup(main_window))
+    
+    @staticmethod
+    def handle_break_time(main_window, frame):
+        if not main_window.is_break: return
+        if main_window.remaining_time > 0:
+            now = time.time()
+            if now - main_window.last_tick_time >= 1:
+                main_window.remaining_time -= 1
+                main_window.last_tick_time = now
+        else:
+            main_window.is_break = False
+            main_window.workout_handler.next_set_or_workout()
+        cv2.putText(frame, f"Break: {main_window.remaining_time}s", (cons.window_width // 2, cons.window_height // 2),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.5, (75, 150, 150), 3)
+    @staticmethod      
+    def handle_pose_info(main_window, frame):
+        if not isinstance(main_window.tcp.landmark, dict):
+            return
+        pi_data = main_window.tcp.landmark
+        if pi_data.get("command") != "PI":
+            return
+
+
+        # 루틴에서 reps / sets 가져오기
+        try:
+            routine = main_window.routine_queue[main_window.current_index]
+            total_reps = routine['reps']
+            total_sets = routine['sets']
+            done_sets = main_window.reps_done
+        except Exception as e:
+            print("⚠️ handle_pose_info 루틴 정보 접근 실패:", e)
+            return
+        
+        count = pi_data['count']
+
+        # remaining_reps = max(0, total_reps - count)
+        # remaining_sets = max(0, total_sets - done_sets)
+        
+        if not main_window.is_break:
+            ox, oy = pi_data['origin']['x'], pi_data['origin']['y']
+            cv2.circle(frame, (ox, oy), 10, (0, 255, 255), -1)
+
+            vx, vy = pi_data['vector']['x'], pi_data['vector']['y']
+            cv2.arrowedLine(frame, (ox, oy), (vx, vy), (255, 0, 255), 3)
+
+            for pt in pi_data['landmarks']:
+                cv2.circle(frame, (pt['x'], pt['y']), 6, (0, 100, 255), -1)
+            # 남은 개수와 세트
+            cv2.putText(frame, f"reps: {count}/{total_reps}", 
+                        (10, 220), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 255), 2)
+            cv2.putText(frame, f"sets: {done_sets}/{total_sets}", 
+                        (10, 260), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 0), 2)
+    @staticmethod    
+    def handle_workout_timer(main_window, frame):
+        if main_window.is_break: return  # break 중일 땐 pass
+
+        #  1. 현재 운동 Routine 정보 가져오기
+        routine = main_window.routine_queue[main_window.current_index]
+        # current_reps = routine['reps']
+        # count = main_window.classifier.angle_counter.get_count()
+        # 2. 카운트가 목표에 도달했을 경우 → break 시작
+        # if count >= current_reps:
+        #     print(f"🎯 목표 도달! Count {count} / Reps {current_reps}")
+        #     main_window.classifier.angle_counter.set_count()  # count 초기화
+        #     main_window.reps_done += 1
+
+        #     if main_window.reps_done < routine['sets']:
+        #         print(f"➡️ 세트 완료: {main_window.reps_done}/{routine['sets']}")
+        #     else:
+        #         print(f"✅ 운동 완료: {routine['name']}")
+        #         main_window.reps_done = 0
+        #         main_window.current_index += 1
+        #         main_window.set_current_workout()
+
+        #     main_window.start_break_timer()
+        #     return  # 여기서 타이머 갱신 중단
+        
+        # 3. Timer 처리 
+        if main_window.remaining_time > 0:
+            now = time.time()
+            if now - main_window.last_tick_time >= 1:
+                main_window.remaining_time -= 1
+                main_window.last_tick_time = now
+        else:
+            # 시간 초과 시 break 
+            main_window.remaining_time = 0
+            main_window.is_workout = False
+            main_window.reps_done += 1
+            print(f"⏰ 시간 초과! 세트 {main_window.reps_done} 강제 종료")
+
+            routine = main_window.routine_queue[main_window.current_index]
+            if main_window.reps_done < routine['sets']:
+                print("➡ 다음 세트 준비 (30초)")
+            else:
+                print("✅ 다음 운동으로 (30초)")
+                main_window.reps_done = 0
+                main_window.current_index += 1
+            main_window.start_break_timer()
+        # 4. 남은 시간 rendering 
+        cv2.putText(frame, f"{main_window.remaining_time}", (cons.window_width - 250, 50),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 255), 3)
+    @staticmethod   
+    def handle_lookup_mode(main_window, frame, lmList):
+        number = main_window.hand_detector.count_fingers(lmList)
+        cv2.putText(frame, f'{number}', (cons.window_width - 100, 50),
+                    cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
+
+        if 1 <= number <= 5:
+            if main_window.current_gesture != number:
+                main_window.current_gesture = number
+                main_window.gesture_start_time = time.time()
+                main_window.selection_confirmed = False
+            elif not main_window.selection_confirmed and time.time() - main_window.gesture_start_time >= 3:
+                main_window.selection_confirmed = True
+                WorkoutHandler.play_selected_workout(main_window, number, main_window.tier)
+        else:
+            main_window.current_gesture = None
+            main_window.gesture_start_time = None
+            main_window.selection_confirmed = False
+    @staticmethod
+    def draw_overlay_ui(main_window, frame):
+        if main_window.view:
+            main_window.view.appear(frame)
+        if main_window.modal_pause_view:
+            main_window.modal_pause_view.appear(frame)
+        if main_window.modal_exit_view:
+            main_window.modal_exit_view.appear(frame)
+    @staticmethod
+    def send_to_gui(main_window, frame, frame_copy):
+        img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        qt_img = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888)
+        main_window.lb_cam.setPixmap(QPixmap.fromImage(qt_img))
+
+        if main_window.camera.is_active:
+            main_window.udp.send_video(frame_copy)
 
     @staticmethod
     def update_gui(main_window):
-        if main_window.camera.frame is not None:
-            frame_copy = main_window.camera.frame.copy()
-            frame = main_window.hand_detector.findHands(main_window.camera.frame, draw=False)
-            lmList = main_window.hand_detector.findPosition(frame, draw=False)
-            Detector.analyze_user(frame)
-            hands.set()
-            if main_window.is_ready:
-                print(main_window.tcp.landmark)
-                if isinstance(main_window.tcp.landmark, dict) and main_window.tcp.landmark.get("command") == "PI":
-                    pi_data = main_window.tcp.landmark
+        if main_window.camera.frame is None: return
+    
+        frame_copy = main_window.camera.frame.copy()
+        frame = main_window.hand_detector.findHands(main_window.camera.frame, draw=False)
+        lmList = main_window.hand_detector.findPosition(frame, draw=False)
+        Detector.analyze_user(frame)
+        hands.set()
 
-                    # origin
-                    ox, oy = pi_data['origin']['x'], pi_data['origin']['y']
-                    cv2.circle(frame, (ox, oy), 10, (0, 255, 255), -1)  # 노란 원
+        if main_window.is_ready:
+            WorkoutHandler.handle_break_time(main_window, frame)
+            WorkoutHandler.handle_pose_info(main_window, frame)
+            WorkoutHandler.handle_workout_timer(main_window, frame)
+        elif main_window.is_lookup:
+            WorkoutHandler.handle_lookup_mode(main_window, frame, lmList)
 
-                    # vector
-                    vx, vy = pi_data['vector']['x'], pi_data['vector']['y']
-                    cv2.arrowedLine(frame, (ox, oy), (vx, vy), (255, 0, 255), 3)  # 보라색 벡터 선
+        WorkoutHandler.draw_overlay_ui(main_window, frame)
+        WorkoutHandler.send_to_gui(main_window, frame, frame_copy)
+        
+            #     # print(main_window.tcp.landmark)
+            #     if isinstance(main_window.tcp.landmark, dict) and main_window.tcp.landmark.get("command") == "PI":
+            #         pi_data = main_window.tcp.landmark
 
-                    # landmarks
-                    for pt in pi_data['landmarks']:
-                        lx, ly = pt['x'], pt['y']
-                        cv2.circle(frame, (lx, ly), 6, (0, 100, 255), -1)  # 주황색 점
-                # 시간 갱신 
-                    cv2.putText(frame, f"Count: {pi_data['count']}", (10, 180), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
-                
-                if main_window.remaining_time > 0:
-                    current_time = time.time()
-                    elapsed = current_time - main_window.last_tick_time
+            #         # origin
+            #         ox, oy = pi_data['origin']['x'], pi_data['origin']['y']
+            #         cv2.circle(frame, (ox, oy), 10, (0, 255, 255), -1)  # 노란 원
 
-                    if elapsed >= 1 :
-                        main_window.remaining_time -= 1
-                        main_window.last_tick_time = current_time
-                cv2.putText(frame, f"{main_window.remaining_time}", (cons.window_width - 250, 50),
-                                        cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 255), 3)
-                if main_window.remaining_time <= 0:
-                    main_window.is_workout = False
-                    """
-                        다음 운동 
-                    """
-                    # cv2.putText(frame, "✔ 운동 완료!", (cons.window_width - 100, 50),
-                    #             cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 200, 0), 3)
+            #         # vector
+            #         vx, vy = pi_data['vector']['x'], pi_data['vector']['y']
+            #         cv2.arrowedLine(frame, (ox, oy), (vx, vy), (255, 0, 255), 3)  # 보라색 벡터 선
 
-            elif main_window.is_lookup:
-                number = main_window.hand_detector.count_fingers(lmList)
-                cv2.putText(frame, f' {number}', (cons.window_width - 100, 50),
-                            cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
+            #         # landmarks
+            #         for pt in pi_data['landmarks']:
+            #             lx, ly = pt['x'], pt['y']
+            #             cv2.circle(frame, (lx, ly), 6, (0, 100, 255), -1)  # 주황색 점
+            #         # 시간 갱신 
+            #         cv2.putText(frame, f"Count: {pi_data['count']}", (10, 180), 
+            #                     cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
+            #     if main_window.is_break:
+            #         if main_window.remaining_time > 0:
+            #             current_time = time.time()
+            #             elapsed = current_time - main_window.last_tick_time
+            #             if elapsed >= 1:
+            #                 main_window.remaining_time -= 1
+            #                 main_window.last_tick_time = current_time
+            #         else:
+            #             main_window.is_break = False
+            #             main_window.workout_handler.next_set_or_workout()
+                    
+            #     else: 
+   
+            #         if main_window.remaining_time > 0:
+            #             current_time = time.time()
+            #             elapsed = current_time - main_window.last_tick_time
 
-                if 1 <= number <= 5:
-                    if main_window.current_gesture != number:
-                        main_window.current_gesture = number
-                        main_window.gesture_start_time = time.time()
-                        main_window.selection_confirmed = False
-                        print(f"⏳ 숫자 {number} 인식됨. 유지 중...")
-                    elif not main_window.selection_confirmed and time.time() - main_window.gesture_start_time >= 3:
-                        print(f"🎯 숫자 {number} 확정됨! 운동 시작.")
-                        main_window.selection_confirmed = True
-                        WorkoutHandler.play_selected_workout(main_window, number, main_window.tier)
-                else:
-                    main_window.current_gesture = None
-                    main_window.gesture_start_time = None
-                    main_window.selection_confirmed = False
+            #             if elapsed >= 1 :
+            #                 main_window.remaining_time -= 1
+            #                 main_window.last_tick_time = current_time
+            #         else: 
+            #             main_window.remaining_time = 0
+            #             main_window.is_workout = False
+
+            #             # ✅ 1세트 완료로 간주 → reps_done 증가
+            #             main_window.reps_done += 1
+            #             print(f"⏰ 시간 초과! 세트 {main_window.reps_done} 강제 종료")
+
+            #             current_routine = main_window.routine_queue[main_window.current_index]
+            #             total_sets = current_routine['sets']
+
+            #             if main_window.reps_done < total_sets:
+            #                 print(f"➡ 다음 세트 준비 중... (30초 휴식)")
+            #                 main_window.start_break_timer()
+            #             else:
+            #                 print(f"✅ 운동 '{current_routine['name']}' 완료. 다음 운동으로 이동 중... (30초 휴식)")
+            #                 main_window.reps_done = 0
+            #                 main_window.current_index += 1
+            #                 main_window.start_break_timer()
+            #     cv2.putText(frame, f"{main_window.remaining_time}", (cons.window_width - 250, 50),
+            #                                     cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 255), 3)
+
+            # elif main_window.is_lookup:
+            #     number = main_window.hand_detector.count_fingers(lmList)
+            #     cv2.putText(frame, f' {number}', (cons.window_width - 100, 50),
+            #                 cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
+
+            #     if 1 <= number <= 5:
+            #         if main_window.current_gesture != number:
+            #             main_window.current_gesture = number
+            #             main_window.gesture_start_time = time.time()
+            #             main_window.selection_confirmed = False
+            #             print(f"⏳ 숫자 {number} 인식됨. 유지 중...")
+            #         elif not main_window.selection_confirmed and time.time() - main_window.gesture_start_time >= 3:
+            #             print(f"🎯 숫자 {number} 확정됨! 운동 시작.")
+            #             main_window.selection_confirmed = True
+            #             WorkoutHandler.play_selected_workout(main_window, number, main_window.tier)
+            #     else:
+            #         main_window.current_gesture = None
+            #         main_window.gesture_start_time = None
+            #         main_window.selection_confirmed = False
 
             
 
-            if main_window.view:
-                main_window.view.appear(frame)
-            if main_window.modal_pause_view:
-                main_window.modal_pause_view.appear(frame)
-            if main_window.modal_exit_view:
-                main_window.modal_exit_view.appear(frame)
+            # if main_window.view:
+            #     main_window.view.appear(frame)
+            # if main_window.modal_pause_view:
+            #     main_window.modal_pause_view.appear(frame)
+            # if main_window.modal_exit_view:
+            #     main_window.modal_exit_view.appear(frame)
 
-            img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            qt_img = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888)
-            main_window.lb_cam.setPixmap(QPixmap.fromImage(qt_img))
-            if main_window.camera.is_active:
-                main_window.udp.send_video(frame_copy)
+            # img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            # qt_img = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888)
+            # main_window.lb_cam.setPixmap(QPixmap.fromImage(qt_img))
+            # if main_window.camera.is_active:
+            #     main_window.udp.send_video(frame_copy)
 
     @staticmethod
     def play_selected_workout(main_window, index, tier):

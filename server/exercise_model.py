@@ -27,18 +27,20 @@ class ExerciseClassifier:
         self.sequence = deque(maxlen=20)
         self.lock = threading.Lock()
         self.result = None
+        self.pose = mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.5, min_tracking_confidence=0.5)
         self.exercise_list = ["Standing", "Standing Knee Raise", "Shoulder Press", "Squat", "Side Lunge"]
         self.exercise_count={'Standing Knee Raise':'knee',"Shoulder Press":'shoulder',"Squat":'squat'}
-        self.pose = mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.5, min_tracking_confidence=0.5)
         
-        self.frame_delay = 10
-        self.frame_count = 0
-        self.label = None
+        # self.frame_delay = 10
+        # self.frame_count = 0
+        # self.label = None
         
         self.current_routine_idx = 0
         self.current_set = 1
         self.reps_done = 0
-
+        self.break_active = False
+        self.break_end_time = 0
+        
         # 같은 운동을 일정 프레임 이상 유지할 때 업데이트
         self.last_exercise = None
         self.consistent_frames = 0
@@ -53,12 +55,16 @@ class ExerciseClassifier:
 
     def set_routine(self, routine):
         self.routine_list = routine
+        self.current_routine_idx = 0
+        self.current_set = 1
+        self.reps_done = 0
         print("[Model] 루틴 저장됨:", self.routine_list)
+    
     def get_current_exercise(self):
         if self.current_routine_idx < len(self.routine_list):
             return self.routine_list[self.current_routine_idx]
         return None
-    
+
     def extract_pose_landmarks(self, results):
         xyz_list = []
         points = [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28]
@@ -97,39 +103,47 @@ class ExerciseClassifier:
             else:
                 print(f"⚠️ 운동 매핑 실패: {kor_name}")
 
+    # def start_break(self):
+    #     self.break_active = True
+    #     self.break_end_time = time.time() + cons.BREAK_DURATION
+
+    # def check_break(self):
+    #     if self.break_active and time.time() >= self.break_end_time:
+    #         self.break_active = False
+    #         return True
+    #     return False
+    
     def process_frame(self, frame):
+        if self.break_active:
+            remaining = int(self.break_end_time - time.time())
+            cv2.putText(frame, f"Break Time: {remaining}s", (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 3)
+            return frame
+        
         image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = self.pose.process(image)
        
-        # 현재 루틴에서 수행 중인 운동 가져오기
+        # 현재 Routine 정보 
         current_routine = self.get_current_exercise()
-        if not current_routine:
-            return frame
+        if not current_routine: return frame
        
         kor_name = current_routine['name']
         internal_name = cons.EXERCISE_NAME_MAP.get(kor_name)
-        
         if internal_name is None:
             print(f"[UDP Server] 알 수 없는 운동 이름: {kor_name}")
             return frame
-        
         self.angle_counter.set_exercise(exercise=internal_name)
-        # exercise=['shoulder', 'squat', 'knee']
-        # self.angle_counter.set_exercise(exercise=exercise[0])
-        # if self.angle_counter.exercise != None:
-        #     self.angle_counter.draw(frame, results.pose_landmarks.landmark)
-        #     cv2.putText(frame, f"Count: {self.angle_counter.get_count()}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
-        # if results.pose_landmarks is None:
-        #     return frame
+
         if self.angle_counter.exercise is not None and results.pose_landmarks:
             self.angle_counter.draw(frame, results.pose_landmarks.landmark)
             cv2.putText(frame, f"Count: {self.angle_counter.get_count()}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
-        if results.pose_landmarks is None: return frame
         
-        landmarks = self.extract_pose_landmarks(results)
-        with self.lock:
-            self.sequence.append(landmarks)
+        # landmark append 
+        if results.pose_landmarks:
+            landmarks = self.extract_pose_landmarks(results)
+            with self.lock:
+                self.sequence.append(landmarks)
         
+        # 운동 판별 
         if self.result is not None:
             predict_class = int(np.argmax(self.result))
             predicted_label = self.exercise_list[predict_class]
@@ -143,11 +157,41 @@ class ExerciseClassifier:
                     self.consistent_frames = 0
                     tts_thread = TextToSpeechThread("다른 운동 하지 마세요.")
                     tts_thread.start()
+
             except Exception as e:
                     print("[Predict Error]", e)
             cv2.putText(frame, f"{internal_name}", (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 3)        
+        
+        # Count 업데이트
+        if self.angle_counter.exercise:
+            self.angle_counter.draw(frame, results.pose_landmarks.landmark)
+            cv2.putText(frame, f"Count: {self.angle_counter.get_count()}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
+            #  남은 개수와 세트 계산
+            remaining_reps = max(0, current_routine['reps'] - self.angle_counter.get_count())
+            remaining_sets = max(0, current_routine['sets'] - self.reps_done)
+
+            #  OpenCV로 표시
+            cv2.putText(frame, f"Count: {self.angle_counter.get_count()}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
+            cv2.putText(frame, f"reps: {remaining_reps}", (10, 130), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 255), 3)
+            cv2.putText(frame, f"sets: {remaining_sets}", (10, 170), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 0), 3)
+
+            # set / 운동 완료 체크
+            if self.angle_counter.get_count() >= current_routine['reps']:
+                self.angle_counter.set_count()
+                self.reps_done += 1
+                print(f"[Model] 세트 완료 ({self.reps_done}/{current_routine['sets']})")
+                return "BREAK"
+        
         mp_drawing.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
         return frame
+    
+            # exercise=['shoulder', 'squat', 'knee']
+        # self.angle_counter.set_exercise(exercise=exercise[0])
+        # if self.angle_counter.exercise != None:
+        #     self.angle_counter.draw(frame, results.pose_landmarks.landmark)
+        #     cv2.putText(frame, f"Count: {self.angle_counter.get_count()}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
+        # if results.pose_landmarks is None:
+        #     return frame
                 # if self.exercise_count[predicted_label] != exercise[0]:
                 #     #print(predicted_label)
                 #     self.consistent_frames += 1
@@ -170,7 +214,6 @@ class ExerciseClassifier:
         
         # mp_drawing.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
         # return frame
-    
 
 if __name__ == "__main__":
     classifier = ExerciseClassifier()
