@@ -1,7 +1,6 @@
+from collections import deque
+
 class ClientInfo:
-
-    client_list = {}
-
     def __init__(self, socket):
         self.socket = socket
         self.user_id = None
@@ -11,68 +10,42 @@ class ClientInfo:
         self.tier = 0
         self.score = 0
         self.routine = []
+        self.image_buffer = deque(maxlen=30)
 
-        ClientInfo.client_list[socket] = self
+    def set_user_info(self, user_id, user_name=None, weight=0, height=0, tier=0, score=0):
+        self.user_id = user_id
+        self.user_name = user_name
+        self.weight = weight
+        self.height = height
+        self.tier = tier
+        self.score = score
 
-    @classmethod
-    def get_client(cls, socket):
-        return cls.client_list.get(socket)
-    
-    @classmethod
-    def remove_client(cls, socket):
-        if socket in cls.client_list:
-            del cls.client_list[socket]
+    def append_image_buffer(self, frame):
+        self.image_buffer.append(frame)
 
-    @classmethod
-    def set_user_info(cls, socket, user_id, user_name, weight, height, tier, score):
-        client = cls.get_client(socket)
+    def get_image_buffer(self):
+        return self.image_buffer
 
-        if client:
-            client.user_id = user_id
-            client.user_name = user_name
-            client.weight = weight
-            client.height = height
-            client.tier = tier
-            client.score = score
+    def set_routine(self, routine):
+        self.routine.append(routine)
 
-    @classmethod
-    def set_routine(cls, socket, routine):
-        client = cls.get_client(socket)
-        if client:
-            client.routine.append(routine)
+    def get_routine(self):
+        return self.routine
 
-    @classmethod
-    def get_routine(cls, socket):
-        client = cls.get_client(socket)
-        return client.routine if client else None
+    def get_user_id(self):
+        return self.user_id
 
-    @classmethod
-    def get_user_id(cls, socket):
-        client = cls.get_client(socket)
-        return client.user_id if client else None
+    def get_user_name(self):
+        return self.user_name
 
-    @classmethod
-    def get_user_name(cls, socket):
-        client = cls.get_client(socket)
-        return client.user_name if client else None
+    def get_weight(self):
+        return self.weight
 
-    @classmethod
-    def get_weight(cls, socket):
-        client = cls.get_client(socket)
-        return client.weight if client else None
+    def get_height(self):
+        return self.height
 
-    @classmethod
-    def get_height(cls, socket):
-        client = cls.get_client(socket)
-        return client.height if client else None
+    def get_tier(self):
+        return self.tier
 
-    @classmethod
-    def get_tier(cls, socket):
-        client = cls.get_client(socket)
-        return client.tier if client else None
-
-    @classmethod
-    def get_score(cls, socket):
-        client = cls.get_client(socket)
-        return client.score if client else None
-
+    def get_score(self):
+        return self.score
