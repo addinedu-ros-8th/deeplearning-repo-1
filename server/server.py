@@ -34,12 +34,11 @@ class FAAServer(QTcpServer):
         client_socket.setSocketDescriptor(socketDescriptor)
         print(f"클라이언트 연결됨: {client_socket.peerAddress().toString()}:{client_socket.peerPort()}")
 
+        self.client_list.append(client_socket)
+
         # 각 소켓에 대해 개별적으로 처리되도록 설정
         client_socket.readyRead.connect(partial(self.receive_data, client_socket))
         client_socket.disconnected.connect(partial(self.disconnected, client_socket))
-
-        self.client_list.append(client_socket)
-        print(self.client_list)
 
     def receive_data(self, client_socket):
         while client_socket.bytesAvailable() > 0:
@@ -83,7 +82,7 @@ class FAAServer(QTcpServer):
 
                 if self.data['command'] == "LI":
                     print("로그인")
-                    self.login()
+                    self.login(client_socket)
                 elif self.data['command'] == "RG":
                     print("회원가입")
                     self.register()
@@ -134,6 +133,7 @@ class FAAServer(QTcpServer):
 
         # 명령어 언팩
         command = unpack_string()
+        status = unpack_string()
         pw = unpack_string()
         name = unpack_string()
         height = unpack_string()
@@ -170,6 +170,7 @@ class FAAServer(QTcpServer):
 
         return {
             'command': command,
+            'status': status,
             'pw': pw,
             'name': name,
             'height': height,
@@ -257,18 +258,17 @@ class FAAServer(QTcpServer):
             print("[Server] Client disconnected:", client_socket.peerAddress().toString())
         client_socket.deleteLater()  # 안전하게 객체 삭제
     
-    def login(self):
+    def login(self, socket):
         self.name=self.data['name']
-        self.cur.execute("SELECT password FROM user where name = %s and password = %s",(self.data['name'],self.data['pw']))
-        rows = self.cur.fetchall()
-        #print(rows)
+        self.cur.execute("SELECT id FROM user where name = %s and password = %s",(self.data['name'],self.data['pw']))
+        rows = self.cur.fetchone()
+
         if len(rows) == 0:
             print('로그인정보가 틀렸습니다.')
             data = self.pack_data("LI",status='1',err="Invalid credentials")
         else:
-            print(rows[0][0])
             data = self.pack_data("LI",status='0')
-        self.send_data(self.client_list[3],data)
+        self.send_data(self.client_list[3], data)
     
     def register(self):
         self.cur.execute("SELECT EXISTS(SELECT 1 FROM user WHERE name = %s)",(self.data['name'],))
