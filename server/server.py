@@ -13,6 +13,7 @@ import datetime
 from functools import partial
 import json
 import socket 
+from client_info import ClientInfo
 
 class FAAServer(QTcpServer):
     def __init__(self):
@@ -22,9 +23,9 @@ class FAAServer(QTcpServer):
         self.db = FAAdb()
         self.cur = self.db.conn.cursor(buffered=True)
         
-        self.name=None
         self.score = 0
-        self.ai_socket= None 
+        self.ai_socket= None
+
     def start_server(self):
         if self.listen(QHostAddress.Any, SERVER_PORT): print(f"Server listening on port {SERVER_PORT}")
         else: print(f"Failed to listen on port {SERVER_PORT}")
@@ -33,8 +34,8 @@ class FAAServer(QTcpServer):
         client_socket = QTcpSocket(self)
         client_socket.setSocketDescriptor(socketDescriptor)
         print(f"클라이언트 연결됨: {client_socket.peerAddress().toString()}:{client_socket.peerPort()}")
-
-        self.client_list.append(client_socket)
+        
+        ClientInfo(client_socket)
 
         # 각 소켓에 대해 개별적으로 처리되도록 설정
         client_socket.readyRead.connect(partial(self.receive_data, client_socket))
@@ -43,9 +44,11 @@ class FAAServer(QTcpServer):
     def receive_data(self, client_socket):
         while client_socket.bytesAvailable() > 0:
             data = client_socket.readAll().data()
+            print(data)
             # AI 서버가 자기소개 할 경우
             if data == b'AI_HELLO':
                 self.ai_socket = client_socket
+                ClientInfo.remove_client(client_socket)
                 print(f"[Server] AI 서버로 등록됨: {client_socket.peerAddress().toString()}")
                 return
             
@@ -85,21 +88,21 @@ class FAAServer(QTcpServer):
                     self.login(client_socket)
                 elif self.data['command'] == "RG":
                     print("회원가입")
-                    self.register()
+                    self.register(client_socket)
                 elif self.data['command'] == "CT":
                     print("카운팅")
-                    self.counting(self.data['data'])
+                    self.counting(client_socket, self.data['data'])
                 elif self.data['command'] == "RC":
                     print("녹화시작")
                     self.record_start()
                 elif self.data['command'] == "RR":
                     print("루틴 생성 요청")
-                    self.create_routine()
+                    self.create_routine(client_socket)
 
                 elif self.data['command'] == 'GR':
-                    self.send_routine()
+                    self.send_routine(client_socket)
                 elif self.data['command'] == 'CR':
-                    print(self.data )
+                    print(self.data)
                     self.draw_guidline()
                 elif self.data['command'] == "ME":
                     self.modify_exercise(client_socket)
@@ -244,7 +247,7 @@ class FAAServer(QTcpServer):
         
         return packed_data
     
-    def send_data(self,client_socket, response_data):
+    def send_data(self, client_socket, response_data):
         if client_socket.state() == QTcpSocket.ConnectedState:
             client_socket.write(response_data)
             client_socket.flush()
@@ -256,21 +259,23 @@ class FAAServer(QTcpServer):
         client_socket = self.sender()  # 현재 신호를 보낸 객체 가져오기
         if isinstance(client_socket, QTcpSocket):
             print("[Server] Client disconnected:", client_socket.peerAddress().toString())
+        ClientInfo.remove_client(client_socket)
         client_socket.deleteLater()  # 안전하게 객체 삭제
     
     def login(self, socket):
-        self.name=self.data['name']
-        self.cur.execute("SELECT id FROM user where name = %s and password = %s",(self.data['name'],self.data['pw']))
-        rows = self.cur.fetchone()
+        if self.data['status'] == '0':
+            self.cur.execute("SELECT id, name, weight, height, tier, score FROM user where name = %s and password = %s",(self.data['name'],self.data['pw']))
+            rows = self.cur.fetchone()
 
-        if len(rows) == 0:
-            print('로그인정보가 틀렸습니다.')
-            data = self.pack_data("LI",status='1',err="Invalid credentials")
-        else:
-            data = self.pack_data("LI",status='0')
-        self.send_data(self.client_list[3], data)
+            if rows is None:
+                data = self.pack_data("LI",status='1', err="Invalid credentials")
+            else:
+                ClientInfo.set_user_info(socket, rows[0], rows[1], rows[2], rows[3], rows[4], rows[5])
+                list_data = str(rows[2]) + "," + str(rows[3]) + "," + str(rows[4]) + "," + str(rows[5])
+                data = self.pack_data("LI", status='0', name=rows[1], id=str(rows[0]), list_data=list_data)
+            self.send_data(socket, data)
     
-    def register(self):
+    def register(self, socket):
         self.cur.execute("SELECT EXISTS(SELECT 1 FROM user WHERE name = %s)",(self.data['name'],))
         duplication_name = int(self.cur.fetchall()[0][0])
 
@@ -283,74 +288,90 @@ class FAAServer(QTcpServer):
             self.db.commit()
             data = self.pack_data("RG",status='0')
                
-        self.send_data(self.client_list[3],data)
+        self.send_data(socket, data)
     
-    def counting(self,count):
+    def counting(self, socket, count):
         data = self.pack_data("CT",status=count)
-        self.send_data(self.client_list[3],data)
+        self.send_data(socket,data)
 
     def record_start(self):
         if self.data['data'] == 'True':
             data = self.pack_data("RC",status='True')
-            self.send_data(self.client_list[0],data)
+            self.send_data(self.ai_socket, data)
         elif self.data['data'] == 'False':
             data = self.pack_data("RC",status='False')
-            self.send_data(self.client_list[0],data)
+            self.send_data(self.ai_socket,data)
     
-    def create_routine(self):
+    def create_routine(self, socket):
         name = self.data['name']   
 
         # look up user tier 
-        self.cur.execute("SELECT id, tier FROM user WHERE name = %s", (name,))
-        result = self.cur.fetchone()
-        if not result: 
-            data = self.pack_data("RR", status='1')
-            print("no user in db")
-            self.send_data(self.client_list[3], data)
-            return 
+        # self.cur.execute("SELECT id, tier FROM user WHERE name = %s", (name,))
+        # result = self.cur.fetchone()
+        # if not result: 
+        #     data = self.pack_data("RR", status='1')
+        #     print("no user in db")
+        #     self.send_data(socket, data)
+        #     return 
         
-        user_id, tier = result
-        print(f"DEBUG, ID: {user_id}, 티어: {tier}")
+        # user_id, tier = result
+        # print(f"DEBUG, ID: {user_id}, 티어: {tier}")
+
+        user_id = ClientInfo.get_user_id(socket)
+        tier = ClientInfo.get_tier(socket)
 
         # does the routine duplicate ? 
         today = datetime.datetime.now().date()  # 현재 날짜
         self.cur.execute("SELECT id FROM routine WHERE user_id = %s AND DATE(date) = %s", 
                                             (user_id, today))
         existing = self.cur.fetchone()
-        if existing:
+        if not existing:
             print("금일 routine 이미 존재")
-            data = self.pack_data("RR", status='1')         # duplicate 
-            self.send_data(self.client_list[3], data)
-            return 
+            # data = self.pack_data("RR", status='1')         # duplicate 
+            # self.send_data(socket, data)
+            self.cur.execute("INSERT INTO routine (user_id, status, date) VALUES (%s, %s, %s)",
+                                                        (user_id, 0, datetime.datetime.now()))
+            routine_id = self.cur.lastrowid
+
+            # get a list of exercises that fit one's tier 
+            self.cur.execute("SELECT id, name, reps FROM workout WHERE tier = %s", (tier,))
+            workout_list = self.cur.fetchall()
+            selected_workouts = workout_list
+
+            # add single routine in routine_workout table 
+            for workout_id, workout_name, reps in selected_workouts:
+                sets = random.randint(3, 5)
+                self.cur.execute("INSERT INTO routine_workout (routine_id, workout_id, sets, status) VALUES (%s, %s, %s, %s)",
+                                (routine_id, workout_id, sets, 0))
+            self.db.commit()
+
+            print("Routine 생성 완료")
+
+        sql = """
+            SELECT rw.id, w.name, rw.sets, w.reps
+            FROM routine r, routine_workout rw, workout w
+            where Date(r.date) = %s
+            and r.user_id = %s
+            and rw.routine_id = r.id
+            and rw.workout_id = w.id
+            """
+        self.cur.execute(sql, (today, user_id))
+        results = self.cur.fetchall()
         
-        self.cur.execute("INSERT INTO routine (user_id, status, date) VALUES (%s, %s, %s)",
-                                                    (user_id, 0, datetime.datetime.now()))
-        routine_id = self.cur.lastrowid
+        formatted = ",".join([f"{id}|{name}|{sets}|{reps}" for id, name, sets, reps in results])
+        for item in formatted.split(','):
+            id, name, sets, reps = item.strip().split('|')
+            ClientInfo.set_routine(socket, {
+                'id': id,
+                'name': name,
+                'sets': int(sets),
+                'reps': int(reps)
+            })
 
-        # get a list of exercises that fit one's tier 
-        self.cur.execute("SELECT id, name, reps FROM workout WHERE tier = %s", (tier,))
-        workout_list = self.cur.fetchall()
-        if not workout_list :
-            print("운동 없음")
-            data = self.pack_data("RR", status='1')
-            self.send_data(self.client_list[3], data)
-            return 
-        # select workout randomly 
-        selected_workouts = workout_list
+        data = self.pack_data("RR", status='0', list_data=formatted)
+        self.send_data(socket, data)
 
-        # add single routine in routine_workout table 
-        for workout_id, workout_name, reps in selected_workouts:
-            sets = random.randint(3, 5)
-            self.cur.execute("INSERT INTO routine_workout (routine_id, workout_id, sets, status) VALUES (%s, %s, %s, %s)",
-                            (routine_id, workout_id, sets, 0)) 
-
-        self.db.commit()
-
-        print("Routine 생성 완료")
-        data = self.pack_data("RR", status='0')
-        self.send_data(self.client_list[3], data)
-
-    def modify_exercise(self, client_socket):
+    def modify_exercise(self, socket):
         status = self.data['status']
 
         if status == '0': # 운동 정보 요청
@@ -358,7 +379,7 @@ class FAAServer(QTcpServer):
             result = self.cur.fetchall()
             if not result:
                 data = self.pack_data("ME", status=9, err="운동 정보가 없습니다.")
-                self.send_data(self.client_socket, data)
+                self.send_data(socket, data)
                 return
             
             tmp = ""
@@ -367,7 +388,7 @@ class FAAServer(QTcpServer):
                     tmp += str(tmp2) + ","
                 tmp += "\n"
 
-            self.send_data(client_socket, self.pack_data("ME", status='0', list_data=tmp))
+            self.send_data(socket, self.pack_data("ME", status='0', list_data=tmp))
         elif status == '1': # 운동 정보 추가
             data = self.data['data'].split(",")
 
@@ -381,10 +402,10 @@ class FAAServer(QTcpServer):
                 self.db.commit()
 
                 data = self.pack_data("ME", status='1')
-                self.send_data(client_socket, data)
+                self.send_data(socket, data)
             except:
                 data = self.pack_data("ME", status='9')
-                self.send_data(client_socket, data)
+                self.send_data(socket, data)
                 return
             
         elif status == '2': # 운동 정보 수정
@@ -395,10 +416,10 @@ class FAAServer(QTcpServer):
                 self.db.commit()
 
                 data = self.pack_data("ME", status='2')
-                self.send_data(client_socket, data)
+                self.send_data(socket, data)
             except:
                 data = self.pack_data("ME", status='9')
-                self.send_data(client_socket, data)
+                self.send_data(socket, data)
         elif status == '3': # 운동 정보 삭제
             data = self.data['data']
             
@@ -407,24 +428,25 @@ class FAAServer(QTcpServer):
                 self.db.commit()
 
                 data = self.pack_data("ME", status='3')
-                self.send_data(client_socket, data)
+                self.send_data(socket, data)
             except:
                 data = self.pack_data("ME", status='9')
-                self.send_data(client_socket, data)
+                self.send_data(socket, data)
 
-    def send_routine(self):
+    def send_routine(self, socket):
         name = self.data['name']
 
         # 1. user ID 조회
-        self.cur.execute("SELECT id FROM user WHERE name = %s", (name,))
-        result = self.cur.fetchone()
-        if not result:
-            print("❌ User 없음")
-            data = self.pack_data("GR", status='1', err="User를 찾을 수 없습니다.")
-            self.send_data(self.client_list[3], data)
-            return
+        # self.cur.execute("SELECT id FROM user WHERE name = %s", (name,))
+        # result = self.cur.fetchone()
+        # if not result:
+        #     print("❌ User 없음")
+        #     data = self.pack_data("GR", status='1', err="User를 찾을 수 없습니다.")
+        #     self.send_data(socket, data)
+        #     return
 
-        user_id = result[0]
+        # user_id = result[0]
+        user_id = ClientInfo.get_user_id(socket)
 
         # 2. 최신 Routine ID 조회
         self.cur.execute("SELECT id FROM routine WHERE user_id = %s ORDER BY date DESC LIMIT 1", (user_id,))
@@ -432,7 +454,7 @@ class FAAServer(QTcpServer):
         if not result:
             print("❌ Routine 없음")
             data = self.pack_data("GR", status='1', err="Routine 정보가 없습니다.")
-            self.send_data(self.client_list[3], data)
+            self.send_data(socket, data)
             return
 
         routine_id = result[0]
@@ -449,7 +471,7 @@ class FAAServer(QTcpServer):
         if not routine_data:
             print("❌ Routine 내용 없음")
             data = self.pack_data("GR", status='1', err="Routine 상세 정보가 없습니다.")
-            self.send_data(self.client_list[3], data)
+            self.send_data(socket, data)
             return
 
         # 4. 문자열 formatiing 후 client에게 전송
@@ -458,7 +480,7 @@ class FAAServer(QTcpServer):
         ai_routine = ",".join([f"{name.lower().replace(' ', '')}|{sets}|{reps}" for name, sets, reps in routine_data])
         self.send_routine_to_ai(ai_routine)
         data = self.pack_data("GR", status='0', list_data=formatted)
-        self.send_data(self.client_list[3], data)
+        self.send_data(socket, data)
 
 
     def send_routine_to_ai(self, routine_str):

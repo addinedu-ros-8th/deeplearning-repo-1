@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QMessageBox, QInputDialog, QFileDialog
 from network.packer import pack_data
 from PyQt5.QtCore import QEventLoop
 from PyQt5.QtGui import QPixmap
+import time
 
 
 class AuthHandler:
@@ -18,42 +19,54 @@ class AuthHandler:
             QMessageBox.warning(self.main_window, "계정 비밀번호", "비밀번호를 입력해야 합니다.")
             return
 
-        # Check credentials locally first (optional)
-        self.cur.execute("SELECT password FROM user WHERE name = %s and password = %s", (name, input_passwd))
-        result = self.cur.fetchall()
-
-        if not result:
-            QMessageBox.warning(self.main_window, "계정 비밀번호", "비밀번호가 일치하지 않습니다.")
-            return
-
         # TCP login request to server
-        passwd = result[0][0]
-        data = pack_data(command="LI", name=name, pw=passwd)
+        data = pack_data(command="LI", status='0', name=name, pw=input_passwd)
         self.tcp.sendData(data)
 
         loop = QEventLoop()
         self.tcp.responseReceived.connect(loop.quit)
         loop.exec_()
+        self.tcp.responseReceived.disconnect(loop.quit)
 
         if self.tcp.result == 0:
-            print("로그인 성공")
-            self.main_window.username = name
-            self.main_window.set_user_name(name)
-            self.main_window.set_profile_icon(name)
-            # tier 가져오기 
-            self.cur.execute("SELECT tier FROM user WHERE name = %s", (name,))
-            tier_result = self.cur.fetchone()
-            if tier_result: 
-                self.main_window.tier = tier_result[0]
-                self.main_window.set_user_tier(self.main_window.tier)
-                print(f"user tier: {self.main_window.tier}")
-            else: 
-                print("user tier 없음")
-  
+            data = self.tcp.data
 
+            user_id = data['id']
+            tmp = data['list_data'].split(",")
+            height = int(tmp[0])
+            weight = int(tmp[1])
+            tier = int(tmp[2])
+            score = int(tmp[3])
+            
+
+            self.main_window.set_user_name(name, user_id, height, weight, tier, score)
+            self.main_window.set_profile_icon(name)
             self.main_window.stackedWidget_big.setCurrentWidget(self.main_window.big_main_page)     # page 이동 
+
             # Routine 생성 요청 (서버가 routine 생성만)
             rr_data = pack_data(command="RR", name=name)
             self.tcp.sendData(rr_data)
+
+            loop2 = QEventLoop()
+            self.tcp.responseReceived.connect(loop2.quit)
+            loop2.exec_()
+            self.tcp.responseReceived.disconnect(loop2.quit)
+
+            if self.tcp.result == 0:
+                # self.routine_list = []  # 초기화
+                routine_str = self.tcp.data['list_data']
+                items = routine_str.split(',')
+                for item in items:
+                    try:
+                        id, name, sets, reps = item.strip().split('|')
+                        self.main_window.routine.append({
+                            'id': id,
+                            'name': name,
+                            'sets': int(sets),
+                            'reps': int(reps)
+                        })
+                    except ValueError:
+                        print("⚠️ 잘못된 루틴 항목 포맷:", item)
+                print(" 루틴 리스트:", self.main_window.routine)
         else:
             QMessageBox.warning(self.main_window, "로그인 실패", "로그인 정보가 틀렸습니다.")

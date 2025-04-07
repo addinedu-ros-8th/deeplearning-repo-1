@@ -17,7 +17,6 @@ class Client(QObject) :
     responseReceived = pyqtSignal()
     def __init__(self):
         super().__init__()
-        self.AiSocket = AitoMain()
         self.socket = QTcpSocket()                              # 1. create socket 
         self.socket.connectToHost(SERVER_IP, SERVER_PORT)       # 2. connect to server 
         self.socket.connected.connect(self.on_connected)        # 3. send data 
@@ -25,7 +24,6 @@ class Client(QObject) :
 
         self.udp_socket = QUdpSocket()
         
-
         self.result = None
         self.landmark = None
 
@@ -74,25 +72,9 @@ class Client(QObject) :
             elif self.data['command'] == 'CT':
                 self.result = int(self.data['status'])
                 self.responseReceived.emit()
-            elif self.data['command'] == 'GR':  
-                        if self.data['status'] == '0':
-                            self.routine_list = []  # 초기화
-                            routine_str = self.data['list_data']
-                            items = routine_str.split(',')
-                            for item in items:
-                                try:
-                                    name, sets, reps = item.strip().split('|')
-                                    self.routine_list.append({
-                                        'name': name,
-                                        'sets': int(sets),
-                                        'reps': int(reps)
-                                    })
-                                except ValueError:
-                                    print("⚠️ 잘못된 루틴 항목 포맷:", item)
-                            print(" 루틴 리스트:", self.routine_list)
-                        else:
-                            print(" 루틴 조회 실패:", self.data['err'])
-                        self.responseReceived.emit()
+            elif self.data['command'] == 'RR':  
+                    self.result = int(self.data['status'])
+                    self.responseReceived.emit()
             elif self.data['command'] == "ME":
                 self.result = int(self.data['status'])
                 self.responseReceived.emit()

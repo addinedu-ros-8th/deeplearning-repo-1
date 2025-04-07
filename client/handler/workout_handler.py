@@ -86,9 +86,11 @@ class WorkoutHandler:
         main_window.timer.start(30)
         
         # call routine 
-        data = pack_data(command="GR", name=main_window.username)
-        main_window.tcp.sendData(data)
-        main_window.tcp.responseReceived.connect(lambda: WorkoutHandler.on_routine_ready(main_window))
+        # data = pack_data(command="GR", name=main_window.username)
+        # main_window.tcp.sendData(data)
+        # main_window.tcp.responseReceived.connect(lambda: WorkoutHandler.on_routine_ready(main_window))
+
+        WorkoutHandler.on_routine_ready(main_window)
         
         main_window.view = ViewMain()
         main_window.view.set_mode("main")
@@ -227,8 +229,9 @@ class WorkoutHandler:
         img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         qt_img = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888)
         main_window.lb_cam.setPixmap(QPixmap.fromImage(qt_img))
-        
-        main_window.udp.send_video(frame_copy)
+
+        if main_window.camera.is_active:
+            main_window.udp.send_video(frame_copy)
 
     @staticmethod
     def update_gui(main_window):
@@ -322,14 +325,12 @@ class WorkoutHandler:
     @staticmethod
     def on_routine_ready(main_window):
         # GR에 대한 응답인지 확인
-        if main_window.tcp.data["command"] != "GR":
-            return
         
-        print("✅ 루틴 수신 완료, workout 시작 준비")
-        main_window.routine_queue = main_window.tcp.routine_list.copy()
+        main_window.routine_queue = main_window.routine.copy()
         main_window.current_index = 0
         main_window.set_current_workout()
         main_window.display_routine_list()
+        
         # 이 연결은 한 번만 실행되도록 제거해주면 좋음
         try:
             main_window.tcp.responseReceived.disconnect()
@@ -348,7 +349,7 @@ class WorkoutHandler:
         main_window.modal_exit_view = ViewModalExit()
         main_window.modal_exit_view.bttn_yes.action = lambda: WorkoutHandler.handle_close_button(main_window)
         main_window.modal_exit_view.bttn_no.action = lambda: WorkoutHandler.handle_back_to_main(main_window)
-        
+
 
     @staticmethod
     def handle_lookup(main_window):
