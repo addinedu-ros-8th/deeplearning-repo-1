@@ -1,7 +1,7 @@
 #ui.uisetup.py
 from PyQt5.QtGui import QPixmap, QIcon
 from PyQt5.QtCore import QSize
-from PyQt5.QtWidgets import QButtonGroup
+from PyQt5.QtWidgets import QButtonGroup, QTableWidget, QAbstractItemView
 from handler.workout_handler import WorkoutHandler
 
 class UISetupHelper:
