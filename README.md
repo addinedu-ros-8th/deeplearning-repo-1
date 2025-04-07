@@ -4,14 +4,14 @@ DL 프로젝트 1조 저장소. 팀 CHICAGO
 <br />
 <p align="center">
   <a href="https://github.com/addinedu-ros-8th/deeplearning-repo-1">
-    <img src="https://github.com/addinedu-ros-8th/deeplearning-repo-1/blob/main/Front.png" alt="Logo" width="700px">
+    <img src="https://github.com/addinedu-ros-8th/deeplearning-repo-1/blob/main/Front.png" alt="Logo" width="500px">
   </a>
 
   <h3 align="center">피트니스 AI 에이전트(Fitness AI Agent)</h3>
 
   <p align="center">
-    <a href="https://docs.google.com/presentation/d/1iNOuPEVw5FUgLmUJqL00OPBQSc4z1UGs">Video Demo</a>\\
-    <a href="">Presentation</a>
+    <a href="">Video Demo</a>\\
+    <a href="https://docs.google.com/presentation/d/1iNOuPEVw5FUgLmUJqL00OPBQSc4z1UGs">Presentation</a>
   </p>
 </p>
 
