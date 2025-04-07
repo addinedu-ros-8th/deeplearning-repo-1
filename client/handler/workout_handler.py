@@ -224,11 +224,14 @@ class WorkoutHandler:
             main_window.modal_pause_view.appear(frame)
         if main_window.modal_exit_view:
             main_window.modal_exit_view.appear(frame)
+            
     @staticmethod
     def send_to_gui(main_window, frame, frame_copy):
         img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         qt_img = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888)
-        main_window.lb_cam.setPixmap(QPixmap.fromImage(qt_img))            
+        main_window.lb_cam.setPixmap(QPixmap.fromImage(qt_img))
+
+        main_window.udp.send_video(frame_copy, main_window.lb_what.text(), main_window.user_id)
 
     @staticmethod
     def update_gui(main_window):

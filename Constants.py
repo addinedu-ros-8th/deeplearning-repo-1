@@ -191,10 +191,10 @@ TIER_TIMES = {
 }
 
 EXERCISE_NAME_MAP = {
-    '스탠딩니업': 'knee',
+    '스탠딩 니업': 'knee',
     '숄더프레스': 'shoulder',
     '스쿼트': 'squat',
-    '프론트런지': 'lunge'
+    '프론트 런지': 'lunge'
 }
 
 BREAK_TIME = 30
