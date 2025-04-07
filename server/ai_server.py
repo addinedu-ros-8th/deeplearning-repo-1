@@ -39,12 +39,12 @@ class AiServer(QWidget):
         print(f"[UDP Server] Listening for video on port {port}...")
 
         # UI 설정
-        self.setWindowTitle("UDP Video Server")
-        self.setGeometry(200, 200, 640, 480)
-        self.label = QLabel(self)
-        layout = QVBoxLayout()
-        layout.addWidget(self.label)
-        self.setLayout(layout)
+        # self.setWindowTitle("UDP Video Server")
+        # self.setGeometry(200, 200, 640, 480)
+        # self.label = QLabel(self)
+        # layout = QVBoxLayout()
+        # layout.addWidget(self.label)
+        # self.setLayout(layout)
 
         # 루틴 전용 TCP 서버 실행
         threading.Thread(target=self.start_routine_server, daemon=True).start()
@@ -57,6 +57,7 @@ class AiServer(QWidget):
         while True:
             conn, addr = s.accept()
             threading.Thread(target=self.handle_routine_connection, args=(conn,), daemon=True).start()
+
     def handle_routine_connection(self, conn):
         try:
             data = conn.recv(2048).decode('utf-8')
@@ -82,8 +83,20 @@ class AiServer(QWidget):
             conn.close()   
 
     def receive_data(self):
+        self.count += 1
         while self.udp_socket.hasPendingDatagrams():
             data, sender, sender_port = self.udp_socket.readDatagram(self.udp_socket.pendingDatagramSize())
+            
+            img_len = int.from_bytes(data[:4])
+            img_bytes = data[4:4+img_len]
+
+            text_data = data[4+img_len:]
+            print(text_data)
+            exercise = text_data[0].decode('utf-8')
+            user_id = text_data[1].decode('utf-8')
+
+            print(exercise, user_id)
+
 
             # QEventLoop가 한 번만 실행되도록 플래그 사용
             if not hasattr(self, 'loop_ran'):  # loop_ran이 없으면 실행
@@ -93,7 +106,7 @@ class AiServer(QWidget):
                 self.loop_ran = True  # 한 번 실행 후 플래그 설정
             #print(self.tcp.result)
             if self.tcp.result == "True":
-                self.process_video_frame(data)
+                self.process_video_frame(img_bytes)
             if self.tcp.result == "False":
                 self.loop_ran = False
 
@@ -214,5 +227,5 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     signal.signal(signal.SIGINT, signal.SIG_DFL)  # Ctrl+C 핸들러
     server = AiServer(port=12345)
-    server.show()
+    # server.show()
     sys.exit(app.exec_())
