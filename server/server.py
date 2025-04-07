@@ -102,8 +102,8 @@ class FAAServer(QTcpServer):
                 elif self.data['command'] == 'CR':
                     print(self.data )
                     self.draw_guidline()
-
-
+                elif self.data['command'] == "ME":
+                    self.modify_exercise(client_socket)
             except Exception as e:
                 print(f"[✗] 바이너리 데이터 처리 오류: {e}")
 
@@ -350,7 +350,67 @@ class FAAServer(QTcpServer):
         data = self.pack_data("RR", status='0')
         self.send_data(self.client_list[3], data)
 
+    def modify_exercise(self, client_socket):
+        status = self.data['status']
 
+        if status == '0': # 운동 정보 요청
+            self.cur.execute("SELECT * from workout")
+            result = self.cur.fetchall()
+            if not result:
+                data = self.pack_data("ME", status=9, err="운동 정보가 없습니다.")
+                self.send_data(self.client_socket, data)
+                return
+            
+            tmp = ""
+            for data in result:
+                for tmp2 in data:
+                    tmp += str(tmp2) + ","
+                tmp += "\n"
+
+            self.send_data(client_socket, self.pack_data("ME", status='0', list_data=tmp))
+        elif status == '1': # 운동 정보 추가
+            data = self.data['data'].split(",")
+
+            exercise_name = data[0]
+            tier = data[1]
+            reps = data[2][:-1]
+            score = data[3][:-1]
+
+            try:
+                self.cur.execute("INSERT INTO workout (name, tier, reps, score) VALUES (%s, %s, %s, %s)", (exercise_name, tier, reps, score))
+                self.db.commit()
+
+                data = self.pack_data("ME", status='1')
+                self.send_data(client_socket, data)
+            except:
+                data = self.pack_data("ME", status='9')
+                self.send_data(client_socket, data)
+                return
+            
+        elif status == '2': # 운동 정보 수정
+            data = self.data['data'].split(",")
+
+            try:
+                self.cur.execute("UPDATE workout SET tier = %s, reps = %s, score = %s WHERE name = %s", (data[1], data[2], data[3], data[0]))
+                self.db.commit()
+
+                data = self.pack_data("ME", status='2')
+                self.send_data(client_socket, data)
+            except:
+                data = self.pack_data("ME", status='9')
+                self.send_data(client_socket, data)
+        elif status == '3': # 운동 정보 삭제
+            data = self.data['data']
+            
+            try:
+                self.cur.execute("DELETE FROM workout WHERE name = %s", (data,))
+                self.db.commit()
+
+                data = self.pack_data("ME", status='3')
+                self.send_data(client_socket, data)
+            except:
+                data = self.pack_data("ME", status='9')
+                self.send_data(client_socket, data)
 
     def send_routine(self):
         name = self.data['name']
