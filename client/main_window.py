@@ -34,7 +34,8 @@ class MainWindow(QMainWindow, main_class):
         self.profile_cnt = 0
 
         self.is_ready = False
-        self.is_workout = False
+        self.is_working = False
+
         self.is_lookup = False
         self.modal_pause_view = None
         self.modal_exit_view = None
@@ -73,8 +74,24 @@ class MainWindow(QMainWindow, main_class):
         UISetupHelper.button_stylers(self)
         self.displayScore()
 
-    def set_classifier(self, classifier):
-        self.classifier = classifier
+        self.countdown_timer = QTimer()
+        self.countdown_time_left = cons.COUNTDOWN 
+        self.is_countdown = False 
+        
+    def start_preworkout_countdown(self):
+        self.is_countdown = True
+        self.countdown_timer.timeout.connect(self.update_countdown)
+        self.countdown_timer.start(1000)  # 1초마다 timeout 발생
+    
+    def update_countdown(self):
+        if self.countdown_time_left > 0:
+            self.countdown_time_left -=1 
+        else:
+            self.countdown_timer.stop()
+            self.countdown_timer.timeout.disconnect(self.update_countdown)
+            self.is_countdown = False
+            
+            self.is_working = True 
     # Login
     def plus_profile(self):
         self.second=AuthWindow()
