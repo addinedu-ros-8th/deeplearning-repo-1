@@ -44,7 +44,14 @@ class MainWindow(QMainWindow, main_class):
         self.selection_confirmed = False
         self.prev_pi_data = None
         self.current_workout = False 
+
         self.username = None
+        self.user_id = None
+        self.tier = 0
+        self.weight = 0
+        self.height_ = 0
+        self.score = 0
+        self.routine = []
  
         self.remaining_time = 0
         self.last_tick_time = 0
@@ -101,10 +108,16 @@ class MainWindow(QMainWindow, main_class):
         self.btn_plus_profile.setEnabled(profile_cnt < 4)
 
     # Main
-    def set_user_name(self,name):
+    def set_user_name(self, name, user_id, weight, height, tier, score):
         self.lb_name.setText(name)
         self.lb_name_2.setText(name)        # account name 
-        self.username = name  
+        self.username = name
+        self.user_id = user_id
+        self.weight = weight
+        self.height_ = height
+        self.tier = tier
+        self.score = score
+        
     def set_profile_icon(self, username):
         self.cur.execute("SELECT user_icon FROM user WHERE name = %s", (username,))
         result = self.cur.fetchone()
@@ -119,24 +132,28 @@ class MainWindow(QMainWindow, main_class):
 
     def back2login(self):
         self.stackedWidget_big.setCurrentWidget(self.profile_page)
+        
     def go2account(self):
         self.stackedWidget_big.setCurrentWidget(self.account_page)
         
     def show_main(self):
         self.stackedWidget_small.setCurrentWidget(self.main_page)
+        
     def show_record(self):
         self.stackedWidget_small.setCurrentWidget(self.record_page)
+
     def show_rank(self):
         self.stackedWidget_small.setCurrentWidget(self.rank_page)
+        
     def displayScore(self):
         current_score = 4720
         max_score = 10000
         text = f"{current_score} / {max_score} (next tier)"
         self.lb_score.setText(text)
+
     def go2calendar(self):
         self.stackedWidget_big.setCurrentWidget(self.calendar_page)
 
-    
     # Workout 
     def back2main(self):
         if self.camera is not None:
