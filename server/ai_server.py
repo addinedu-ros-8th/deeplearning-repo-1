@@ -57,6 +57,7 @@ class AiServer(QWidget):
         while True:
             conn, addr = s.accept()
             threading.Thread(target=self.handle_routine_connection, args=(conn,), daemon=True).start()
+            
     def handle_routine_connection(self, conn):
         try:
             data = conn.recv(2048).decode('utf-8')
