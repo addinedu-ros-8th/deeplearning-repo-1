@@ -189,12 +189,14 @@ TIER_TIMES = {
     1: 90,
     2: 60
 }
+
 EXERCISE_NAME_MAP = {
     '스탠딩니업': 'knee',
     '숄더프레스': 'shoulder',
     '스쿼트': 'squat',
     '프론트런지': 'lunge'
 }
+
 BREAK_TIME = 30
 class HourOfDay(Enum):
     H00 = "00:00"; H03 = "03:00"; H06 = "06:00"; H09 = "09:00"; 

@@ -3,6 +3,8 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
-
+View/__pycache__/
+client/__pycache__/
+Controller/__pycache__/
 # 녹화 파일 예시
 recorded_*
