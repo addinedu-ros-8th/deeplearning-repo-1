@@ -77,8 +77,12 @@ mp4 - video
     pip install pydub
     pip install tensorflow
 ```
-
-
+## 기능  
+### Hand gesture UI 
+#### Lookup - 티어별 운동들 살펴보기   
+![Image](https://github.com/user-attachments/assets/4879d38c-d6cb-4a4c-a3a6-226bc995d4b0)
+#### Hand gesture (손가락인식)
+![Image](https://github.com/user-attachments/assets/5ce51d23-7b70-46bd-af8f-2a0e75ded9b8)
 
 ## 설계
 ### 시나리오
@@ -108,17 +112,6 @@ mp4 - video
 #### 3) ERD 
 ![Image](https://github.com/user-attachments/assets/fb42019f-67a3-46c5-bd02-2793efa1790e)
 
-## 기능 
-### 기능 리스트 
-|  기능  | 설명 |
-|:--------:|------| 
-| Auth  | ID,PW 인증관리 |    
-| Counting | 운동 Counting |
-| Feedback | 운동 Guide line, 운동 음성/시각 feedback |
-| Tier | 티어별 운동 리스트 조회 |      
-| Test | score기반의 tier test 기능 |     
-| Record | 일/주/월 운동 기록 시각화, |
-| Goal | 목표 설정 |
 
  
 ## Project Schesule
