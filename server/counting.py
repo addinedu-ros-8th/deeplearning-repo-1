@@ -185,8 +185,8 @@ class AngleGuid():
 
             # 가이드 라인
             cv2.line(frame, tuple(origin.astype(int)), tuple(self.vectors[idx].astype(int)), self.p, 2)
-            print(origin.astype(int))
-            print(self.vectors[idx].astype(int))
+            # print(origin.astype(int))
+            # print(self.vectors[idx].astype(int))
 
             # 관절 색
             if self.exercise == "shoulder":

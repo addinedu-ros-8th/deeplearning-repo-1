@@ -47,7 +47,8 @@ class FAAServer(QTcpServer):
     def receive_data(self, client_socket):
         while client_socket.bytesAvailable() > 0:
             data = client_socket.readAll().data()
-            
+            print(data)
+
             # AI 서버가 자기소개 할 경우
             if data == b'AI_HELLO':
                 self.ai_socket = client_socket
@@ -59,24 +60,20 @@ class FAAServer(QTcpServer):
             if data.startswith(b'{'):
                 try:
                     json_str = data.decode('utf-8')
-                    json_data = json.loads(json_str)
-                    if json_data.get('command') == 'PI':
-                        # print(f"[Server] [JSON - PI 명령 수신]: {json_data}")
-                        self.send_data(client_socket, data)
-                        current_count = json_data.get('count')
+                    # json_data = json.loads(json_str)
+                    json_list = json_str.strip().split('\n')
+                    for item in json_list:
+                        json_data = json.loads(item)
+                        if json_data.get('command') == 'PI':
+                            user_id = json_data.get('user_id')
 
-                        # 이전 count와 비교해서 20 -> 0으로 떨어졌는지 확인
-                        if hasattr(self, 'prev_count') and self.prev_count == 20 and current_count == 0:
-                            self.score += 10
-                            self.cur.execute("UPDATE user SET score = %s WHERE name = %s", (self.score, self.name))
-                            self.db.commit()
-                            print(f"[Server] 🎯 점수 증가! 현재 점수: {self.score}")
-
-                        # 현재 count 값을 다음 비교를 위해 저장
-                        self.prev_count = current_count
-                    else:
-                        print(f"[Server] [무시된 JSON 명령]: {json_data.get('command')}")
-                    return
+                            tmp = (item + '\n').encode('utf-8')
+                            # print(f"[Server] [JSON - PI 명령 수신]: {json_data}")
+                            self.send_data(self.get_socket(int(user_id)), tmp)
+                            current_count = json_data.get('count')
+                        else:
+                            print(f"[Server] [무시된 JSON 명령]: {json_data.get('command')}")
+                        return
                 except Exception as e:
                     print(f"[!] JSON 형식으로 보이지만 파싱 실패: {e}")
                     return
@@ -111,6 +108,13 @@ class FAAServer(QTcpServer):
                     self.modify_exercise(client_socket)
             except Exception as e:
                 print(f"[✗] 바이너리 데이터 처리 오류: {e}")
+
+    def get_socket(self, user_id):
+        for socket, client_info in self.client_list.items():
+            if client_info.get_user_id() == user_id:
+                return socket
+        
+        return None
 
     def send_exercise_to_ai(self, exercise):
         try:

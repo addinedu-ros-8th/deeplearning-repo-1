@@ -41,7 +41,7 @@ class LandmarkSender:
 
         json_str = json.dumps(data)
         try:
-            self.sock.sendall((json_str + "\n").encode('utf-8'))  # \n 구분자
+            self.sock.sendall((json_str + '\n').encode('utf-8'))  # \n 구분자
             # print("[→] 데이터 전송 완료")
         except Exception as e:
             print("[✗] 데이터 전송 실패:", e)
