@@ -15,6 +15,7 @@ from ui.ui_setup import UISetupHelper
 from handler.auth_handler import AuthHandler
 from handler.workout_handler import WorkoutHandler
 from handler.record_handler import RecordHandler
+from network.packer import pack_data
 import Controller.Detector as Detector
 import Constants as cons 
 main_class = uic.loadUiType("client/ui/main_page.ui")[0]
@@ -57,10 +58,6 @@ class MainWindow(QMainWindow, main_class):
         self.btn_profile2.clicked.connect(lambda: self.auth.login_user(self.label_profile2.text()))
         self.btn_profile3.clicked.connect(lambda: self.auth.login_user(self.label_profile3.text()))
         self.btn_profile4.clicked.connect(lambda: self.auth.login_user(self.label_profile4.text()))
-
-        self.workout_handler = WorkoutHandler(self)
-        self.btn_add_workout.clicked.connect(self.workout_handler.add_workout_to_table)
-        self.btn_delete_workout.clicked.connect(self.workout_handler.delete_selected_workout)
 
         self.record_handler = RecordHandler(self)
         
