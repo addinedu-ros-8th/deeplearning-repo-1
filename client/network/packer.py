@@ -2,7 +2,7 @@
 import struct
 
 
-def pack_data(command, pw=None, name=None, height=None, weight=None, data=None, content=None, image_data=None, joint=None, angle=None):
+def pack_data(command, status=None, pw=None, name=None, height=None, weight=None, data=None, content=None, image_data=None, joint=None, angle=None):
         packed_data = b''
 
         # 명령어 패킹 (길이 + 데이터)
@@ -15,6 +15,7 @@ def pack_data(command, pw=None, name=None, height=None, weight=None, data=None, 
             return struct.pack('I', 0)
 
         # 문자열 패킹
+        packed_data += pack_string(status)
         packed_data += pack_string(pw)
         packed_data += pack_string(name)
         packed_data += pack_string(str(height) if height is not None else None)
