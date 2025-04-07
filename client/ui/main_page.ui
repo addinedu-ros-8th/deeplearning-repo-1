@@ -33,7 +33,7 @@
        <item>
         <widget class="QStackedWidget" name="stackedWidget_big">
          <property name="currentIndex">
-          <number>2</number>
+          <number>1</number>
          </property>
          <widget class="QWidget" name="profile_page">
           <layout class="QGridLayout" name="gridLayout_3">
@@ -608,11 +608,22 @@
                                  </widget>
                                 </item>
                                 <item>
-                                 <widget class="QLabel" name="lb_days">
-                                  <property name="text">
-                                   <string>TextLabel</string>
-                                  </property>
-                                 </widget>
+                                 <layout class="QHBoxLayout" name="horizontalLayout_6">
+                                  <item>
+                                   <widget class="QLabel" name="lb_days">
+                                    <property name="text">
+                                     <string>?</string>
+                                    </property>
+                                   </widget>
+                                  </item>
+                                  <item>
+                                   <widget class="QLabel" name="label_5">
+                                    <property name="text">
+                                     <string>일</string>
+                                    </property>
+                                   </widget>
+                                  </item>
+                                 </layout>
                                 </item>
                                </layout>
                               </item>
@@ -626,11 +637,29 @@
                                  </widget>
                                 </item>
                                 <item>
-                                 <widget class="QLabel" name="lb_count">
-                                  <property name="text">
-                                   <string>TextLabel</string>
-                                  </property>
-                                 </widget>
+                                 <layout class="QHBoxLayout" name="horizontalLayout_5">
+                                  <item>
+                                   <widget class="QLabel" name="label_3">
+                                    <property name="text">
+                                     <string>총</string>
+                                    </property>
+                                   </widget>
+                                  </item>
+                                  <item>
+                                   <widget class="QLabel" name="lb_count">
+                                    <property name="text">
+                                     <string>?</string>
+                                    </property>
+                                   </widget>
+                                  </item>
+                                  <item>
+                                   <widget class="QLabel" name="label_4">
+                                    <property name="text">
+                                     <string>회</string>
+                                    </property>
+                                   </widget>
+                                  </item>
+                                 </layout>
                                 </item>
                                </layout>
                               </item>
@@ -644,11 +673,36 @@
                                  </widget>
                                 </item>
                                 <item>
-                                 <widget class="QLabel" name="lb_time">
-                                  <property name="text">
-                                   <string>TextLabel</string>
-                                  </property>
-                                 </widget>
+                                 <layout class="QHBoxLayout" name="horizontalLayout_7">
+                                  <item>
+                                   <widget class="QLabel" name="lb_hour">
+                                    <property name="text">
+                                     <string>?</string>
+                                    </property>
+                                   </widget>
+                                  </item>
+                                  <item>
+                                   <widget class="QLabel" name="label_6">
+                                    <property name="text">
+                                     <string>시간</string>
+                                    </property>
+                                   </widget>
+                                  </item>
+                                  <item>
+                                   <widget class="QLabel" name="lb_min">
+                                    <property name="text">
+                                     <string>?</string>
+                                    </property>
+                                   </widget>
+                                  </item>
+                                  <item>
+                                   <widget class="QLabel" name="label_7">
+                                    <property name="text">
+                                     <string>분</string>
+                                    </property>
+                                   </widget>
+                                  </item>
+                                 </layout>
                                 </item>
                                </layout>
                               </item>
@@ -696,6 +750,13 @@ color: white;</string>
                           <layout class="QHBoxLayout" name="horizontalLayout_13">
                            <item>
                             <widget class="QLabel" name="lb_score">
+                             <property name="font">
+                              <font>
+                               <pointsize>12</pointsize>
+                               <weight>75</weight>
+                               <bold>true</bold>
+                              </font>
+                             </property>
                              <property name="text">
                               <string>TextLabel</string>
                              </property>
@@ -723,7 +784,7 @@ color: white;</string>
                               </sizepolicy>
                              </property>
                              <property name="text">
-                              <string>last_workout</string>
+                              <string>내 영상 다시보기 </string>
                              </property>
                             </widget>
                            </item>
