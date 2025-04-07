@@ -15,7 +15,6 @@ from counting import AngleGuid
 from tts import TextToSpeechThread
 import sys
 import  Constants as cons
-from client_info import ClientInfo
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 mp_drawing = mp.solutions.drawing_utils

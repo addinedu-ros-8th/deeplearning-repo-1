@@ -122,17 +122,17 @@ class AiServer(QWidget):
                 self.model.run_thread()
 
             # QEventLoop가 한 번만 실행되도록 플래그 사용
-            if not hasattr(self, 'loop_ran'):  # loop_ran이 없으면 실행
-                loop = QEventLoop()
-                self.tcp.responseReceived.connect(loop.quit)  # 응답 받으면 이벤트 루프 종료
-                loop.exec_()
-                self.loop_ran = True  # 한 번 실행 후 플래그 설정
-            #print(self.tcp.result)
-            if self.tcp.result == "True":
-                pass
-                # self.process_video_frame(img_bytes, exercise)
-            if self.tcp.result == "False":
-                self.loop_ran = False
+            # if not hasattr(self, 'loop_ran'):  # loop_ran이 없으면 실행
+            #     loop = QEventLoop()
+            #     self.tcp.responseReceived.connect(loop.quit)  # 응답 받으면 이벤트 루프 종료
+            #     loop.exec_()
+            #     self.loop_ran = True  # 한 번 실행 후 플래그 설정
+            # #print(self.tcp.result)
+            # if self.tcp.result == "True":
+            #     pass
+            #     # self.process_video_frame(img_bytes, exercise)
+            # if self.tcp.result == "False":
+            #     self.loop_ran = False
 
     def process_video_frame(self, client, frame_bytes, exercise):
         """ 수신한 비디오 프레임을 디코딩 후 화면에 표시 및 녹화 """
