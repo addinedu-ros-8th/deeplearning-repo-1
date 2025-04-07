@@ -27,7 +27,7 @@ class ExerciseClassifier:
         # self.lock = threading.Lock()
         self.result = None
         self.pose = mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.5, min_tracking_confidence=0.5)
-        self.exercise_list = ["Standing Knee Raise", "Shoulder Press", "Squat", "Side Lunge"]
+        self.exercise_list = ["knee", "shoulder", "squat", "lunge"]
         self.exercise_count={'Standing Knee Raise':'knee',"Shoulder Press":'shoulder',"Squat":'squat'}
         
         # self.frame_delay = 10
@@ -41,17 +41,19 @@ class ExerciseClassifier:
         self.reps_done = 0
         self.break_active = False
         self.break_end_time = 0
+        self.tts_active = False
         
         # 같은 운동을 일정 프레임 이상 유지할 때 업데이트
         self.last_exercise = None
         self.consistent_frames = 0
+        self.correct = 0
         self.required_frames = 33 # 10프레임 이상 지속되어야 인식
         self.clients = clients
         self.angle_counter = AngleGuid(exercise=None)  # 초기 운동 설정
         
         self.predict_thread = threading.Thread(target=self.run_prediction, daemon=True)
         # self.predict_thread.start()
-
+        self.tts_thread = TextToSpeechThread()
         
         
         self.routine_list = []
@@ -155,15 +157,22 @@ class ExerciseClassifier:
         if self.result is not None:
             predict_class = int(np.argmax(self.result))
             predicted_label = self.exercise_list[predict_class]
+            print(predicted_label)
             try:
                 # if self.exercise_count.get(predicted_label) != internal_name:
                 if internal_name != predicted_label:
                     self.consistent_frames += 1
+                else:
+                    self.correct += 1
                 
                 if self.consistent_frames >= self.required_frames:
                     self.consistent_frames = 0
-                    tts_thread = TextToSpeechThread("다른 운동 하지 마세요.")
-                    tts_thread.start()
+                    self.tts_thread.set_text("회원님 다른운동 하지 마세요.")
+                    self.tts_thread.start()
+                elif self.correct >= 20:
+                    self.correct = 0
+                    self.tts_thread.set_text("회원님 잘 하고 있어요.")
+                    self.tts_thread.start()
 
             except Exception as e:
                     print("[Predict Error]", e)

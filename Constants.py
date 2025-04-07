@@ -185,7 +185,7 @@ TIER_ICONS = {
 }
 
 TIER_TIMES = {
-    0: 5,
+    0: 20,
     1: 90,
     2: 60
 }
@@ -197,7 +197,7 @@ EXERCISE_NAME_MAP = {
     '프론트 런지': 'lunge'
 }
 
-BREAK_TIME = 30
+BREAK_TIME = 10
 COUNTDOWN = 5
 
 class HourOfDay(Enum):
