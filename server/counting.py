@@ -118,7 +118,7 @@ class AngleGuid():
         unit_vec = vec / (np.linalg.norm(vec) + 1e-6)
 
         # 회전 각도: 관절 기준이라 180도에서 빼야 함
-        theta = np.radians(180 - angle_deg)
+        theta = np.radians(angle_deg)
 
         rot_matrix = np.array([
             [np.cos(theta), -np.sin(theta)],
@@ -138,7 +138,7 @@ class AngleGuid():
         }
 
         self.guide_angle = {
-            "shoulder": lambda idx: -120 * (1 if idx == 0 else -1),
+            "shoulder": lambda idx: -130 * (1 if idx == 0 else -1),
             "squat": lambda idx: 90 * (1 if idx == 1 else -1),
             "knee": lambda idx: -98
         }
