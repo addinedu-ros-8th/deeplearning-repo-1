@@ -19,7 +19,8 @@ class WorkoutHandler:
         self.cur = self.main_window.cur
         self.db = self.main_window.db
 
-        print("💡 현재 username:", main_window.username)
+
+
 
     def load_user_routine(self):
         self.cur.execute("SELECT workout_name FROM routine WHERE username = %s ORDER BY idx ASC", (self.main_window.username,))
@@ -71,9 +72,9 @@ class WorkoutHandler:
                 main_window.last_tick_time = now
         else:
             main_window.is_break = False
-           
+            WorkoutHandler.handle_force_set_progress()
         cv2.putText(frame, f"Break: {main_window.remaining_time}s", (cons.window_width // 2, cons.window_height // 2),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1.5, (75, 150, 150), 3)
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.5, (200, 150, 150), 3)
     @staticmethod
     def mark_current_workout_done(main_window):
         try:
@@ -97,16 +98,19 @@ class WorkoutHandler:
    
     @staticmethod
     def handle_force_set_progress(main_window):
+        
         try:
             routine = main_window.routine_queue[main_window.current_index]
             total_sets = routine['sets']
-            main_window.done_sets += 1
-            print(f"시간 초과 → 세트 강제 종료: {main_window.done_sets}/{total_sets}")
-
-        
+            main_window.sets += 1
+            print(f"시간 초과 → 세트 강제 종료: 현재 {main_window.sets}/{total_sets}")
+            main_window.reps = 0  # reset counting 
         except Exception as e:
             print("❌ 시간 초과 세트 처리 실패:", e)
-            
+        
+        # 다음 세트 진행 
+        main_window.is_working  = True      
+        
     @staticmethod
     def handle_set_progress(main_window, count):
         try:
