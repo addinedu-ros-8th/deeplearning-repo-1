@@ -93,6 +93,9 @@ class Client(QObject) :
                         else:
                             print(" 루틴 조회 실패:", self.data['err'])
                         self.responseReceived.emit()
+            elif self.data['command'] == "ME":
+                self.result = int(self.data['status'])
+                self.responseReceived.emit()
     def unpack_data(self, binary_data):
         offset = 0
         
