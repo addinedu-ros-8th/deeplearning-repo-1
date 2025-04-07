@@ -224,6 +224,7 @@ class WorkoutHandler:
             main_window.modal_pause_view.appear(frame)
         if main_window.modal_exit_view:
             main_window.modal_exit_view.appear(frame)
+    
     @staticmethod
     def send_to_gui(main_window, frame, frame_copy):
         img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -407,8 +408,8 @@ class WorkoutHandler:
         main_window.is_lookup = False
         main_window.modal_pause_view = None
         main_window.modal_exit_view = None
-        main_window.is_workout = False
-        main_window.is_ready = False
+
+        main_window.is_working = False  # 운동 중단 
 
         main_window.view.set_mode("main")
         main_window.lookup_frame.hide()
