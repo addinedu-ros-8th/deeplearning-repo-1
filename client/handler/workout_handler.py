@@ -20,53 +20,6 @@ class WorkoutHandler:
         self.db = self.main_window.db
 
         print("💡 현재 username:", main_window.username)
-    def add_workout_to_table(self):
-        workout = self.main_window.workout_text.text().strip()
-        tier = self.main_window.combo_tier.currentText()
-
-        if not workout:
-            QMessageBox.warning(self.main_window, "입력오류", "운동 이름을 입력해주세요.")
-            return 
-
-        try: 
-            self.cur.execute(
-                "INSERT INTO workout (workout_name, tier, reps) VALUES (%s, %s, %s)",
-                (workout, tier, 20)
-            )
-            self.db.commit()
-        except Exception as e:
-            QMessageBox.critical(self.main_window, "DB 오류", f"운동 추가 중 오류 발생: {e}")
-            return
-
-        row_position = self.main_window.tableWidget.rowCount()
-        self.main_window.tableWidget.insertRow(row_position)
-        self.main_window.tableWidget.setItem(row_position, 0, QTableWidgetItem(workout))
-        self.main_window.tableWidget.setItem(row_position, 1, QTableWidgetItem(tier))
-
-        self.main_window.workout_text.clear()
-        self.main_window.combo_tier.setCurrentIndex(0)
-
-    def delete_selected_workout(self):
-        row = self.main_window.tableWidget.currentRow()
-        if row < 0:
-            QMessageBox.warning(self.main_window, "선택 오류", "삭제할 운동을 선택해주세요.")
-            return
-
-        workout_item = self.main_window.tableWidget.item(row, 0)
-        if workout_item is None:
-            QMessageBox.warning(self.main_window, "삭제 오류", "유효한 운동이 아닙니다.")
-            return
-
-        workout = workout_item.text()
-
-        try:
-            self.cur.execute("DELETE FROM workout WHERE workout_name = %s", (workout,))
-            self.db.commit()
-        except Exception as e:
-            QMessageBox.critical(self.main_window, "DB 오류", f"운동 삭제 중 오류 발생: {e}")
-            return
-
-        self.main_window.tableWidget.removeRow(row)
 
     def load_user_routine(self):
         self.cur.execute("SELECT workout_name FROM routine WHERE username = %s ORDER BY idx ASC", (self.main_window.username,))
