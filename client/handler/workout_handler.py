@@ -436,6 +436,7 @@ class WorkoutHandler:
         main_window.modal_exit_view = ViewModalExit()
         main_window.modal_exit_view.bttn_yes.action = lambda: WorkoutHandler.handle_close_button(main_window)
         main_window.modal_exit_view.bttn_no.action = lambda: WorkoutHandler.handle_back_to_main(main_window)
+        
 
     @staticmethod
     def handle_lookup(main_window):
