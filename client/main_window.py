@@ -60,7 +60,8 @@ class MainWindow(QMainWindow, main_class):
         self.is_break = False
 
         self.reps_done = 0
-
+        self.set_done = False
+        
         self.auth = AuthHandler(self)
         self.btn_profile1.clicked.connect(lambda: self.auth.login_user(self.label_profile1.text()))
         self.btn_profile2.clicked.connect(lambda: self.auth.login_user(self.label_profile2.text()))
@@ -77,7 +78,7 @@ class MainWindow(QMainWindow, main_class):
         self.countdown_timer = QTimer()
         self.countdown_time_left = cons.COUNTDOWN 
         self.is_countdown = False 
-        
+            
     def start_preworkout_countdown(self):
         self.is_countdown = True
         self.countdown_timer.timeout.connect(self.update_countdown)
@@ -128,6 +129,7 @@ class MainWindow(QMainWindow, main_class):
     def set_user_name(self, name, user_id, weight, height, tier, score):
         self.lb_name.setText(name)
         self.lb_name_2.setText(name)        # account name 
+
         self.username = name
         self.user_id = user_id
         self.weight = weight
@@ -185,12 +187,12 @@ class MainWindow(QMainWindow, main_class):
             self.lb_sets.setText("")
             self.lb_thumbnail.clear()
             return
-        
-        # self.routine_queue = self.tcp.routine_list.copy()
+
         if not self.routine_queue:
             print("❌ 루틴이 비어 있습니다. 운동을 시작할 수 없습니다.")
             self.lb_what.setText("routine x")
             return
+        
         current = self.routine_queue[self.current_index]
         # self.current_workout = current
         # current = self.routine_queue.pop(0)
@@ -238,6 +240,7 @@ class MainWindow(QMainWindow, main_class):
     def handle_next_workout(self):
         self.current_index += 1
         self.set_current_workout()
+
     # Account 
     def show_modify(self):
         self.stackedWidget_small_2.setCurrentWidget(self.pg_modify)

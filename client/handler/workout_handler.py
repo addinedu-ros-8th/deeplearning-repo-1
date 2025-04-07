@@ -27,43 +27,6 @@ class WorkoutHandler:
         self.routine = [row[0] for row in rows]
         self.current_index = 0
     
-    # def update_break_gui(self):
-    #     # break 상태일 경우 화면에 타이머 표시
-    #     if hasattr(self, 'classifier') and self.classifier.break_active:
-    #         remaining = int(30 - (time.time() - self.classifier.break_start_time))
-    #         if remaining >= 0:
-    #             cv2.putText(frame, f"Break Time: {remaining}s", (cons.window_width // 2 - 200, 80),
-    #                         cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 4)
-    #         if not self.classifier.check_break():
-    #             print("[Main] break 종료됨")
-    #             # break 종료 시 아무 것도 하지 않음 (exercise_model이 알아서 다음 세트 처리)
-    #     return frame
-
-    def next_set_or_workout(self):
-        model = self.main_window.classifier
-        current = model.get_current_exercise()
-
-        if current is None:
-            self.main_window.lb_what.setText("루틴 완료")
-            return
-
-        if model.reps_done < current['sets']:
-            print(f"➡️ 다음 세트 시작: {model.reps_done + 1}/{current['sets']}")
-        else:
-            print(f"✅ 운동 완료: {current['name']}")
-            model.reps_done = 0
-            model.current_routine_idx += 1
-            model.update_routine_index(model.current_routine_idx)
-
-        if model.current_routine_idx < len(model.routine_list):
-            self.main_window.remaining_time = 30
-            self.main_window.last_tick_time = time.time()
-            self.main_window.is_break = True
-        else:
-            print("🎉 루틴 전체 완료")
-            self.main_window.lb_what.setText("모든 운동 완료!")
-
-
     @staticmethod
     def go2workout(main_window):
         main_window.modal_exit_view = None
@@ -108,10 +71,78 @@ class WorkoutHandler:
                 main_window.last_tick_time = now
         else:
             main_window.is_break = False
-            main_window.workout_handler.next_set_or_workout()
+           
         cv2.putText(frame, f"Break: {main_window.remaining_time}s", (cons.window_width // 2, cons.window_height // 2),
                     cv2.FONT_HERSHEY_SIMPLEX, 1.5, (75, 150, 150), 3)
-    
+    @staticmethod
+    def mark_current_workout_done(main_window):
+        try:
+            user_id = main_window.user_id
+            routine = main_window.routine_queue[main_window.current_index]
+            workout_id = routine['id']
+            
+            # 최신 routine의 workout id 들을 가져오기 
+            sql = "SELECT MAX(routine_id) FROM routine_workout WHERE user_id = ?"
+            main_window.cur.execute(sql, (user_id,))
+            result = main_window.cur.fetchone()
+            routine_id = result[0]
+            
+            sql = """UPDATE routine_workout SET status = TRUE WHERE user_id = ? AND routine_id = ? AND workout_id = ? """
+            main_window.cur.execute(sql, (user_id, routine_id, workout_id))
+            main_window.db.conn.commit()
+
+            print(f" {routine['name']}운동 완료 DB 업데이트: user_id={user_id}, id={workout_id}")
+        except Exception as e:
+            print(f"❌ DB 업데이트 실패: {e}")
+   
+    @staticmethod
+    def handle_force_set_progress(main_window):
+        try:
+            routine = main_window.routine_queue[main_window.current_index]
+            total_sets = routine['sets']
+            main_window.done_sets += 1
+            print(f"시간 초과 → 세트 강제 종료: {main_window.done_sets}/{total_sets}")
+
+        
+        except Exception as e:
+            print("❌ 시간 초과 세트 처리 실패:", e)
+            
+    @staticmethod
+    def handle_set_progress(main_window, count):
+        try:
+            user_id = main_window.user_id
+            routine = main_window.routine_queue[main_window.current_index]
+            total_reps = routine['reps']
+            total_sets = routine['sets']
+            
+            # Count가 목표 횟수 도달한 경우
+            if count >= total_reps:
+                main_window.reps_done += 1
+                print(f" 세트 완료: {main_window.reps_done}/{total_sets}")
+
+                if main_window.reps_done >= total_sets:
+                    # 운동 완료 -> routine_workou.status == true 
+                    WorkoutHandler.mark_current_workout_done(main_window)
+                    main_window.reps_done = 0
+                    main_window.current_index += 1
+
+                    if main_window.current_index < len(main_window.routine_queue):
+                        print(f"다음 운동: {main_window.routine_queue[main_window.current_index]['name']}")
+                    else:
+                        print(" 전체 루틴 완료!")
+                        main_window.lb_what.setText("루틴 완료")
+                        # sql = """UPDATE routine SET status = TRUE WHERE user_id = ? """
+                        # main_window.cur.execute(sql, (user_id,))
+                        # main_window.db.conn.commit()
+                else:
+                    print(" 다음 세트 로.")
+
+                # 항상 break time 시작
+                main_window.start_break_timer()
+
+        except Exception as e:
+            print("세트 진행 로직 실패:", e)
+
     @staticmethod      
     def handle_pose_info(main_window, frame):
         if not isinstance(main_window.tcp.landmark, dict):
@@ -127,7 +158,7 @@ class WorkoutHandler:
             total_sets = routine['sets']
             done_sets = main_window.reps_done
         except Exception as e:
-            print("⚠️ handle_pose_info 루틴 정보 접근 실패:", e)
+            print("handle_pose_info 루틴 정보 접근 실패:", e)
             return
         
         count = pi_data['count']
@@ -198,6 +229,7 @@ class WorkoutHandler:
         # 4. 남은 시간 rendering 
         cv2.putText(frame, f"{main_window.remaining_time}", (cons.window_width - 250, 50),
                     cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 0, 255), 3)
+        
     @staticmethod   
     def handle_lookup_mode(main_window, frame, lmList):
         number = main_window.hand_detector.count_fingers(lmList)
@@ -216,6 +248,7 @@ class WorkoutHandler:
             main_window.current_gesture = None
             main_window.gesture_start_time = None
             main_window.selection_confirmed = False
+
     @staticmethod
     def draw_overlay_ui(main_window, frame):
         if main_window.view:
