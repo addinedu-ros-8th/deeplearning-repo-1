@@ -47,6 +47,7 @@ class MainWindow(QMainWindow, main_class):
  
         self.remaining_time = 0
         self.last_tick_time = 0
+        self.last_selected_row = -1
         self.is_break = False
 
         self.reps_done = 0
@@ -215,6 +216,139 @@ class MainWindow(QMainWindow, main_class):
         self.stackedWidget_small_2.setCurrentWidget(self.pg_record)
     def show_config(self):
         self.stackedWidget_small_2.setCurrentWidget(self.pg_config)
+        self.btn_modify_workout.setEnabled(False)
+        self.btn_delete_workout.setEnabled(False)
+        self.tcp.sendData(pack_data(command="ME", status='0'))
+
+        loop = QEventLoop()
+        self.tcp.responseReceived.connect(loop.quit)
+        loop.exec_()
+
+        data = str.split(self.tcp.data['list_data'], '\n')
+
+        self.tableWidget.clearContents()
+        self.tableWidget.setRowCount(0)
+
+        for tmp in data[:-1]:
+            tier = ""
+            row = self.tableWidget.rowCount()
+            self.tableWidget.insertRow(row)
+
+            tmp2 = tmp.split(",")
+            self.tableWidget.setItem(row, 0, QTableWidgetItem(tmp2[1]))
+            if tmp2[2] == "0": tier = "bronze"
+            elif tmp2[2] == "1": tier = "silver"
+            elif tmp2[2] == "2": tier = "gold"
+            self.tableWidget.setItem(row, 1, QTableWidgetItem(tier))
+            self.tableWidget.setItem(row, 2, QTableWidgetItem(tmp2[3]))
+            self.tableWidget.setItem(row, 3, QTableWidgetItem(tmp2[4]))
+
+    def add_workout(self):
+        workout = self.workout_text.text()
+        tier = self.combo_tier.currentIndex()
+        reps = self.combo_reps.currentText()
+        score = self.combo_score.currentText()
+
+        if not workout:
+            QMessageBox.warning(self.main_window, "입력오류", "운동 이름을 입력해주세요.")
+            return
+        
+        if self.tableWidget.findItems(workout, Qt.MatchContains):
+            QMessageBox.warning(self, "입력오류", "이미 존재하는 운동입니다.")
+            return
+        
+        data = workout + "," + str(tier) + "," + reps + "," + score
+        self.tcp.sendData(pack_data("ME", status='1', data=data))
+
+        loop = QEventLoop()
+        self.tcp.responseReceived.connect(loop.quit)
+        loop.exec_()
+
+        if self.tcp.result == 1:
+            QMessageBox.information(self, "성공", "'" + workout + "' 운동이 추가되었습니다.")
+            self.show_config()
+            self.tableWidget.scrollToBottom()
+            self.workout_text.clear()
+            self.combo_tier.setCurrentIndex(0)
+            self.combo_reps.setCurrentIndex(0)
+            self.combo_score.setCurrentIndex(0)
+        elif self.tcp.result == 9:
+            QMessageBox.warning(self, "실패", "'" + workout + "' 운동 추가에 실패했습니다.")
+
+    def delete_workout(self):
+        item = self.tableWidget.selectedItems()
+
+        if not item:
+            QMessageBox.warning(self, "삭제오류", "삭제할 운동을 선택해주세요.")
+            return
+        
+        self.tcp.sendData(pack_data("ME", status='3', data=item[0].text()))
+
+        loop = QEventLoop()
+        self.tcp.responseReceived.connect(loop.quit)
+        loop.exec_()
+
+        if self.tcp.result == 3:
+            QMessageBox.information(self, "성공", "'" + item[0].text() + "' 운동이 삭제되었습니다.")
+            self.show_config()
+            self.tableWidget.scrollToTop()
+        elif self.tcp.result == 9:
+            QMessageBox.warning(self, "실패", "'" + item[0].text() + "' 운동 삭제에 실패했습니다.")\
+            
+    def modify_workout(self):
+        item = self.tableWidget.selectedItems()
+
+        if not item:
+            QMessageBox.warning(self, "수정오류", "수정할 운동을 선택해주세요.")
+            return
+        
+        name = item[0].text()
+        tier = str(self.combo_tier.currentIndex())
+        reps = self.combo_reps.currentText()[:-1]
+        score = self.combo_score.currentText()[:-1]
+
+        data = name + "," + tier + "," + reps + "," + score
+        self.tcp.sendData(pack_data("ME", status='2', data=data))
+
+        loop = QEventLoop()
+        self.tcp.responseReceived.connect(loop.quit)
+        loop.exec_()
+
+        if self.tcp.result == 2:
+            QMessageBox.information(self, "성공", "'" + name + "' 운동이 수정되었습니다.")
+            self.show_config()
+        elif self.tcp.result == 9:
+            QMessageBox.warning(self, "실패", "'" + name + "' 운동 수정에 실패했습니다.")
+
+    def click_tableWidget(self):
+        item = self.tableWidget.selectedItems()
+
+        if self.last_selected_row == self.tableWidget.currentRow():
+            self.tableWidget.clearSelection()
+            self.workout_text.clear()
+            self.workout_text.setEnabled(True)
+            self.workout_text.setFocus()
+            self.combo_tier.setCurrentIndex(0)
+            self.combo_reps.setCurrentIndex(0)
+            self.combo_score.setCurrentIndex(0)
+            self.last_selected_row = -1
+            self.btn_add_workout.setEnabled(True)
+            self.btn_modify_workout.setEnabled(False)
+            self.btn_delete_workout.setEnabled(False)
+            return
+
+        self.workout_text.setText(item[0].text())
+        self.workout_text.setEnabled(False)
+        self.combo_tier.setCurrentText(item[1].text())
+        self.combo_reps.setCurrentText(item[2].text() + "회")
+        self.combo_score.setCurrentText(item[3].text() + "점")
+
+        self.btn_add_workout.setEnabled(False)
+        self.btn_modify_workout.setEnabled(True)
+        self.btn_delete_workout.setEnabled(True)
+
+        self.last_selected_row = self.tableWidget.currentRow()
+    
     def set_user_tier(self,tier):
         tier_icon_path = cons.TIER_ICONS.get(tier)
         if tier_icon_path: 
