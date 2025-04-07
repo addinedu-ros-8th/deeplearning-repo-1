@@ -10,7 +10,7 @@ DL 프로젝트 1조 저장소. 팀 CHICAGO
   <h3 align="center">피트니스 AI 에이전트(Fitness AI Agent)</h3>
 
   <p align="center">
-    <a href="">Video Demo</a>\\
+    <a href="https://docs.google.com/presentation/d/1iNOuPEVw5FUgLmUJqL00OPBQSc4z1UGs">Video Demo</a>\\
     <a href="">Presentation</a>
   </p>
 </p>
