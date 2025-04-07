@@ -98,7 +98,7 @@ class WorkoutHandler:
     
     @staticmethod
     def handle_break_time(main_window, frame):
-        if not main_window.is_break: return
+        
         if main_window.remaining_time > 0:
             now = time.time()
             if now - main_window.last_tick_time >= 1:
@@ -109,6 +109,7 @@ class WorkoutHandler:
             main_window.workout_handler.next_set_or_workout()
         cv2.putText(frame, f"Break: {main_window.remaining_time}s", (cons.window_width // 2, cons.window_height // 2),
                     cv2.FONT_HERSHEY_SIMPLEX, 1.5, (75, 150, 150), 3)
+    
     @staticmethod      
     def handle_pose_info(main_window, frame):
         if not isinstance(main_window.tcp.landmark, dict):
@@ -116,7 +117,6 @@ class WorkoutHandler:
         pi_data = main_window.tcp.landmark
         if pi_data.get("command") != "PI":
             return
-
 
         # 루틴에서 reps / sets 가져오기
         try:
@@ -133,24 +133,24 @@ class WorkoutHandler:
         # remaining_reps = max(0, total_reps - count)
         # remaining_sets = max(0, total_sets - done_sets)
         
-        if not main_window.is_break:
-            ox, oy = pi_data['origin']['x'], pi_data['origin']['y']
-            cv2.circle(frame, (ox, oy), 10, (0, 255, 255), -1)
+       
+        ox, oy = pi_data['origin']['x'], pi_data['origin']['y']
+        cv2.circle(frame, (ox, oy), 10, (0, 255, 255), -1)
 
-            vx, vy = pi_data['vector']['x'], pi_data['vector']['y']
-            cv2.arrowedLine(frame, (ox, oy), (vx, vy), (255, 0, 255), 3)
+        vx, vy = pi_data['vector']['x'], pi_data['vector']['y']
+        cv2.arrowedLine(frame, (ox, oy), (vx, vy), (255, 0, 255), 3)
 
-            for pt in pi_data['landmarks']:
-                cv2.circle(frame, (pt['x'], pt['y']), 6, (0, 100, 255), -1)
-            # 남은 개수와 세트
-            cv2.putText(frame, f"reps: {count}/{total_reps}", 
-                        (10, 220), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 255), 2)
-            cv2.putText(frame, f"sets: {done_sets}/{total_sets}", 
-                        (10, 260), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 0), 2)
+        for pt in pi_data['landmarks']:
+            cv2.circle(frame, (pt['x'], pt['y']), 6, (0, 100, 255), -1)
+
+        # 남은 개수와 세트
+        cv2.putText(frame, f"reps: {count}/{total_reps}", 
+                    (10, 220), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 255), 2)
+        cv2.putText(frame, f"sets: {done_sets}/{total_sets}", 
+                    (10, 260), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 0), 2)
+
     @staticmethod    
     def handle_workout_timer(main_window, frame):
-        if main_window.is_break: return  # break 중일 땐 pass
-
         #  1. 현재 운동 Routine 정보 가져오기
         routine = main_window.routine_queue[main_window.current_index]
         # current_reps = routine['reps']
@@ -227,9 +227,8 @@ class WorkoutHandler:
         img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         qt_img = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888)
         main_window.lb_cam.setPixmap(QPixmap.fromImage(qt_img))
-
-        if main_window.camera.is_active:
-            main_window.udp.send_video(frame_copy)
+        
+        main_window.udp.send_video(frame_copy)
 
     @staticmethod
     def update_gui(main_window):
@@ -240,17 +239,24 @@ class WorkoutHandler:
         lmList = main_window.hand_detector.findPosition(frame, draw=False)
         Detector.analyze_user(frame)
         hands.set()
+        if main_window.is_countdown:
+            cv2.putText(frame, f"{main_window.countdown_time_left}..", 
+                (cons.window_width // 2 , cons.window_height // 2), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 3)
 
-        if main_window.is_ready:
-            WorkoutHandler.handle_break_time(main_window, frame)
-            WorkoutHandler.handle_pose_info(main_window, frame)
-            WorkoutHandler.handle_workout_timer(main_window, frame)
+        if main_window.is_working:
+            if main_window.is_break:
+                WorkoutHandler.handle_break_time(main_window, frame)        # break time countdown 
+            else: 
+                WorkoutHandler.handle_pose_info(main_window, frame)
+                WorkoutHandler.handle_workout_timer(main_window, frame)     # workout time countdown 
+                
+
         elif main_window.is_lookup:
             WorkoutHandler.handle_lookup_mode(main_window, frame, lmList)
 
         WorkoutHandler.draw_overlay_ui(main_window, frame)
         WorkoutHandler.send_to_gui(main_window, frame, frame_copy)
-        
+
         
     @staticmethod
     def play_selected_workout(main_window, index, tier):
@@ -302,16 +308,17 @@ class WorkoutHandler:
         main_window.view.set_mode("working")
         main_window.lookup_frame.hide()
         main_window.routine_frame.show()
-        print(main_window.lb_cam.size())
+        main_window.start_preworkout_countdown()
+        # print(main_window.lb_cam.size())
         WorkoutHandler.save_video(main_window)
         QApplication.processEvents()
-
+        
         main_window.remaining_time = cons.TIER_TIMES.get(main_window.tier, 80)
         main_window.last_tick_time = time.time()
         main_window.is_workout = True
 
         main_window.view.set_button_action("pause", lambda: WorkoutHandler.handle_pause(main_window))
-        main_window.view.set_button_action("ready", lambda: WorkoutHandler.handle_ready(main_window))
+        main_window.view.set_button_action("skip", lambda: WorkoutHandler.handle_skip(main_window))
     @staticmethod
     def on_routine_ready(main_window):
         # GR에 대한 응답인지 확인
@@ -329,12 +336,12 @@ class WorkoutHandler:
         except Exception as e:
             print("disconnect 실패:", e)
     @staticmethod
-    def handle_ready(main_window):
+    def handle_skip(main_window):
         print("Ready button tapped!")
-        main_window.is_ready = True 
+        
 
         main_window.view.set_button_action("pause", lambda: WorkoutHandler.handle_pause(main_window))
-        main_window.view.set_button_action("ready", lambda: WorkoutHandler.handle_ready(main_window))
+        main_window.view.set_button_action("skip", lambda: WorkoutHandler.handle_skip(main_window))
     @staticmethod
     def handle_exit(main_window):
         print("EXIT button tapped!")
@@ -400,10 +407,12 @@ class WorkoutHandler:
         main_window.modal_pause_view = None
         main_window.modal_exit_view = None
         main_window.is_workout = False
+        main_window.is_ready = False
 
         main_window.view.set_mode("main")
         main_window.lookup_frame.hide()
         main_window.routine_frame.hide()
+        
         main_window.view.set_button_action("start", lambda: WorkoutHandler.handle_start(main_window))
         main_window.view.set_button_action("exit", lambda: WorkoutHandler.handle_exit(main_window))
         main_window.view.set_button_action("lookup", lambda: WorkoutHandler.handle_lookup(main_window))
@@ -418,7 +427,7 @@ class WorkoutHandler:
         data=pack_data("RC",data='True')
         main_window.tcp.sendData(data)
         main_window.view.set_button_action("pause", lambda: WorkoutHandler.handle_pause(main_window))
-        main_window.view.set_button_action("ready", lambda: WorkoutHandler.handle_ready(main_window))
+        main_window.view.set_button_action("skip", lambda: WorkoutHandler.handle_skip(main_window))
 
     @staticmethod
     def handle_close_button(main_window):
