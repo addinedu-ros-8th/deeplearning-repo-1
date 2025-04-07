@@ -232,8 +232,6 @@ class WorkoutHandler:
         main_window.lb_cam.setPixmap(QPixmap.fromImage(qt_img))
         main_window.lb_cam.setPixmap(QPixmap.fromImage(qt_img))
 
-        main_window.udp.send_video(frame_copy, main_window.lb_what.text(), main_window.user_id)
-
     @staticmethod
     def update_gui(main_window):
         if main_window.camera.frame is None: return
@@ -251,6 +249,8 @@ class WorkoutHandler:
             if main_window.is_break:
                 WorkoutHandler.handle_break_time(main_window, frame)        # break time countdown 
             else: 
+                main_window.udp.send_video(frame_copy, main_window.lb_what.text(), main_window.user_id)
+
                 WorkoutHandler.handle_pose_info(main_window, frame)
                 WorkoutHandler.handle_workout_timer(main_window, frame)     # workout time countdown 
                 
