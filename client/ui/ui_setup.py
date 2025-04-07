@@ -72,6 +72,7 @@ class UISetupHelper:
 
         main_window.btn_calendar.clicked.connect(main_window.go2calendar)
         main_window.btn_back2main.clicked.connect(main_window.back2main)
+        
         # Workout
         main_window.btn_work_to_main.clicked.connect(main_window.back2main)
         main_window.btn_next.clicked.connect(main_window.handle_next_workout)       # for debugging 

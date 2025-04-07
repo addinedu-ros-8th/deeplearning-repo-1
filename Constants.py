@@ -185,7 +185,7 @@ TIER_ICONS = {
 }
 
 TIER_TIMES = {
-    0: 100,
+    0: 5,
     1: 90,
     2: 60
 }
@@ -198,6 +198,8 @@ EXERCISE_NAME_MAP = {
 }
 
 BREAK_TIME = 30
+COUNTDOWN = 5
+
 class HourOfDay(Enum):
     H00 = "00:00"; H03 = "03:00"; H06 = "06:00"; H09 = "09:00"; 
     H12 = "12:00"; H15 = "15:00"; H18 = "18:00"; H21 = "21:00"; 

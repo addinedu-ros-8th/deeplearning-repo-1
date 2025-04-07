@@ -33,9 +33,9 @@ class ViewMain(View):
             self.buttons["pause"] = ViewButton(
                 x=50, y=50, x_end=200, y_end=130,
                 label=ViewLabel(text="PAUSE"), center_label=True)
-            self.buttons["ready"] = ViewButton(
+            self.buttons["skip"] = ViewButton(
                 x=220, y=50, x_end=370, y_end=130,
-                label=ViewLabel(text="READY"), center_label=True)
+                label=ViewLabel(text="SKIP"), center_label=True)
 
         elif mode == "lookup":
             self.buttons["back"] = ViewButton(
