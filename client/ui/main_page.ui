@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>850</width>
-    <height>580</height>
+    <height>608</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -402,39 +402,39 @@
                           </property>
                           <layout class="QVBoxLayout" name="verticalLayout_4">
                            <item>
-                            <widget class="QFrame" name="frame_11">
+                            <widget class="QFrame" name="frame_20">
                              <property name="frameShape">
                               <enum>QFrame::StyledPanel</enum>
                              </property>
                              <property name="frameShadow">
                               <enum>QFrame::Raised</enum>
                              </property>
-                             <layout class="QHBoxLayout" name="horizontalLayout_5">
+                             <layout class="QHBoxLayout" name="horizontalLayout_11">
                               <item>
-                               <widget class="QLabel" name="label_3">
+                               <widget class="QLabel" name="lb_first">
                                 <property name="text">
                                  <string>1st</string>
                                 </property>
                                </widget>
                               </item>
                               <item>
-                               <widget class="QLabel" name="label_4">
+                               <widget class="QLabel" name="label_27">
                                 <property name="text">
-                                 <string/>
+                                 <string>남상기</string>
                                 </property>
                                </widget>
                               </item>
                               <item>
-                               <widget class="QLabel" name="label_5">
+                               <widget class="QLabel" name="label_28">
                                 <property name="text">
                                  <string>님 Score:</string>
                                 </property>
                                </widget>
                               </item>
                               <item>
-                               <widget class="QLabel" name="label_6">
+                               <widget class="QLabel" name="label_29">
                                 <property name="text">
-                                 <string>TextLabel</string>
+                                 <string>892</string>
                                 </property>
                                </widget>
                               </item>
@@ -442,39 +442,39 @@
                             </widget>
                            </item>
                            <item>
-                            <widget class="QFrame" name="frame_12">
+                            <widget class="QFrame" name="frame_22">
                              <property name="frameShape">
                               <enum>QFrame::StyledPanel</enum>
                              </property>
                              <property name="frameShadow">
                               <enum>QFrame::Raised</enum>
                              </property>
-                             <layout class="QHBoxLayout" name="horizontalLayout_6">
+                             <layout class="QHBoxLayout" name="horizontalLayout_19">
                               <item>
-                               <widget class="QLabel" name="label_7">
+                               <widget class="QLabel" name="label_30">
                                 <property name="text">
                                  <string>2st</string>
                                 </property>
                                </widget>
                               </item>
                               <item>
-                               <widget class="QLabel" name="label_8">
+                               <widget class="QLabel" name="label_31">
                                 <property name="text">
-                                 <string>TextLabel</string>
+                                 <string>이명운</string>
                                 </property>
                                </widget>
                               </item>
                               <item>
-                               <widget class="QLabel" name="label_9">
+                               <widget class="QLabel" name="label_33">
                                 <property name="text">
                                  <string>님 Score:</string>
                                 </property>
                                </widget>
                               </item>
                               <item>
-                               <widget class="QLabel" name="label_10">
+                               <widget class="QLabel" name="label_34">
                                 <property name="text">
-                                 <string>TextLabel</string>
+                                 <string>761</string>
                                 </property>
                                </widget>
                               </item>
@@ -482,39 +482,39 @@
                             </widget>
                            </item>
                            <item>
-                            <widget class="QFrame" name="frame_13">
+                            <widget class="QFrame" name="frame_30">
                              <property name="frameShape">
                               <enum>QFrame::StyledPanel</enum>
                              </property>
                              <property name="frameShadow">
                               <enum>QFrame::Raised</enum>
                              </property>
-                             <layout class="QHBoxLayout" name="horizontalLayout_7">
+                             <layout class="QHBoxLayout" name="horizontalLayout_28">
                               <item>
-                               <widget class="QLabel" name="label_11">
+                               <widget class="QLabel" name="label_35">
                                 <property name="text">
                                  <string>3st</string>
                                 </property>
                                </widget>
                               </item>
                               <item>
-                               <widget class="QLabel" name="label_12">
+                               <widget class="QLabel" name="label_36">
                                 <property name="text">
-                                 <string>TextLabel</string>
+                                 <string>김가은</string>
                                 </property>
                                </widget>
                               </item>
                               <item>
-                               <widget class="QLabel" name="label_13">
+                               <widget class="QLabel" name="label_37">
                                 <property name="text">
                                  <string>님 Score:</string>
                                 </property>
                                </widget>
                               </item>
                               <item>
-                               <widget class="QLabel" name="label_14">
+                               <widget class="QLabel" name="label_39">
                                 <property name="text">
-                                 <string>TextLabel</string>
+                                 <string>544</string>
                                 </property>
                                </widget>
                               </item>
@@ -522,39 +522,39 @@
                             </widget>
                            </item>
                            <item>
-                            <widget class="QFrame" name="frame_14">
+                            <widget class="QFrame" name="frame_31">
                              <property name="frameShape">
                               <enum>QFrame::StyledPanel</enum>
                              </property>
                              <property name="frameShadow">
                               <enum>QFrame::Raised</enum>
                              </property>
-                             <layout class="QHBoxLayout" name="horizontalLayout_8">
+                             <layout class="QHBoxLayout" name="horizontalLayout_29">
                               <item>
-                               <widget class="QLabel" name="label_15">
+                               <widget class="QLabel" name="label_43">
                                 <property name="text">
                                  <string>4st</string>
                                 </property>
                                </widget>
                               </item>
                               <item>
-                               <widget class="QLabel" name="label_16">
+                               <widget class="QLabel" name="label_44">
                                 <property name="text">
-                                 <string>TextLabel</string>
+                                 <string>박정배</string>
                                 </property>
                                </widget>
                               </item>
                               <item>
-                               <widget class="QLabel" name="label_17">
+                               <widget class="QLabel" name="label_45">
                                 <property name="text">
                                  <string>님 Score:</string>
                                 </property>
                                </widget>
                               </item>
                               <item>
-                               <widget class="QLabel" name="label_18">
+                               <widget class="QLabel" name="label_48">
                                 <property name="text">
-                                 <string>TextLabel</string>
+                                 <string>42</string>
                                 </property>
                                </widget>
                               </item>
@@ -590,79 +590,67 @@
                           </property>
                           <layout class="QHBoxLayout" name="horizontalLayout_12">
                            <item>
-                            <widget class="QFrame" name="frame_20">
+                            <widget class="QFrame" name="frame_21">
                              <property name="frameShape">
                               <enum>QFrame::StyledPanel</enum>
                              </property>
                              <property name="frameShadow">
                               <enum>QFrame::Raised</enum>
                              </property>
-                             <layout class="QVBoxLayout" name="verticalLayout_6">
+                             <layout class="QHBoxLayout" name="horizontalLayout">
                               <item>
-                               <widget class="QFrame" name="frame_21">
-                                <property name="frameShape">
-                                 <enum>QFrame::StyledPanel</enum>
-                                </property>
-                                <property name="frameShadow">
-                                 <enum>QFrame::Raised</enum>
-                                </property>
-                                <layout class="QHBoxLayout" name="horizontalLayout">
-                                 <item>
-                                  <widget class="QLabel" name="day_icon">
-                                   <property name="text">
-                                    <string>TextLabel</string>
-                                   </property>
-                                  </widget>
-                                 </item>
-                                 <item>
-                                  <widget class="QLabel" name="count_icon">
-                                   <property name="text">
-                                    <string>TextLabel</string>
-                                   </property>
-                                  </widget>
-                                 </item>
-                                 <item>
-                                  <widget class="QLabel" name="time_icon">
-                                   <property name="text">
-                                    <string>TextLabel</string>
-                                   </property>
-                                  </widget>
-                                 </item>
-                                </layout>
-                               </widget>
+                               <layout class="QVBoxLayout" name="verticalLayout_21">
+                                <item>
+                                 <widget class="QLabel" name="day_icon">
+                                  <property name="text">
+                                   <string>TextLabel</string>
+                                  </property>
+                                 </widget>
+                                </item>
+                                <item>
+                                 <widget class="QLabel" name="lb_days">
+                                  <property name="text">
+                                   <string>TextLabel</string>
+                                  </property>
+                                 </widget>
+                                </item>
+                               </layout>
                               </item>
                               <item>
-                               <widget class="QFrame" name="frame_22">
-                                <property name="frameShape">
-                                 <enum>QFrame::StyledPanel</enum>
-                                </property>
-                                <property name="frameShadow">
-                                 <enum>QFrame::Raised</enum>
-                                </property>
-                                <layout class="QHBoxLayout" name="horizontalLayout_11">
-                                 <item>
-                                  <widget class="QLabel" name="lb_days">
-                                   <property name="text">
-                                    <string>TextLabel</string>
-                                   </property>
-                                  </widget>
-                                 </item>
-                                 <item>
-                                  <widget class="QLabel" name="lb_count">
-                                   <property name="text">
-                                    <string>TextLabel</string>
-                                   </property>
-                                  </widget>
-                                 </item>
-                                 <item>
-                                  <widget class="QLabel" name="lb_time">
-                                   <property name="text">
-                                    <string>TextLabel</string>
-                                   </property>
-                                  </widget>
-                                 </item>
-                                </layout>
-                               </widget>
+                               <layout class="QVBoxLayout" name="verticalLayout_20">
+                                <item>
+                                 <widget class="QLabel" name="count_icon">
+                                  <property name="text">
+                                   <string>TextLabel</string>
+                                  </property>
+                                 </widget>
+                                </item>
+                                <item>
+                                 <widget class="QLabel" name="lb_count">
+                                  <property name="text">
+                                   <string>TextLabel</string>
+                                  </property>
+                                 </widget>
+                                </item>
+                               </layout>
+                              </item>
+                              <item>
+                               <layout class="QVBoxLayout" name="verticalLayout_15">
+                                <item>
+                                 <widget class="QLabel" name="time_icon">
+                                  <property name="text">
+                                   <string>TextLabel</string>
+                                  </property>
+                                 </widget>
+                                </item>
+                                <item>
+                                 <widget class="QLabel" name="lb_time">
+                                  <property name="text">
+                                   <string>TextLabel</string>
+                                  </property>
+                                 </widget>
+                                </item>
+                               </layout>
                               </item>
                              </layout>
                             </widget>
@@ -1043,76 +1031,6 @@ color: white;</string>
                    </property>
                    <layout class="QVBoxLayout" name="verticalLayout_16">
                     <item>
-                     <widget class="QFrame" name="frame_44">
-                      <property name="sizePolicy">
-                       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                        <horstretch>0</horstretch>
-                        <verstretch>0</verstretch>
-                       </sizepolicy>
-                      </property>
-                      <property name="frameShape">
-                       <enum>QFrame::StyledPanel</enum>
-                      </property>
-                      <property name="frameShadow">
-                       <enum>QFrame::Raised</enum>
-                      </property>
-                      <layout class="QHBoxLayout" name="horizontalLayout_21">
-                       <item>
-                        <widget class="QRadioButton" name="radioButton_4">
-                         <property name="sizePolicy">
-                          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                           <horstretch>0</horstretch>
-                           <verstretch>0</verstretch>
-                          </sizepolicy>
-                         </property>
-                         <property name="text">
-                          <string>level-1</string>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QRadioButton" name="radioButton_5">
-                         <property name="sizePolicy">
-                          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                           <horstretch>0</horstretch>
-                           <verstretch>0</verstretch>
-                          </sizepolicy>
-                         </property>
-                         <property name="text">
-                          <string>level-2</string>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QRadioButton" name="radioButton_6">
-                         <property name="sizePolicy">
-                          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                           <horstretch>0</horstretch>
-                           <verstretch>0</verstretch>
-                          </sizepolicy>
-                         </property>
-                         <property name="text">
-                          <string>level-3</string>
-                         </property>
-                        </widget>
-                       </item>
-                       <item>
-                        <widget class="QRadioButton" name="radioButton_7">
-                         <property name="sizePolicy">
-                          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                           <horstretch>0</horstretch>
-                           <verstretch>0</verstretch>
-                          </sizepolicy>
-                         </property>
-                         <property name="text">
-                          <string>level-4</string>
-                         </property>
-                        </widget>
-                       </item>
-                      </layout>
-                     </widget>
-                    </item>
-                    <item>
                      <widget class="QFrame" name="frame_43">
                       <property name="frameShape">
                        <enum>QFrame::StyledPanel</enum>
@@ -1399,7 +1317,7 @@ color: white;</string>
                  <item row="0" column="1">
                   <widget class="QStackedWidget" name="stackedWidget_small_2">
                    <property name="currentIndex">
-                    <number>0</number>
+                    <number>1</number>
                    </property>
                    <widget class="QWidget" name="pg_modify">
                     <layout class="QGridLayout" name="gridLayout_17">
@@ -1600,6 +1518,16 @@ color: white;</string>
                      </column>
                      <column>
                       <property name="text">
+                       <string>횟수</string>
+                      </property>
+                     </column>
+                     <column>
+                      <property name="text">
+                       <string>점수</string>
+                      </property>
+                     </column>
+                     <column>
+                      <property name="text">
                        <string/>
                       </property>
                      </column>
@@ -1607,7 +1535,7 @@ color: white;</string>
                     <widget class="QComboBox" name="combo_tier">
                      <property name="geometry">
                       <rect>
-                       <x>250</x>
+                       <x>170</x>
                        <y>210</y>
                        <width>86</width>
                        <height>31</height>
@@ -1632,7 +1560,7 @@ color: white;</string>
                     <widget class="QPushButton" name="btn_add_workout">
                      <property name="geometry">
                       <rect>
-                       <x>120</x>
+                       <x>40</x>
                        <y>250</y>
                        <width>88</width>
                        <height>31</height>
@@ -1658,7 +1586,7 @@ color: white;</string>
                     <widget class="QLineEdit" name="workout_text">
                      <property name="geometry">
                       <rect>
-                       <x>100</x>
+                       <x>40</x>
                        <y>210</y>
                        <width>113</width>
                        <height>27</height>
@@ -1667,6 +1595,69 @@ color: white;</string>
                      <property name="text">
                       <string>운동명</string>
                      </property>
+                    </widget>
+                    <widget class="QPushButton" name="btn_modify_workout">
+                     <property name="geometry">
+                      <rect>
+                       <x>150</x>
+                       <y>250</y>
+                       <width>88</width>
+                       <height>31</height>
+                      </rect>
+                     </property>
+                     <property name="text">
+                      <string>수정</string>
+                     </property>
+                    </widget>
+                    <widget class="QComboBox" name="combo_reps">
+                     <property name="geometry">
+                      <rect>
+                       <x>270</x>
+                       <y>210</y>
+                       <width>71</width>
+                       <height>31</height>
+                      </rect>
+                     </property>
+                     <item>
+                      <property name="text">
+                       <string>10회</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>15회</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>20회</string>
+                      </property>
+                     </item>
+                    </widget>
+                    <widget class="QComboBox" name="combo_score">
+                     <property name="geometry">
+                      <rect>
+                       <x>360</x>
+                       <y>210</y>
+                       <width>81</width>
+                       <height>31</height>
+                      </rect>
+                     </property>
+                     <item>
+                      <property name="text">
+                       <string>10점</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>20점</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>30점</string>
+                      </property>
+                     </item>
                     </widget>
                    </widget>
                    <widget class="QWidget" name="pg_goal">

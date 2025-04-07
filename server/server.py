@@ -34,12 +34,11 @@ class FAAServer(QTcpServer):
         client_socket.setSocketDescriptor(socketDescriptor)
         print(f"클라이언트 연결됨: {client_socket.peerAddress().toString()}:{client_socket.peerPort()}")
 
+        self.client_list.append(client_socket)
+
         # 각 소켓에 대해 개별적으로 처리되도록 설정
         client_socket.readyRead.connect(partial(self.receive_data, client_socket))
         client_socket.disconnected.connect(partial(self.disconnected, client_socket))
-
-        self.client_list.append(client_socket)
-        print(self.client_list)
 
     def receive_data(self, client_socket):
         while client_socket.bytesAvailable() > 0:
@@ -83,7 +82,7 @@ class FAAServer(QTcpServer):
 
                 if self.data['command'] == "LI":
                     print("로그인")
-                    self.login()
+                    self.login(client_socket)
                 elif self.data['command'] == "RG":
                     print("회원가입")
                     self.register()
@@ -102,8 +101,8 @@ class FAAServer(QTcpServer):
                 elif self.data['command'] == 'CR':
                     print(self.data )
                     self.draw_guidline()
-
-
+                elif self.data['command'] == "ME":
+                    self.modify_exercise(client_socket)
             except Exception as e:
                 print(f"[✗] 바이너리 데이터 처리 오류: {e}")
 
@@ -134,6 +133,7 @@ class FAAServer(QTcpServer):
 
         # 명령어 언팩
         command = unpack_string()
+        status = unpack_string()
         pw = unpack_string()
         name = unpack_string()
         height = unpack_string()
@@ -170,6 +170,7 @@ class FAAServer(QTcpServer):
 
         return {
             'command': command,
+            'status': status,
             'pw': pw,
             'name': name,
             'height': height,
@@ -257,18 +258,17 @@ class FAAServer(QTcpServer):
             print("[Server] Client disconnected:", client_socket.peerAddress().toString())
         client_socket.deleteLater()  # 안전하게 객체 삭제
     
-    def login(self):
+    def login(self, socket):
         self.name=self.data['name']
-        self.cur.execute("SELECT password FROM user where name = %s and password = %s",(self.data['name'],self.data['pw']))
-        rows = self.cur.fetchall()
-        #print(rows)
+        self.cur.execute("SELECT id FROM user where name = %s and password = %s",(self.data['name'],self.data['pw']))
+        rows = self.cur.fetchone()
+
         if len(rows) == 0:
             print('로그인정보가 틀렸습니다.')
             data = self.pack_data("LI",status='1',err="Invalid credentials")
         else:
-            print(rows[0][0])
             data = self.pack_data("LI",status='0')
-        self.send_data(self.client_list[3],data)
+        self.send_data(self.client_list[3], data)
     
     def register(self):
         self.cur.execute("SELECT EXISTS(SELECT 1 FROM user WHERE name = %s)",(self.data['name'],))
@@ -350,7 +350,67 @@ class FAAServer(QTcpServer):
         data = self.pack_data("RR", status='0')
         self.send_data(self.client_list[3], data)
 
+    def modify_exercise(self, client_socket):
+        status = self.data['status']
 
+        if status == '0': # 운동 정보 요청
+            self.cur.execute("SELECT * from workout")
+            result = self.cur.fetchall()
+            if not result:
+                data = self.pack_data("ME", status=9, err="운동 정보가 없습니다.")
+                self.send_data(self.client_socket, data)
+                return
+            
+            tmp = ""
+            for data in result:
+                for tmp2 in data:
+                    tmp += str(tmp2) + ","
+                tmp += "\n"
+
+            self.send_data(client_socket, self.pack_data("ME", status='0', list_data=tmp))
+        elif status == '1': # 운동 정보 추가
+            data = self.data['data'].split(",")
+
+            exercise_name = data[0]
+            tier = data[1]
+            reps = data[2][:-1]
+            score = data[3][:-1]
+
+            try:
+                self.cur.execute("INSERT INTO workout (name, tier, reps, score) VALUES (%s, %s, %s, %s)", (exercise_name, tier, reps, score))
+                self.db.commit()
+
+                data = self.pack_data("ME", status='1')
+                self.send_data(client_socket, data)
+            except:
+                data = self.pack_data("ME", status='9')
+                self.send_data(client_socket, data)
+                return
+            
+        elif status == '2': # 운동 정보 수정
+            data = self.data['data'].split(",")
+
+            try:
+                self.cur.execute("UPDATE workout SET tier = %s, reps = %s, score = %s WHERE name = %s", (data[1], data[2], data[3], data[0]))
+                self.db.commit()
+
+                data = self.pack_data("ME", status='2')
+                self.send_data(client_socket, data)
+            except:
+                data = self.pack_data("ME", status='9')
+                self.send_data(client_socket, data)
+        elif status == '3': # 운동 정보 삭제
+            data = self.data['data']
+            
+            try:
+                self.cur.execute("DELETE FROM workout WHERE name = %s", (data,))
+                self.db.commit()
+
+                data = self.pack_data("ME", status='3')
+                self.send_data(client_socket, data)
+            except:
+                data = self.pack_data("ME", status='9')
+                self.send_data(client_socket, data)
 
     def send_routine(self):
         name = self.data['name']
