@@ -248,8 +248,6 @@ class WorkoutHandler:
             WorkoutHandler.handle_pose_info(main_window, frame)
             WorkoutHandler.handle_workout_timer(main_window, frame)
 
-            main_window.udp.send_video(frame_copy, main_window.lb_what.text(), main_window.user_id)
-
         elif main_window.is_lookup:
             WorkoutHandler.handle_lookup_mode(main_window, frame, lmList)
 
