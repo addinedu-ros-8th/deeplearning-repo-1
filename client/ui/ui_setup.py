@@ -91,6 +91,8 @@ class UISetupHelper:
         # main_window.btn_todayrecord.clicked.connect(main_window.show_todayrecord)
         main_window.btn_config.clicked.connect(main_window.show_config)
         main_window.btn_modify.setChecked(True)
+        main_window.tableWidget.verticalHeader().setVisible(False)
+        
         ## Account-modify
         # main_window.btn_select_profile_img_2.clicked.connect(lambda: select_icon(main_window.label_profile_icon_2, 
         #                                                                          main_window.btn_select_profile_img_2))
@@ -98,8 +100,13 @@ class UISetupHelper:
 
         
         ## Account-config 
-        main_window.btn_add_workout.clicked.connect(lambda: WorkoutHandler.add_workout_to_table(main_window))
-        main_window.btn_delete_workout.clicked.connect(lambda: WorkoutHandler.delete_selected_workout(main_window))
+        main_window.btn_add_workout.clicked.connect(main_window.add_workout)
+        main_window.btn_delete_workout.clicked.connect(main_window.delete_workout)
+        main_window.btn_modify_workout.clicked.connect(main_window.modify_workout)
+        main_window.tableWidget.setSelectionBehavior(QTableWidget.SelectRows)
+        main_window.tableWidget.clicked.connect(main_window.click_tableWidget)
+        main_window.tableWidget.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        main_window.tableWidget.setSelectionMode(QAbstractItemView.SingleSelection)
  
         main_window.stackedWidget_small_2.setCurrentWidget(main_window.pg_modify)
 
