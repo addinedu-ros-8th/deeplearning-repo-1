@@ -17,6 +17,22 @@ from exercise_model import ExerciseClassifier
 # from counting import AngleGuid
 import itertools
 #from counting import ExerciseCounter
+from collections import deque
+
+class ClientInfo():
+    def __init__(self, user_id, lock):
+        self.user_id = user_id
+        self.sequence = deque(maxlen=30)
+        self.lock = lock
+
+    def get_user_id(self):
+        return self.user_id
+    
+    def get_lock(self):
+        return self.lock
+    
+    def get_sequence(self):
+        return self.sequence
 
 class AiServer(QWidget):
     def __init__(self, port=12345, record_duration=5):
@@ -25,8 +41,9 @@ class AiServer(QWidget):
         self.udp_socket.bind(QHostAddress.Any, port)
         self.udp_socket.readyRead.connect(self.receive_data)
 
+        self.client = {}
         self.tcp = AitoMain()
-        self.model = ExerciseClassifier()
+        self.model = ExerciseClassifier(self.client)
         self.recording = False
         self.video_writer = None
         self.record_duration = record_duration  # 녹화 간격 (초)
@@ -35,19 +52,20 @@ class AiServer(QWidget):
 
         self.prev_count=0
         self.prev_exercise=None
+        self.routine = {}
 
         print(f"[UDP Server] Listening for video on port {port}...")
 
         # UI 설정
-        # self.setWindowTitle("UDP Video Server")
-        # self.setGeometry(200, 200, 640, 480)
-        # self.label = QLabel(self)
-        # layout = QVBoxLayout()
-        # layout.addWidget(self.label)
-        # self.setLayout(layout)
+        self.setWindowTitle("UDP Video Server")
+        self.setGeometry(200, 200, 640, 480)
+        self.label = QLabel(self)
+        layout = QVBoxLayout()
+        layout.addWidget(self.label)
+        self.setLayout(layout)
 
         # 루틴 전용 TCP 서버 실행
-        threading.Thread(target=self.start_routine_server, daemon=True).start()
+        # threading.Thread(target=self.start_routine_server, daemon=True).start()
     
     def start_routine_server(self, host='127.0.0.1', port=9999):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -57,6 +75,7 @@ class AiServer(QWidget):
         while True:
             conn, addr = s.accept()
             threading.Thread(target=self.handle_routine_connection, args=(conn,), daemon=True).start()
+
     def handle_routine_connection(self, conn):
         try:
             data = conn.recv(2048).decode('utf-8')
@@ -82,20 +101,25 @@ class AiServer(QWidget):
             conn.close()   
 
     def receive_data(self):
-        self.count += 1
         while self.udp_socket.hasPendingDatagrams():
             data, sender, sender_port = self.udp_socket.readDatagram(self.udp_socket.pendingDatagramSize())
             
             img_len = int.from_bytes(data[:4])
             img_bytes = data[4:4+img_len]
 
-            text_data = data[4+img_len:]
-            print(text_data)
+            text_data = data[4+img_len:].split(b'||')
             exercise = text_data[0].decode('utf-8')
             user_id = text_data[1].decode('utf-8')
 
-            print(exercise, user_id)
+            if user_id not in self.client:
+                self.lock = threading.Lock()
+                self.client[user_id] = ClientInfo(user_id, self.lock)
 
+            client = self.client[user_id]
+
+            self.process_video_frame(client, img_bytes, exercise)
+            if not self.model.predict_thread.is_alive():
+                self.model.run_thread()
 
             # QEventLoop가 한 번만 실행되도록 플래그 사용
             if not hasattr(self, 'loop_ran'):  # loop_ran이 없으면 실행
@@ -105,11 +129,12 @@ class AiServer(QWidget):
                 self.loop_ran = True  # 한 번 실행 후 플래그 설정
             #print(self.tcp.result)
             if self.tcp.result == "True":
-                self.process_video_frame(img_bytes)
+                pass
+                # self.process_video_frame(img_bytes, exercise)
             if self.tcp.result == "False":
                 self.loop_ran = False
 
-    def process_video_frame(self, frame_bytes):
+    def process_video_frame(self, client, frame_bytes, exercise):
         """ 수신한 비디오 프레임을 디코딩 후 화면에 표시 및 녹화 """
         try:
             frame_array = np.frombuffer(frame_bytes, dtype=np.uint8)
@@ -120,7 +145,7 @@ class AiServer(QWidget):
                 return
             # if self.start == True:
 
-            frame = self.model.process_frame(frame)
+            frame = self.model.process_frame(client, frame, exercise)
             #self.guid = AngleGuid(exercise=None)
             
             self.display_frame(frame)
@@ -144,9 +169,9 @@ class AiServer(QWidget):
         #     self.tcp.sendData(data)
 
         if self.prev_exercise != current_exercise:
-            print(self.prev_exercise)
+            # print(self.prev_exercise)
             self.prev_exercise = current_exercise
-            print(self.prev_exercise)
+            # print(self.prev_exercise)
             joint=self.model.angle_counter.joint_map[self.model.angle_counter.exercise]
             joint_list = list(itertools.chain(*joint))
 
@@ -226,5 +251,5 @@ if __name__ == "__main__":
     app = QApplication(sys.argv)
     signal.signal(signal.SIGINT, signal.SIG_DFL)  # Ctrl+C 핸들러
     server = AiServer(port=12345)
-    # server.show()
+    server.show()
     sys.exit(app.exec_())

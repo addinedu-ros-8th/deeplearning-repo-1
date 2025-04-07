@@ -226,7 +226,7 @@ class WorkoutHandler:
             main_window.modal_exit_view.appear(frame)
     
     @staticmethod
-    def send_to_gui(main_window, frame, frame_copy):
+    def send_to_gui(main_window, frame):
         img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         qt_img = QImage(img.data, img.shape[1], img.shape[0], QImage.Format_RGB888)
         main_window.lb_cam.setPixmap(QPixmap.fromImage(qt_img))
@@ -259,7 +259,7 @@ class WorkoutHandler:
             WorkoutHandler.handle_lookup_mode(main_window, frame, lmList)
 
         WorkoutHandler.draw_overlay_ui(main_window, frame)
-        WorkoutHandler.send_to_gui(main_window, frame, frame_copy)
+        WorkoutHandler.send_to_gui(main_window, frame)
 
         
     @staticmethod

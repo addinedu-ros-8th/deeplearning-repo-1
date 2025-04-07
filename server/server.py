@@ -14,12 +14,13 @@ from functools import partial
 import json
 import socket 
 from client_info import ClientInfo
+from client.ai_to_main import AitoMain
 
 class FAAServer(QTcpServer):
     def __init__(self):
         super(FAAServer, self).__init__()
-        self.client_list = []
-        #self.ai_server = AitoMain()
+        self.client_list = {}
+        self.ai_server = AitoMain()
         self.db = FAAdb()
         self.cur = self.db.conn.cursor(buffered=True)
         
@@ -33,9 +34,11 @@ class FAAServer(QTcpServer):
     def incomingConnection(self, socketDescriptor):
         client_socket = QTcpSocket(self)
         client_socket.setSocketDescriptor(socketDescriptor)
-        print(f"클라이언트 연결됨: {client_socket.peerAddress().toString()}:{client_socket.peerPort()}")
+        #print(f"클라이언트 연결됨: {client_socket.peerAddress().toString()}:{client_socket.peerPort()}")
+        print(f"{client_socket}")
         
-        ClientInfo(client_socket)
+        client_info = ClientInfo(client_socket)
+        self.client_list[client_socket] = client_info
 
         # 각 소켓에 대해 개별적으로 처리되도록 설정
         client_socket.readyRead.connect(partial(self.receive_data, client_socket))
@@ -44,11 +47,11 @@ class FAAServer(QTcpServer):
     def receive_data(self, client_socket):
         while client_socket.bytesAvailable() > 0:
             data = client_socket.readAll().data()
-            print(data)
+            
             # AI 서버가 자기소개 할 경우
             if data == b'AI_HELLO':
                 self.ai_socket = client_socket
-                ClientInfo.remove_client(client_socket)
+                del self.client_list[client_socket]
                 print(f"[Server] AI 서버로 등록됨: {client_socket.peerAddress().toString()}")
                 return
             
@@ -59,7 +62,7 @@ class FAAServer(QTcpServer):
                     json_data = json.loads(json_str)
                     if json_data.get('command') == 'PI':
                         # print(f"[Server] [JSON - PI 명령 수신]: {json_data}")
-                        self.send_data(self.client_list[3],data)
+                        self.send_data(client_socket, data)
                         current_count = json_data.get('count')
 
                         # 이전 count와 비교해서 20 -> 0으로 떨어졌는지 확인
@@ -259,7 +262,8 @@ class FAAServer(QTcpServer):
         client_socket = self.sender()  # 현재 신호를 보낸 객체 가져오기
         if isinstance(client_socket, QTcpSocket):
             print("[Server] Client disconnected:", client_socket.peerAddress().toString())
-        ClientInfo.remove_client(client_socket)
+        if client_socket in self.client_list:
+            del self.client_list[client_socket]
         client_socket.deleteLater()  # 안전하게 객체 삭제
     
     def login(self, socket):
@@ -270,7 +274,7 @@ class FAAServer(QTcpServer):
             if rows is None:
                 data = self.pack_data("LI",status='1', err="Invalid credentials")
             else:
-                ClientInfo.set_user_info(socket, rows[0], rows[1], rows[2], rows[3], rows[4], rows[5])
+                self.client_list[socket].set_user_info(rows[0], rows[1], rows[2], rows[3], rows[4], rows[5])
                 list_data = str(rows[2]) + "," + str(rows[3]) + "," + str(rows[4]) + "," + str(rows[5])
                 data = self.pack_data("LI", status='0', name=rows[1], id=str(rows[0]), list_data=list_data)
             self.send_data(socket, data)
@@ -317,8 +321,8 @@ class FAAServer(QTcpServer):
         # user_id, tier = result
         # print(f"DEBUG, ID: {user_id}, 티어: {tier}")
 
-        user_id = ClientInfo.get_user_id(socket)
-        tier = ClientInfo.get_tier(socket)
+        user_id = self.client_list[socket].get_user_id()
+        tier = self.client_list[socket].get_tier()
 
         # does the routine duplicate ? 
         today = datetime.datetime.now().date()  # 현재 날짜
@@ -361,7 +365,7 @@ class FAAServer(QTcpServer):
         formatted = ",".join([f"{id}|{name}|{sets}|{reps}" for id, name, sets, reps in results])
         for item in formatted.split(','):
             id, name, sets, reps = item.strip().split('|')
-            ClientInfo.set_routine(socket, {
+            self.client_list[socket].set_routine({
                 'id': id,
                 'name': name,
                 'sets': int(sets),
@@ -446,7 +450,7 @@ class FAAServer(QTcpServer):
         #     return
 
         # user_id = result[0]
-        user_id = ClientInfo.get_user_id(socket)
+        user_id = self.client_list[socket].get_user_id()
 
         # 2. 최신 Routine ID 조회
         self.cur.execute("SELECT id FROM routine WHERE user_id = %s ORDER BY date DESC LIMIT 1", (user_id,))
@@ -494,8 +498,6 @@ class FAAServer(QTcpServer):
             print("[Main Server] AI 서버에 루틴 전송 완료 (TCP):", routine_str)
         except Exception as e:
             print(f"[Main Server] 루틴 전송 실패: {e}")
-
-
     
     def draw_guidline(self):
         #print(self.data['joint'])
@@ -503,8 +505,6 @@ class FAAServer(QTcpServer):
         right_joint = self.data['joint'][3:]
         joint = [tuple(left_joint), tuple(right_joint)]
         print(joint)
-        
-    
 
 if __name__ == "__main__":
     app = QCoreApplication(sys.argv)

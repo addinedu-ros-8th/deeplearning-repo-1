@@ -14,26 +14,28 @@ from pydub.playback import play
 from counting import AngleGuid
 from tts import TextToSpeechThread
 import sys
-import  Constants as cons 
-
+import  Constants as cons
+from client_info import ClientInfo
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
 
 class ExerciseClassifier:
-    def __init__(self, model_path='./exercise_classifier.h5'):
+    def __init__(self, clients, model_path='./exercise_classifier.h5'):
         self.model = load_model(model_path)
-        self.sequence = deque(maxlen=20)
-        self.lock = threading.Lock()
+        # self.sequence = deque(maxlen=20)
+        # self.lock = threading.Lock()
         self.result = None
         self.pose = mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.5, min_tracking_confidence=0.5)
-        self.exercise_list = ["Standing", "Standing Knee Raise", "Shoulder Press", "Squat", "Side Lunge"]
+        self.exercise_list = ["Standing Knee Raise", "Shoulder Press", "Squat", "Side Lunge"]
         self.exercise_count={'Standing Knee Raise':'knee',"Shoulder Press":'shoulder',"Squat":'squat'}
         
         # self.frame_delay = 10
         # self.frame_count = 0
         # self.label = None
+
+        self.sequence_size = 30
         
         self.current_routine_idx = 0
         self.current_set = 1
@@ -45,13 +47,18 @@ class ExerciseClassifier:
         self.last_exercise = None
         self.consistent_frames = 0
         self.required_frames = 33 # 10프레임 이상 지속되어야 인식
-
+        self.clients = clients
         self.angle_counter = AngleGuid(exercise=None)  # 초기 운동 설정
         
         self.predict_thread = threading.Thread(target=self.run_prediction, daemon=True)
-        self.predict_thread.start()
+        # self.predict_thread.start()
+
+        
         
         self.routine_list = []
+
+    def run_thread(self):
+        self.predict_thread.start()
 
     def set_routine(self, routine):
         self.routine_list = routine
@@ -79,17 +86,18 @@ class ExerciseClassifier:
     
     def run_prediction(self):
         while True:
-            with self.lock:
-                if len(self.sequence) == 20:
-                    input_data = np.array(list(self.sequence)).reshape(1, 20, 24)
+            for user_id, client in self.clients.items():
+                with client.get_lock():
+                    if len(client.sequence) == self.sequence_size:
+                        input_data = np.array(list(client.sequence)).reshape(1, self.sequence_size, 24)
+                    else:
+                        input_data = None
+                
+                if input_data is not None:
+                    prediction = self.model.predict(input_data, verbose=0)
+                    self.result = prediction
                 else:
-                    input_data = None
-            
-            if input_data is not None:
-                prediction = self.model.predict(input_data, verbose=0)
-                self.result = prediction
-            else:
-                time.sleep(0.01)
+                    time.sleep(0.01)
 
     def update_routine_index(self, index):
         self.current_routine_idx = index
@@ -113,7 +121,7 @@ class ExerciseClassifier:
     #         return True
     #     return False
     
-    def process_frame(self, frame):
+    def process_frame(self, client, frame, exercise):
         if self.break_active:
             remaining = int(self.break_end_time - time.time())
             cv2.putText(frame, f"Break Time: {remaining}s", (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 3)
@@ -123,35 +131,35 @@ class ExerciseClassifier:
         results = self.pose.process(image)
        
         # 현재 Routine 정보 
-        current_routine = self.get_current_exercise()
-        if not current_routine: return frame
+        # current_routine = self.get_current_exercise()
+        # if not current_routine: return frame
        
-        kor_name = current_routine['name']
-        internal_name = cons.EXERCISE_NAME_MAP.get(kor_name)
+        internal_name = cons.EXERCISE_NAME_MAP.get(exercise)
         if internal_name is None:
-            print(f"[UDP Server] 알 수 없는 운동 이름: {kor_name}")
+            print(f"[UDP Server] 알 수 없는 운동 이름: {exercise}")
             return frame
         self.angle_counter.set_exercise(exercise=internal_name)
 
         if self.angle_counter.exercise is not None and results.pose_landmarks:
-            self.angle_counter.draw(frame, results.pose_landmarks.landmark)
+            self.angle_counter.draw(client.get_user_id(), frame, results.pose_landmarks.landmark)
             cv2.putText(frame, f"Count: {self.angle_counter.get_count()}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
         
         # landmark append 
         if results.pose_landmarks:
             landmarks = self.extract_pose_landmarks(results)
-            with self.lock:
-                self.sequence.append(landmarks)
+            with client.get_lock():
+                # self.sequence.append(landmarks)
+                # ClientInfo.append_image_buffer(user_id, landmarks)
+                client.sequence.append(landmarks)
         
         # 운동 판별 
         if self.result is not None:
             predict_class = int(np.argmax(self.result))
             predicted_label = self.exercise_list[predict_class]
             try:
-                if self.exercise_count.get(predicted_label) != internal_name:
+                # if self.exercise_count.get(predicted_label) != internal_name:
+                if internal_name != predicted_label:
                     self.consistent_frames += 1
-                else:
-                    self.consistent_frames = 0
                 
                 if self.consistent_frames >= self.required_frames:
                     self.consistent_frames = 0
@@ -160,29 +168,29 @@ class ExerciseClassifier:
 
             except Exception as e:
                     print("[Predict Error]", e)
-            cv2.putText(frame, f"{internal_name}", (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 3)        
+            # cv2.putText(frame, f"{internal_name}", (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 3)        
         
         # Count 업데이트
-        if self.angle_counter.exercise:
-            self.angle_counter.draw(frame, results.pose_landmarks.landmark)
-            cv2.putText(frame, f"Count: {self.angle_counter.get_count()}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
-            #  남은 개수와 세트 계산
-            remaining_reps = max(0, current_routine['reps'] - self.angle_counter.get_count())
-            remaining_sets = max(0, current_routine['sets'] - self.reps_done)
+        # if self.angle_counter.exercise:
+        #     self.angle_counter.draw(frame, results.pose_landmarks.landmark)
+        #     cv2.putText(frame, f"Count: {self.angle_counter.get_count()}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
+        #     #  남은 개수와 세트 계산
+        #     remaining_reps = max(0, current_routine['reps'] - self.angle_counter.get_count())
+        #     remaining_sets = max(0, current_routine['sets'] - self.reps_done)
 
-            #  OpenCV로 표시
-            cv2.putText(frame, f"Count: {self.angle_counter.get_count()}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
-            cv2.putText(frame, f"reps: {remaining_reps}", (10, 130), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 255), 3)
-            cv2.putText(frame, f"sets: {remaining_sets}", (10, 170), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 0), 3)
+        #     #  OpenCV로 표시
+        #     cv2.putText(frame, f"Count: {self.angle_counter.get_count()}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
+        #     cv2.putText(frame, f"reps: {remaining_reps}", (10, 130), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 255), 3)
+        #     cv2.putText(frame, f"sets: {remaining_sets}", (10, 170), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 0), 3)
 
-            # set / 운동 완료 체크
-            if self.angle_counter.get_count() >= current_routine['reps']:
-                self.angle_counter.set_count()
-                self.reps_done += 1
-                print(f"[Model] 세트 완료 ({self.reps_done}/{current_routine['sets']})")
-                return "BREAK"
+        #     # set / 운동 완료 체크
+        #     if self.angle_counter.get_count() >= current_routine['reps']:
+        #         self.angle_counter.set_count()
+        #         self.reps_done += 1
+        #         print(f"[Model] 세트 완료 ({self.reps_done}/{current_routine['sets']})")
+        #         return "BREAK"
         
-        mp_drawing.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
+        # mp_drawing.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
         return frame
     
             # exercise=['shoulder', 'squat', 'knee']

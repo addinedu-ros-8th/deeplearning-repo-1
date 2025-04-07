@@ -130,7 +130,7 @@ class AngleGuid():
         return target_point
 
 
-    def draw_exercise_line(self, frame, landmarks):
+    def draw_exercise_line(self, user_id, frame, landmarks):
         self.joint_map = {
             "shoulder": [(12, 14, 16), (11, 13, 15)],
             "squat": [(24, 26, 28), (23, 25, 27)],
@@ -210,15 +210,15 @@ class AngleGuid():
 
             cv2.putText(frame, str(int(angle)), (int(pt2[0]), int(pt2[1])), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
             
-            self.sendLand.send_pose_data(origin, self.vectors[idx], pts, self.count)
+            self.sendLand.send_pose_data(user_id, origin, self.vectors[idx], pts, self.count)
     
     def set_exercise(self, exercise):
         with self.lock:
             self.exercise = exercise
 
-    def draw(self, frame, landmarks):
+    def draw(self, client, frame, landmarks):
         with self.lock:
-            self.draw_exercise_line(frame, landmarks)
+            self.draw_exercise_line(client, frame, landmarks)
 
     def get_count(self):
         with self.lock:
