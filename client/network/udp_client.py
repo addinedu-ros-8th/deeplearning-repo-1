@@ -11,14 +11,20 @@ class UdpClient:
         self.server_port = server_port
         #self.cap = cv2.VideoCapture(0)  # 웹캠 열기
 
-    def send_video(self, frame):
+    def send_video(self, frame, exercise, user_id):
         """ 웹캠에서 프레임을 읽고 UDP로 전송 """
         if frame is None:
             print("[UDP Client] No frame to send")
             return
 
         _, buffer = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
-        frame_bytes = buffer.tobytes()
+        image_bytes = buffer.tobytes()
+        
+        img_len = len(image_bytes)
+        img_len_bytes = img_len.to_bytes(4)
+
+        frame_bytes = img_len_bytes + image_bytes + exercise.encode('utf-8') + b'||' + user_id.encode('utf-8')
+        
         self.udp_socket.writeDatagram(frame_bytes, self.server_ip, self.server_port)
     
     def close(self):
