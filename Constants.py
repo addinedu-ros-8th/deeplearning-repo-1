@@ -159,22 +159,22 @@ THUMBNAIL = {
 }
 videos = {
     0: {
-        1: "./save_file/Asset/front-lunge.mp4",
-        2: "./save_file/Asset/squat.mp4",
-        3: "./save_file/Asset/shoulder_press.mp4",
-        4: "./save_file/Asset/knee-up.mp4"
+        1: "./Asset/front-lunge.mp4",
+        2: "./Asset/squat.mp4",
+        3: "./Asset/shoulder_press.mp4",
+        4: "./Asset/knee-up.mp4"
     },
     1: {
-        1: "./save_file/Asset/push-up.mp4",
-        2: "./save_file/Asset/bridge.mp4",
-        3: "./save_file/Asset/standing-bicycle.mp4",
-        4: "./save_file/Asset/side-lunge.mp4"
+        1: "./Asset/push-up.mp4",
+        2: "./Asset/bridge.mp4",
+        3: "./Asset/standing-bicycle.mp4",
+        4: "./Asset/side-lunge.mp4"
     },
     2: {
-        1: "./save_file/Asset/front-lunge.mp4",
-        2: "./save_file/Asset/squat.mp4",
-        3: "./save_file/Asset/shoulder_press.mp4",
-        4: "./save_file/Asset/knee-up.mp4"
+        1: "./Asset/front-lunge.mp4",
+        2: "./Asset/squat.mp4",
+        3: "./Asset/shoulder_press.mp4",
+        4: "./Asset/knee-up.mp4"
     }
 }
 

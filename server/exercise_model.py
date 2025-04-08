@@ -21,7 +21,7 @@ mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
 
 class ExerciseClassifier:
-    def __init__(self, clients, model_path='/home/sang/dev_ws/git_ws/deeplearning-repo-1/exercise_classifier.h5'):
+    def __init__(self, clients, model_path='./exercise_classifier.h5'):
         self.model = load_model(model_path)
         # self.sequence = deque(maxlen=20)
         # self.lock = threading.Lock()
@@ -51,7 +51,8 @@ class ExerciseClassifier:
         self.clients = clients
         self.angle_counter = AngleGuid(exercise=None)  # 초기 운동 설정
         
-        self.predict_thread = threading.Thread(target=self.run_prediction, daemon=True)
+        self.predict_thread = None
+        self.predict_thread_alive = False
         # self.predict_thread.start()
         self.tts_thread = TextToSpeechThread()
         
@@ -59,7 +60,15 @@ class ExerciseClassifier:
         self.routine_list = []
 
     def run_thread(self):
-        self.predict_thread.start()
+        if self.predict_thread is None:
+            self.predict_thread_alive = True
+            self.predict_thread = threading.Thread(target=self.run_prediction, daemon=True)
+            self.predict_thread.start()
+
+    def stop_thread(self):
+        if self.predict_thread and self.predict_thread.is_alive():
+            self.predict_thread_alive = False
+            self.predict_thread.join()
 
     def set_routine(self, routine):
         self.routine_list = routine
@@ -86,7 +95,7 @@ class ExerciseClassifier:
         return xyz_list
     
     def run_prediction(self):
-        while True:
+        while self.predict_thread_alive:
             for user_id, client in self.clients.items():
                 with client.get_lock():
                     if len(client.sequence) == self.sequence_size:
