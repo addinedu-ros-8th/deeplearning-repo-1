@@ -20,7 +20,9 @@ class Client(QObject) :
         self.socket = QTcpSocket()                              # 1. create socket 
         self.socket.connectToHost(SERVER_IP, SERVER_PORT)       # 2. connect to server 
         self.socket.connected.connect(self.on_connected)        # 3. send data 
-        self.socket.readyRead.connect(self.readData)            # 4. read data 
+        self.socket.readyRead.connect(self.readData)    
+        
+        self.count=0        # 4. read data 
 
         self.udp_socket = QUdpSocket()
         
@@ -39,6 +41,7 @@ class Client(QObject) :
             # JSON 형식인 경우
             # JSON 형식 판단 (여러 개가 붙어올 수도 있음)
             if data.startswith(b'{'):
+                #print(data)
                 try:
                     json_str = data.decode('utf-8')
                     json_list = json_str.strip().split('\n')  # '\n' 구분자로 분리
@@ -70,7 +73,8 @@ class Client(QObject) :
                 self.result = int(self.data['status'])
                 self.responseReceived.emit()
             elif self.data['command'] == 'CT':
-                self.result = int(self.data['status'])
+                print('good')
+                self.count+=1
                 self.responseReceived.emit()
             elif self.data['command'] == 'RR':  
                     self.result = int(self.data['status'])

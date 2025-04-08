@@ -22,7 +22,7 @@ class LandmarkSender:
             print("[✗] 서버 연결 실패:", e)
             return None
 
-    def send_pose_data(self, user_id, origin, vector, pts, count):
+    def send_pose_data(self, user_id, origin, vector, pts):
         if self.sock is None:
             print("소켓이 없음. 데이터 전송 불가.")
             return
@@ -35,8 +35,7 @@ class LandmarkSender:
             "landmarks": [
                 {"x": int(pt[0]), "y": int(pt[1])}
                 for pt in pts
-            ],
-            "count": count
+            ]
         }
 
         json_str = json.dumps(data)
