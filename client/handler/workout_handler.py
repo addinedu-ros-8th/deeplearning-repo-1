@@ -171,12 +171,17 @@ class WorkoutHandler:
 
     @staticmethod      
     def handle_pose_info(main_window, frame):
-        if not isinstance(main_window.tcp.landmark, dict):
-            return
-        pi_data = main_window.tcp.landmark
-        if pi_data.get("command") != "PI":
-            return
+        if isinstance(main_window.tcp.landmark, dict) and main_window.tcp.landmark.get("command") == "PI":
+            pi_data = main_window.tcp.landmark
+            ox, oy = pi_data['origin']['x'], pi_data['origin']['y']
+            cv2.circle(frame, (ox, oy), 10, (0, 255, 255), -1)
 
+            vx, vy = pi_data['vector']['x'], pi_data['vector']['y']
+            cv2.arrowedLine(frame, (ox, oy), (vx, vy), (255, 0, 255), 3)
+
+            for pt in pi_data['landmarks']:
+                lx, ly = pt['x'], pt['y']
+                cv2.circle(frame, (lx, ly), 6, (0, 100, 255), -1)  # 주황색 점
         # 루틴에서 reps / sets 가져오기
         try:
             routine = main_window.routine_queue[main_window.current_index]
@@ -189,16 +194,6 @@ class WorkoutHandler:
 
         # remaining_reps = max(0, total_reps - count)
         # remaining_sets = max(0, total_sets - done_sets)
-        
-       
-        ox, oy = pi_data['origin']['x'], pi_data['origin']['y']
-        cv2.circle(frame, (ox, oy), 10, (0, 255, 255), -1)
-
-        vx, vy = pi_data['vector']['x'], pi_data['vector']['y']
-        cv2.arrowedLine(frame, (ox, oy), (vx, vy), (255, 0, 255), 3)
-
-        for pt in pi_data['landmarks']:
-            cv2.circle(frame, (pt['x'], pt['y']), 6, (0, 100, 255), -1)
 
         # 남은 개수와 세트
         if main_window.tcp.count == total_reps:
