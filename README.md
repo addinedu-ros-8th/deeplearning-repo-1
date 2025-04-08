@@ -4,14 +4,14 @@ DL 프로젝트 1조 저장소. 팀 CHICAGO
 <br />
 <p align="center">
   <a href="https://github.com/addinedu-ros-8th/deeplearning-repo-1">
-    <img src="https://github.com/addinedu-ros-8th/deeplearning-repo-1/blob/main/Front.png" alt="Logo" width="700px">
+    <img src="https://github.com/addinedu-ros-8th/deeplearning-repo-1/blob/main/Front.png" alt="Logo" width="500px">
   </a>
 
   <h3 align="center">피트니스 AI 에이전트(Fitness AI Agent)</h3>
 
   <p align="center">
     <a href="">Video Demo</a>\\
-    <a href="">Presentation</a>
+    <a href="https://docs.google.com/presentation/d/1iNOuPEVw5FUgLmUJqL00OPBQSc4z1UGs">Presentation</a>
   </p>
 </p>
 
@@ -77,8 +77,12 @@ mp4 - video
     pip install pydub
     pip install tensorflow
 ```
-
-
+## 기능  
+### Hand gesture UI 
+#### Lookup - 티어별 운동들 살펴보기   
+![Image](https://github.com/user-attachments/assets/4879d38c-d6cb-4a4c-a3a6-226bc995d4b0)
+#### Hand gesture (손가락인식)
+![Image](https://github.com/user-attachments/assets/5ce51d23-7b70-46bd-af8f-2a0e75ded9b8)
 
 ## 설계
 ### 시나리오
@@ -108,17 +112,6 @@ mp4 - video
 #### 3) ERD 
 ![Image](https://github.com/user-attachments/assets/fb42019f-67a3-46c5-bd02-2793efa1790e)
 
-## 기능 
-### 기능 리스트 
-|  기능  | 설명 |
-|:--------:|------| 
-| Auth  | ID,PW 인증관리 |    
-| Counting | 운동 Counting |
-| Feedback | 운동 Guide line, 운동 음성/시각 feedback |
-| Tier | 티어별 운동 리스트 조회 |      
-| Test | score기반의 tier test 기능 |     
-| Record | 일/주/월 운동 기록 시각화, |
-| Goal | 목표 설정 |
 
  
 ## Project Schesule
