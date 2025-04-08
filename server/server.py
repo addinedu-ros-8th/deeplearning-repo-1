@@ -107,7 +107,7 @@ class FAAServer(QTcpServer):
                 elif self.data['command'] == "ME":
                     self.modify_exercise(client_socket)
             except Exception as e:
-                print(f"[✗] 바이너리 데이터 처리 오류: {e}")
+                print(f" 바이너리 데이터 처리 오류: {e}")
 
     def get_socket(self, user_id):
         for socket, client_info in self.client_list.items():
@@ -444,15 +444,6 @@ class FAAServer(QTcpServer):
     def send_routine(self, socket):
         name = self.data['name']
 
-        # 1. user ID 조회
-        # self.cur.execute("SELECT id FROM user WHERE name = %s", (name,))
-        # result = self.cur.fetchone()
-        # if not result:
-        #     print("❌ User 없음")
-        #     data = self.pack_data("GR", status='1', err="User를 찾을 수 없습니다.")
-        #     self.send_data(socket, data)
-        #     return
-
         # user_id = result[0]
         user_id = self.client_list[socket].get_user_id()
 
@@ -504,7 +495,6 @@ class FAAServer(QTcpServer):
             print(f"[Main Server] 루틴 전송 실패: {e}")
     
     def draw_guidline(self):
-        #print(self.data['joint'])
         left_joint = self.data['joint'][:3]
         right_joint = self.data['joint'][3:]
         joint = [tuple(left_joint), tuple(right_joint)]

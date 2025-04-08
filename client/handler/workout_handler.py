@@ -23,13 +23,6 @@ class WorkoutHandler:
         self.reps = 0
         self.sets = 0
 
-        self.count = 0
-        self.reps = 0
-        self.sets = 0
-
-
-
-
     def load_user_routine(self):
         self.cur.execute("SELECT workout_name FROM routine WHERE username = %s ORDER BY idx ASC", (self.main_window.username,))
         rows = self.cur.fetchall()
@@ -145,7 +138,38 @@ class WorkoutHandler:
         except Exception as e:
             print("❌ 세트 강제 처리 실패:", e)
         
+    @staticmethod
+    def handle_set_and_reps(main_window, total_reps, total_sets):
+        if main_window.tcp.count >= total_reps:
+            main_window.tcp.count = 0
+            main_window.reps_done += 1
 
+            if main_window.reps_done >= total_sets:
+                main_window.reps_done = 0
+                main_window.current_index += 1
+
+                if main_window.current_index < len(main_window.routine_queue):
+                    main_window.current = main_window.routine_queue[main_window.current_index]  # ✅ 추가
+                    main_window.set_current_workout()
+                    main_window.lb_what.setText(main_window.current['name'])
+             
+                    main_window.is_working = False
+                    main_window.is_break = True
+                    main_window.start_break_timer()
+   
+                else:
+                    print("🏁 모든 루틴 완료!")
+                    main_window.lb_what.setText("루틴 완료")
+                    main_window.is_working = False
+                    main_window.is_break = False
+                    WorkoutHandler.handle_back_to_main(main_window)
+                    return
+            else:
+                print("👉 다음 세트 준비 중...")
+                # 🔥 세트 끝났으니 휴식
+                main_window.is_working = False
+                main_window.is_break = True
+                main_window.start_break_timer()
 
     @staticmethod      
     def handle_pose_info(main_window, frame):
@@ -156,13 +180,10 @@ class WorkoutHandler:
             for joint in joints:
                 ox, oy = joint['origin']['x'], joint['origin']['y']
                 vx, vy = joint['vector']['x'], joint['vector']['y']
-
                 # origin 표시 (노란 점)
                 cv2.circle(frame, (ox, oy), 10, (0, 255, 255), -1)
-
                 # guide vector (보라색 화살표)
                 cv2.arrowedLine(frame, (ox, oy), (vx, vy), (255, 0, 255), 3)
-
                 # landmarks (주황 점들)
                 for pt in joint['landmarks']:
                     lx, ly = pt['x'], pt['y']
@@ -172,41 +193,22 @@ class WorkoutHandler:
             routine = main_window.routine_queue[main_window.current_index]
             total_reps = routine['reps']
             total_sets = routine['sets']
-            done_sets = main_window.reps_done
         except Exception as e:
             print("handle_pose_info 루틴 정보 접근 실패:", e)
             return
+    
+        if main_window.tcp.count >= total_reps:
+            WorkoutHandler.handle_set_and_reps(main_window, total_reps, total_sets)
 
-        # remaining_reps = max(0, total_reps - count)
-        # remaining_sets = max(0, total_sets - done_sets)
-
-        # 남은 개수와 세트
-        if main_window.tcp.count == total_reps:
-            main_window.tcp.count = 0
-            main_window.reps_done += 1
         cv2.putText(frame, f"reps: {main_window.tcp.count}/{total_reps}", 
                     (10, 220), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 255), 2)
-        main_window.lb_rep.setText(str(main_window.tcp.count))
-        cv2.putText(frame, f"sets: {done_sets}/{total_sets}", 
-                    (10, 260), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 0), 2)
-        main_window.lb_set.setText(str(done_sets))
         
-        if done_sets == total_sets:
-            main_window.reps_done = 0 # 세트수 초기화 
-            main_window.current_index += 1
-            if main_window.current_index < len(main_window.routine_queue):
-                # 다음 운동 정보 갱신
-                main_window.current = main_window.routine_queue[main_window.current_index]
-                main_window.lb_what.setText(main_window.current['name'])
-                main_window.set_current_workout()
-                main_window.start_break_timer()   
-            # else:
-            #     # ✅ 루틴 종료 처리
-            #     print("🏁 모든 루틴 완료!")
-            #     main_window.lb_what.setText("루틴 완료")
-            #     main_window.is_working = False
-            #     WorkoutHandler.handle_back_to_main(main_window)
-            #     return
+        cv2.putText(frame, f"sets: {main_window.reps_done}/{total_sets}", 
+                    (10, 260), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 0), 2)
+        main_window.lb_rep.setText(str(main_window.tcp.count))
+        main_window.lb_set.setText(str(main_window.reps_done))
+        
+
                     
 
     @staticmethod    
@@ -288,6 +290,7 @@ class WorkoutHandler:
             
         elif main_window.is_break:
             WorkoutHandler.handle_break_time(main_window, frame)        # break time countdown 
+
         elif main_window.is_lookup:
             WorkoutHandler.handle_lookup_mode(main_window, frame, lmList)
 

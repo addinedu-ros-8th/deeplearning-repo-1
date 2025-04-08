@@ -234,7 +234,7 @@ class MainWindow(QMainWindow, main_class):
             # item_text = f"{name} - {sets}세트 x {reps}회"
             item = QListWidgetItem(name)
             self.routine_list.addItem(item)
-        # self.routine_list.setCurrentRow(self.current_index)
+        self.routine_list.setCurrentRow(self.current_index)
     
     def start_break_timer(self):
         self.break_remaining_time = cons.BREAK_TIME
