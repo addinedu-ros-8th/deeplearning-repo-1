@@ -44,7 +44,7 @@ class MainWindow(QMainWindow, main_class):
         self.gesture_start_time = None
         self.selection_confirmed = False
         self.prev_pi_data = None
-        self.current_workout = False 
+        self.current = None
 
         self.username = None
         self.user_id = None
@@ -241,7 +241,7 @@ class MainWindow(QMainWindow, main_class):
         self.last_tick_time = time.time()
         self.is_break = True
         self.is_working = False
-        self.lb_what.setText("휴식 중...")  # UI에 표시
+        # self.lb_what.setText("휴식 중...")  # UI에 표시
 
     def handle_next_workout(self):
         self.current_index += 1

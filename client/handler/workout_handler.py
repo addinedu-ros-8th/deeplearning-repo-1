@@ -199,14 +199,14 @@ class WorkoutHandler:
                 main_window.current = main_window.routine_queue[main_window.current_index]
                 main_window.lb_what.setText(main_window.current['name'])
                 main_window.set_current_workout()
-                main_window.start_break_timer()
-            else:
-                # ✅ 루틴 종료 처리
-                print("🏁 모든 루틴 완료!")
-                main_window.lb_what.setText("루틴 완료")
-                main_window.is_working = False
-                WorkoutHandler.handle_back_to_main(main_window)
-                return
+                main_window.start_break_timer()   
+            # else:
+            #     # ✅ 루틴 종료 처리
+            #     print("🏁 모든 루틴 완료!")
+            #     main_window.lb_what.setText("루틴 완료")
+            #     main_window.is_working = False
+            #     WorkoutHandler.handle_back_to_main(main_window)
+            #     return
                     
 
     @staticmethod    
