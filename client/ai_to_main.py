@@ -26,6 +26,7 @@ class AitoMain(QObject) :
 
         self.udp_socket = QUdpSocket()
         self.result = None
+        self.name=None
         
     def on_connected(self):
         print("[Client] Connected to server")
@@ -57,6 +58,7 @@ class AitoMain(QObject) :
                     self.responseReceived.emit()
                 elif self.data['command'] == 'RC':
                     self.result = self.data['status']
+                    self.name=self.data['name']
 
                 self.responseReceived.emit()
 
