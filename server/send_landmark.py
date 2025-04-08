@@ -22,7 +22,7 @@ class LandmarkSender:
             print("[✗] 서버 연결 실패:", e)
             return None
 
-    def send_pose_data(self, user_id, origin, vector, pts):
+    def send_pose_data(self, user_id, joint_data_list):
         if self.sock is None:
             print("소켓이 없음. 데이터 전송 불가.")
             return
@@ -30,18 +30,23 @@ class LandmarkSender:
         data = {
             "command": "PI",
             "user_id": user_id,
-            "origin": {"x": int(origin[0]), "y": int(origin[1])},
-            "vector": {"x": int(vector[0]), "y": int(vector[1])},
-            "landmarks": [
-                {"x": int(pt[0]), "y": int(pt[1])}
-                for pt in pts
-            ]
+            "joints": []
         }
+
+        for joint in joint_data_list:
+            joint_entry = {
+                "origin": {"x": int(joint["origin"][0]), "y": int(joint["origin"][1])},
+                "vector": {"x": int(joint["guide"][0]), "y": int(joint["guide"][1])},
+                "landmarks": [
+                    {"x": int(pt[0]), "y": int(pt[1])} for pt in joint["points"]
+                ]
+            }
+            data["joints"].append(joint_entry)
 
         json_str = json.dumps(data)
         try:
-            self.sock.sendall((json_str + '\n').encode('utf-8'))  # \n 구분자
-            # print("[→] 데이터 전송 완료")
+            self.sock.sendall((json_str + '\n').encode('utf-8'))  # \n으로 구분
+            # print("[→] 좌우 데이터 전송 완료")
         except Exception as e:
             print("[✗] 데이터 전송 실패:", e)
 

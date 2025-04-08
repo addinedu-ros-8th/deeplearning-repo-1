@@ -181,15 +181,22 @@ class WorkoutHandler:
     def handle_pose_info(main_window, frame):
         if isinstance(main_window.tcp.landmark, dict) and main_window.tcp.landmark.get("command") == "PI":
             pi_data = main_window.tcp.landmark
-            ox, oy = pi_data['origin']['x'], pi_data['origin']['y']
-            cv2.circle(frame, (ox, oy), 10, (0, 255, 255), -1)
+            joints = pi_data.get("joints", [])
 
-            vx, vy = pi_data['vector']['x'], pi_data['vector']['y']
-            cv2.arrowedLine(frame, (ox, oy), (vx, vy), (255, 0, 255), 3)
+            for joint in joints:
+                ox, oy = joint['origin']['x'], joint['origin']['y']
+                vx, vy = joint['vector']['x'], joint['vector']['y']
 
-            for pt in pi_data['landmarks']:
-                lx, ly = pt['x'], pt['y']
-                cv2.circle(frame, (lx, ly), 6, (0, 100, 255), -1)  # 주황색 점
+                # origin 표시 (노란 점)
+                cv2.circle(frame, (ox, oy), 10, (0, 255, 255), -1)
+
+                # guide vector (보라색 화살표)
+                cv2.arrowedLine(frame, (ox, oy), (vx, vy), (255, 0, 255), 3)
+
+                # landmarks (주황 점들)
+                for pt in joint['landmarks']:
+                    lx, ly = pt['x'], pt['y']
+                    cv2.circle(frame, (lx, ly), 6, (0, 100, 255), -1)
         # 루틴에서 reps / sets 가져오기
         try:
             routine = main_window.routine_queue[main_window.current_index]
