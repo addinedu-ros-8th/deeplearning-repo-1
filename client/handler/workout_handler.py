@@ -339,7 +339,7 @@ class WorkoutHandler:
     @staticmethod
     def save_video(main_window):
         main_window.udp.video_writer = True
-        data = pack_data("RC", data='True')
+        data = pack_data("RC", data='True', name=main_window.username)
         main_window.tcp.sendData(data)
 
     @staticmethod

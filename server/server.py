@@ -304,7 +304,7 @@ class FAAServer(QTcpServer):
 
     def record_start(self):
         if self.data['data'] == 'True':
-            data = self.pack_data("RC",status='True')
+            data = self.pack_data("RC",status='True',name=self.data['name'])
             self.send_data(self.ai_socket, data)
         elif self.data['data'] == 'False':
             data = self.pack_data("RC",status='False')

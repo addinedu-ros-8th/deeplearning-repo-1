@@ -54,6 +54,8 @@ class AiServer(QWidget):
         self.prev_exercise=None
         self.routine = {}
 
+        self.name = None
+
         print(f"[UDP Server] Listening for video on port {port}...")
 
         # UI 설정
@@ -120,7 +122,8 @@ class AiServer(QWidget):
             self.process_video_frame(client, img_bytes, exercise)
             if not self.model.predict_thread_alive:
                 self.model.run_thread()
-
+            if self.tcp.result == "True":
+                self.name = self.tcp.name
             # QEventLoop가 한 번만 실행되도록 플래그 사용
             # if not hasattr(self, 'loop_ran'):  # loop_ran이 없으면 실행
             #     loop = QEventLoop()
@@ -128,7 +131,7 @@ class AiServer(QWidget):
             #     loop.exec_()
             #     self.loop_ran = True  # 한 번 실행 후 플래그 설정
             # #print(self.tcp.result)
-            # if self.tcp.result == "True":
+            # 
             #     pass
             #     # self.process_video_frame(img_bytes, exercise)
             # if self.tcp.result == "False":
@@ -180,7 +183,7 @@ class AiServer(QWidget):
                                     angle=self.model.angle_counter.guide_angle[self.model.angle_counter.exercise])
             self.tcp.sendData(data)
 
-        if self.model.angle_counter.count >= 20:
+        if self.model.angle_counter.count >= 10:
             self.stop_and_send_recording()
             self.model.angle_counter.count=0
 
@@ -229,8 +232,8 @@ class AiServer(QWidget):
     def _send_video(self, video_path):
         """파일 전송 실행 및 삭제"""
         try:
-            file_client = FileClient(file_path=video_path)
-            file_client.send_video()
+            file_client = FileClient()
+            file_client.send_video(file_path=video_path,name=self.name)
 
             print(f"[UDP Server] Successfully sent {video_path} to server.")
             os.remove(video_path)  # 전송 완료 후 파일 삭제

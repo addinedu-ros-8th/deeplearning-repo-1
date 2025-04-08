@@ -18,6 +18,7 @@ from handler.record_handler import RecordHandler
 from network.packer import pack_data
 import Controller.Detector as Detector
 import Constants as cons 
+from file_client import FileClient
 main_class = uic.loadUiType("client/ui/main_page.ui")[0]
 class MainWindow(QMainWindow, main_class):
     def __init__(self):
@@ -26,7 +27,7 @@ class MainWindow(QMainWindow, main_class):
         self.setupUi(self)
         self.db = FAAdb()
         self.cur = self.db.conn.cursor()
-
+        self.file = FileClient()
         self.tcp = Client()
         self.udp = UdpClient()
         self.hand_detector = Detector.handDetector()
@@ -72,6 +73,8 @@ class MainWindow(QMainWindow, main_class):
         self.btn_profile2.clicked.connect(lambda: self.auth.login_user(self.label_profile2.text()))
         self.btn_profile3.clicked.connect(lambda: self.auth.login_user(self.label_profile3.text()))
         self.btn_profile4.clicked.connect(lambda: self.auth.login_user(self.label_profile4.text()))
+        
+        self.btn_lastWorkout.clicked.connect(self.bring_video)
 
         self.record_handler = RecordHandler(self)
         
@@ -359,6 +362,11 @@ class MainWindow(QMainWindow, main_class):
             self.show_config()
         elif self.tcp.result == 9:
             QMessageBox.warning(self, "실패", "'" + name + "' 운동 수정에 실패했습니다.")
+    
+    def bring_video(self):
+        
+        data=self.file.pack_data('br',name=self.username)
+        self.file.send_data(data)
 
     def click_tableWidget(self):
         item = self.tableWidget.selectedItems()
