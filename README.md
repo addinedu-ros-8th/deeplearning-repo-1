@@ -78,7 +78,8 @@ Project Period: 2025.03.14~2025.04.08
 ```
 ## Deep Learning 
 ### Data set 
-![Image](https://github.com/user-attachments/assets/319174e8-532d-40fd-819d-b4e536d2ff55)
+
+<img src="https://github.com/user-attachments/assets/319174e8-532d-40fd-819d-b4e536d2ff55" width="500">
 <br />
 
 - **스쿼트** : 26개
@@ -86,13 +87,47 @@ Project Period: 2025.03.14~2025.04.08
 - **니업** : 14개
 - **런지** : 18개
 ### Model Layer 
-![Image](https://github.com/user-attachments/assets/a6d335ef-159e-4331-a0dd-6a4dfdb4d79b)
+
+<img src="https://github.com/user-attachments/assets/a6d335ef-159e-4331-a0dd-6a4dfdb4d79b" width="500">
 <br />
 
 - **epochs** : 20
 - **batch_size** : 100
 - **sequence** : 20, 30
 - **Train,Valid** : 80%, 20%
+### Evaluation 
+#### Sequence size 
+- Sequence size 20
+<table>
+  <tr>
+    <td><img src="https://github.com/user-attachments/assets/f87df427-a4a4-4249-9fb8-4493216c2d62" width="300"></td>
+    <td><img src="https://github.com/user-attachments/assets/144eaa57-c065-4896-bd38-8ee5a2b086ee" width="300"></td>
+  </tr>
+  <tr>
+    <td align="center">Confusion Matrix</td>
+    <td align="center">정확도: 77%</td>
+  </tr>
+</table>
+- Sequence size 30
+<table>
+  <tr>
+    <td><img src="https://github.com/user-attachments/assets/6f33ed1e-d01f-4cb7-afaf-a82e28d7b84d" width="300"></td>
+    <td><img src="https://github.com/user-attachments/assets/6f4c5e8b-9ef7-41e1-b692-21a3dcb4406a" width="300"></td>
+  </tr>
+  <tr>
+    <td align="center">Confusion Matrix</td>
+    <td align="center">정확도: 86%</td>
+  </tr>
+</table>
+
+- Training History
+<br />
+<img src="https://github.com/user-attachments/assets/cfd90b57-cc5b-41eb-b3b3-fbecb73dfe15" width="500">
+
+- result
+<br />
+<img src="https://github.com/user-attachments/assets/eb6fbcc9-7537-4757-beca-b1ba8d499f8d" width="500">
+
 ## 주요 기능 
 ### Login 
 ![Image](https://github.com/user-attachments/assets/fab18721-b4bd-4628-a3ac-186867eefb38)
