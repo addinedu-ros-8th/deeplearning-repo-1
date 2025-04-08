@@ -51,7 +51,8 @@ class ExerciseClassifier:
         self.clients = clients
         self.angle_counter = AngleGuid(exercise=None)  # 초기 운동 설정
         
-        self.predict_thread = threading.Thread(target=self.run_prediction, daemon=True)
+        self.predict_thread = None
+        self.predict_thread_alive = False
         # self.predict_thread.start()
         self.tts_thread = TextToSpeechThread()
         
@@ -59,7 +60,15 @@ class ExerciseClassifier:
         self.routine_list = []
 
     def run_thread(self):
-        self.predict_thread.start()
+        if self.predict_thread is None:
+            self.predict_thread_alive = True
+            self.predict_thread = threading.Thread(target=self.run_prediction, daemon=True)
+            self.predict_thread.start()
+
+    def stop_thread(self):
+        if self.predict_thread and self.predict_thread.is_alive():
+            self.predict_thread_alive = False
+            self.predict_thread.join()
 
     def set_routine(self, routine):
         self.routine_list = routine
@@ -86,7 +95,7 @@ class ExerciseClassifier:
         return xyz_list
     
     def run_prediction(self):
-        while True:
+        while self.predict_thread_alive:
             for user_id, client in self.clients.items():
                 with client.get_lock():
                     if len(client.sequence) == self.sequence_size:
@@ -157,7 +166,6 @@ class ExerciseClassifier:
         if self.result is not None:
             predict_class = int(np.argmax(self.result))
             predicted_label = self.exercise_list[predict_class]
-            print(predicted_label)
             try:
                 # if self.exercise_count.get(predicted_label) != internal_name:
                 if internal_name != predicted_label:

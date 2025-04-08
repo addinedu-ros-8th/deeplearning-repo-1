@@ -118,7 +118,7 @@ class AiServer(QWidget):
             client = self.client[user_id]
 
             self.process_video_frame(client, img_bytes, exercise)
-            if not self.model.predict_thread.is_alive():
+            if not self.model.predict_thread_alive:
                 self.model.run_thread()
 
             # QEventLoop가 한 번만 실행되도록 플래그 사용

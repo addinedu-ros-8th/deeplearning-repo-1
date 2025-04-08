@@ -17,7 +17,7 @@ class UdpClient:
             print("[UDP Client] No frame to send")
             return
 
-        frame = cv2.resize(frame, (640, 640))
+        # frame = cv2.resize(frame, (640, 640))
         _, buffer = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
         image_bytes = buffer.tobytes()
         
