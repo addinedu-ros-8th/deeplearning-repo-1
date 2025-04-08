@@ -112,7 +112,7 @@ AI 기반 스마트 피트니스 트레이닝 시스템
 ## 설계
 ### 시나리오
 #### Sequence Diagram
-![Image](https://github.com/user-attachments/assets/65cebba6-c939-4ffb-96d8-bb6966fd189d)
+![Image](https://github.com/user-attachments/assets/af8de992-43fa-4db0-aee4-966a16b259f4)
 
 ### Workout list
 |  Tier  |  이름  | 설명 | Tier  |  이름  | 설명 
@@ -125,11 +125,9 @@ AI 기반 스마트 피트니스 트레이닝 시스템
 
 
 ### Architecture  
-#### 1) SW
+#### 1) System Atchitecture
 ![Image](https://github.com/user-attachments/assets/13a78c71-6e38-424f-a4a7-bb9ba25d9b86)
-#### 2) HW
-![Image](https://github.com/user-attachments/assets/ee48d138-91da-4a27-8f0a-88d739a6a221)
-#### 3) ERD 
+#### 2) ERD 
 ![Image](https://github.com/user-attachments/assets/fffa8ef7-b725-47d5-8c10-b99cf20ea940)
 
 
