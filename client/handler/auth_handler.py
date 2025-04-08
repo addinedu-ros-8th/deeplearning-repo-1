@@ -66,7 +66,7 @@ class AuthHandler:
                             'reps': int(reps)
                         })
                     except ValueError:
-                        print("⚠️ 잘못된 루틴 항목 포맷:", item)
+                        print(" 잘못된 루틴 항목 포맷:", item)
                 print(" 루틴 리스트:", self.main_window.routine)
         else:
             QMessageBox.warning(self.main_window, "로그인 실패", "로그인 정보가 틀렸습니다.")

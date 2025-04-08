@@ -16,10 +16,10 @@ class LandmarkSender:
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect((self.host, self.port))
-            print(f"[✓] 서버에 연결됨: {self.host}:{self.port}")
+            print(f" 서버에 연결됨: {self.host}:{self.port}")
             return sock
         except Exception as e:
-            print("[✗] 서버 연결 실패:", e)
+            print(" 서버 연결 실패:", e)
             return None
 
     def send_pose_data(self, user_id, joint_data_list):
@@ -46,14 +46,14 @@ class LandmarkSender:
         json_str = json.dumps(data)
         try:
             self.sock.sendall((json_str + '\n').encode('utf-8'))  # \n으로 구분
-            # print("[→] 좌우 데이터 전송 완료")
+            # print(" 좌우 데이터 전송 완료")
         except Exception as e:
-            print("[✗] 데이터 전송 실패:", e)
+            print(" 데이터 전송 실패:", e)
 
     def close(self):
         if self.sock:
             self.sock.close()
-            print("[✦] 소켓 연결 종료")
+            print("소켓 연결 종료")
 
 
 # 🔹 사용 예시 (직접 실행 시)

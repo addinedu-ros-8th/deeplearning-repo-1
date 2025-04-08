@@ -119,7 +119,7 @@ class ExerciseClassifier:
                 self.angle_counter.set_exercise(eng_name)
                 print(f"[Model] 현재 운동으로 변경됨: {eng_name}")
             else:
-                print(f"⚠️ 운동 매핑 실패: {kor_name}")
+                print(f"운동 매핑 실패: {kor_name}")
 
     # def start_break(self):
     #     self.break_active = True
@@ -185,60 +185,9 @@ class ExerciseClassifier:
 
             except Exception as e:
                     print("[Predict Error]", e)
-            # cv2.putText(frame, f"{internal_name}", (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 3)        
-        
-        # Count 업데이트
-        # if self.angle_counter.exercise:
-        #     self.angle_counter.draw(frame, results.pose_landmarks.landmark)
-        #     cv2.putText(frame, f"Count: {self.angle_counter.get_count()}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
-        #     #  남은 개수와 세트 계산
-        #     remaining_reps = max(0, current_routine['reps'] - self.angle_counter.get_count())
-        #     remaining_sets = max(0, current_routine['sets'] - self.reps_done)
 
-        #     #  OpenCV로 표시
-        #     cv2.putText(frame, f"Count: {self.angle_counter.get_count()}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
-        #     cv2.putText(frame, f"reps: {remaining_reps}", (10, 130), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 255), 3)
-        #     cv2.putText(frame, f"sets: {remaining_sets}", (10, 170), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 0), 3)
-
-        #     # set / 운동 완료 체크
-        #     if self.angle_counter.get_count() >= current_routine['reps']:
-        #         self.angle_counter.set_count()
-        #         self.reps_done += 1
-        #         print(f"[Model] 세트 완료 ({self.reps_done}/{current_routine['sets']})")
-        #         return "BREAK"
-        
-        # mp_drawing.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
         return frame
     
-            # exercise=['shoulder', 'squat', 'knee']
-        # self.angle_counter.set_exercise(exercise=exercise[0])
-        # if self.angle_counter.exercise != None:
-        #     self.angle_counter.draw(frame, results.pose_landmarks.landmark)
-        #     cv2.putText(frame, f"Count: {self.angle_counter.get_count()}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
-        # if results.pose_landmarks is None:
-        #     return frame
-                # if self.exercise_count[predicted_label] != exercise[0]:
-                #     #print(predicted_label)
-                #     self.consistent_frames += 1
-                # else:
-                #     self.consistent_frames = 0
-
-        #         if self.consistent_frames >= self.required_frames:
-        #             # if self.label != predicted_label:  # 운동이 변경될 때 동작 수행
-        #             #     self.label = predicted_label
-        #             self.consistent_frames = 0
-        #             #print("다른운동하지마세요.")
-        #             tts_thread = TextToSpeechThread("다른 운동 하지 마세요.")  # TTS 쓰레드 실행
-        #             tts_thread.start()
-        #     except:
-        #         a=1
-
-        #     cv2.putText(frame, f"{exercise[0]}", (10, 45), cv2.FONT_HERSHEY_SIMPLEX, 2, (255, 0, 0), 3)
-        
-
-        
-        # mp_drawing.draw_landmarks(frame, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
-        # return frame
 
 if __name__ == "__main__":
     classifier = ExerciseClassifier()
