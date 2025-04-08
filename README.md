@@ -61,21 +61,36 @@ AI 기반 스마트 피트니스 트레이닝 시스템
     sudo apt install qttools5-dev-tools
     sudo apt install qttools5-dev
 ```
-#### PyQt5
-- Linux 
-```bash 
-    pip install pyqt5
-    sudo apt-get install pyqt5-dev-tools
-```
+
 #### pip requirements
 ```bash
+    pip install pyqt5
     pip install opencv-headless 
     pip install mediapipe
     pip install numpy
     pip install gTTS
     pip install pydub
     pip install tensorflow
+    pip install mysql
+    pip install matplotlib
 ```
+## Deep Learning 
+### Data set 
+![Image](https://github.com/user-attachments/assets/319174e8-532d-40fd-819d-b4e536d2ff55)
+<br />
+
+- **스쿼트** : 26개
+- **숄더 프레스** : 11개
+- **니업** : 14개
+- **런지** : 18개
+### Model Layer 
+![Image](https://github.com/user-attachments/assets/a6d335ef-159e-4331-a0dd-6a4dfdb4d79b)
+<br />
+
+- **epochs** : 20
+- **batch_size** : 100
+- **sequence** : 20, 30
+- **Train,Valid** : 80%, 20%
 ## 주요 기능 
 ### Login 
 ![Image](https://github.com/user-attachments/assets/fab18721-b4bd-4628-a3ac-186867eefb38)
