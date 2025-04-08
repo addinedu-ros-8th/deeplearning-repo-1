@@ -21,7 +21,7 @@ mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
 
 class ExerciseClassifier:
-    def __init__(self, clients, model_path='/home/sang/dev_ws/git_ws/deeplearning-repo-1/exercise_classifier.h5'):
+    def __init__(self, clients, model_path='./exercise_classifier.h5'):
         self.model = load_model(model_path)
         # self.sequence = deque(maxlen=20)
         # self.lock = threading.Lock()

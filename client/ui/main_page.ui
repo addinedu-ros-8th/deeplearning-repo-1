@@ -33,7 +33,7 @@
        <item>
         <widget class="QStackedWidget" name="stackedWidget_big">
          <property name="currentIndex">
-          <number>1</number>
+          <number>2</number>
          </property>
          <widget class="QWidget" name="profile_page">
           <layout class="QGridLayout" name="gridLayout_3">
@@ -1113,6 +1113,23 @@ color: white;</string>
                             <bold>true</bold>
                            </font>
                           </property>
+                          <property name="contextMenuPolicy">
+                           <enum>Qt::CustomContextMenu</enum>
+                          </property>
+                          <property name="text">
+                           <string>reps</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QLabel" name="label_49">
+                          <property name="font">
+                           <font>
+                            <pointsize>16</pointsize>
+                            <weight>75</weight>
+                            <bold>true</bold>
+                           </font>
+                          </property>
                           <property name="text">
                            <string>reps</string>
                           </property>
@@ -1149,6 +1166,20 @@ color: white;</string>
                         </item>
                         <item>
                          <widget class="QLabel" name="lb_sets">
+                          <property name="font">
+                           <font>
+                            <pointsize>16</pointsize>
+                            <weight>75</weight>
+                            <bold>true</bold>
+                           </font>
+                          </property>
+                          <property name="text">
+                           <string>sets</string>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QLabel" name="label_50">
                           <property name="font">
                            <font>
                             <pointsize>16</pointsize>

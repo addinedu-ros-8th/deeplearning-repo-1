@@ -214,9 +214,10 @@ class WorkoutHandler:
             main_window.reps_done += 1
         cv2.putText(frame, f"reps: {main_window.tcp.count}/{total_reps}", 
                     (10, 220), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 255), 2)
+        main_window.lb_rep.setText(str(main_window.tcp.count))
         cv2.putText(frame, f"sets: {done_sets}/{total_sets}", 
                     (10, 260), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 0), 2)
-
+        main_window.lb_set.setText(str(done_sets))
     @staticmethod    
     def handle_workout_timer(main_window, frame):
         if main_window.remaining_time > 0:
