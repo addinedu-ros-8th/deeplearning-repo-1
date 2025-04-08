@@ -223,7 +223,7 @@ class MainWindow(QMainWindow, main_class):
             label.setMovie(movie)
             movie.start()
         else:
-            print(f"⚠️ 썸네일 gif가 존재하지 않거나 등록되지 않음: {workout_name}")
+            print(f" 썸네일 gif가 존재하지 않거나 등록되지 않음: {workout_name}")
     
     def display_routine_list(self):
         self.routine_list.clear()
