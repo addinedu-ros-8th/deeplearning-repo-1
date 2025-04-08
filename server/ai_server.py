@@ -149,12 +149,12 @@ class AiServer(QWidget):
             #self.guid = AngleGuid(exercise=None)
             
             self.display_frame(frame)
-            self.record_video(frame)
+            self.record_video(frame, client)
 
         except Exception as e:
             print(f"[UDP Server] Error processing frame: {e}")
 
-    def record_video(self, frame):
+    def record_video(self, frame, client):
         """ 프레임을 저장하여 녹화 파일 생성 """
         if not self.recording:
             self.start_new_recording(frame)
@@ -163,10 +163,11 @@ class AiServer(QWidget):
         current_count = self.model.angle_counter.count
         current_exercise = self.model.angle_counter.exercise
 
-        # if self.prev_count != current_count:
-        #     self.prev_count = current_count
-        #     data=self.tcp.pack_data(command='CT',data=str(self.model.angle_counter.count))
-        #     self.tcp.sendData(data)
+        if self.prev_count != current_count:
+            self.prev_count = current_count
+            print(client.get_user_id())
+            data=self.tcp.pack_data(command='CT',status=str(client.get_user_id()))
+            self.tcp.sendData(data)
 
         if self.prev_exercise != current_exercise:
             # print(self.prev_exercise)

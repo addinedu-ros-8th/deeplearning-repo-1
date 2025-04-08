@@ -53,8 +53,9 @@ class MainWindow(QMainWindow, main_class):
         self.height_ = 0
         self.score = 0
         self.routine = []
- 
-        self.remaining_time = 0
+
+        self.remaining_time = 0 
+        self.break_remaining_time = cons.BREAK_TIME
         self.last_tick_time = 0
         self.last_selected_row = -1
         self.is_break = False
@@ -65,7 +66,7 @@ class MainWindow(QMainWindow, main_class):
         self.sets = 0
         self.reps = 0
         self.counts =0 
-        
+
         self.auth = AuthHandler(self)
         self.btn_profile1.clicked.connect(lambda: self.auth.login_user(self.label_profile1.text()))
         self.btn_profile2.clicked.connect(lambda: self.auth.login_user(self.label_profile2.text()))
@@ -236,9 +237,10 @@ class MainWindow(QMainWindow, main_class):
         # self.routine_list.setCurrentRow(self.current_index)
     
     def start_break_timer(self):
-        self.remaining_time = cons.BREAK_TIME
+        self.break_remaining_time = cons.BREAK_TIME
         self.last_tick_time = time.time()
         self.is_break = True
+        self.is_working = False
         self.lb_what.setText("휴식 중...")  # UI에 표시
 
     def handle_next_workout(self):

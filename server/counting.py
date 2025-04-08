@@ -15,6 +15,7 @@ class AngleGuid():
         self.up_angle=0
         self.down_angle=0
         self.limit_angle=0
+        self.frame_count = 0
         
         self.sendLand = LandmarkSender()
 
@@ -210,7 +211,11 @@ class AngleGuid():
 
             cv2.putText(frame, str(int(angle)), (int(pt2[0]), int(pt2[1])), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
             
-            self.sendLand.send_pose_data(user_id, origin, self.vectors[idx], pts, self.count)
+            self.frame_count += 1
+
+            # 60프레임에 한 번만 전송
+            if self.frame_count % 33 == 0:
+                self.sendLand.send_pose_data(user_id, origin, self.vectors[idx], pts)
     
     def set_exercise(self, exercise):
         with self.lock:

@@ -14,7 +14,7 @@ from functools import partial
 import json
 import socket 
 from client_info import ClientInfo
-from client.ai_to_main import AitoMain
+from ai_to_main import AitoMain
 
 class FAAServer(QTcpServer):
     def __init__(self):
@@ -47,7 +47,7 @@ class FAAServer(QTcpServer):
     def receive_data(self, client_socket):
         while client_socket.bytesAvailable() > 0:
             data = client_socket.readAll().data()
-            print(data)
+            #print(data)
 
             # AI 서버가 자기소개 할 경우
             if data == b'AI_HELLO':
@@ -70,12 +70,11 @@ class FAAServer(QTcpServer):
                             tmp = (item + '\n').encode('utf-8')
                             # print(f"[Server] [JSON - PI 명령 수신]: {json_data}")
                             self.send_data(self.get_socket(int(user_id)), tmp)
-                            current_count = json_data.get('count')
                         else:
                             print(f"[Server] [무시된 JSON 명령]: {json_data.get('command')}")
                         return
                 except Exception as e:
-                    print(f"[!] JSON 형식으로 보이지만 파싱 실패: {e}")
+                    #print(f"[!] JSON 형식으로 보이지만 파싱 실패: {e}")
                     return
 
             # ✅ 나머지는 전부 바이너리라고 보고 기존 방식대로 처리
@@ -90,8 +89,9 @@ class FAAServer(QTcpServer):
                     print("회원가입")
                     self.register(client_socket)
                 elif self.data['command'] == "CT":
+                    user_id=int(self.data['status'])
                     print("카운팅")
-                    self.counting(client_socket, self.data['data'])
+                    self.counting(self.get_socket(user_id))
                 elif self.data['command'] == "RC":
                     print("녹화시작")
                     self.record_start()
@@ -174,9 +174,9 @@ class FAAServer(QTcpServer):
             angle = None
 
         # ✅ 로그 출력용 (람다 함수일 경우 문자열로 변환)
-        angle_display = angle_str if isinstance(angle, str) else f"lambda function ({angle_str})"
+        #angle_display = angle_str if isinstance(angle, str) else f"lambda function ({angle_str})"
 
-        print(f"[Server] 클라이언트 메세지 : {{'command': {command}, 'angle': {angle_display}}}")
+        #print(f"[Server] 클라이언트 메세지 : {{'command': {command}, 'angle': {angle_display}}}")
 
         return {
             'command': command,
@@ -298,8 +298,8 @@ class FAAServer(QTcpServer):
                
         self.send_data(socket, data)
     
-    def counting(self, socket, count):
-        data = self.pack_data("CT",status=count)
+    def counting(self, socket):
+        data = self.pack_data("CT")
         self.send_data(socket,data)
 
     def record_start(self):

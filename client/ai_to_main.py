@@ -115,11 +115,8 @@ class AitoMain(QObject) :
         print(f"[Client] Socket error: {err}")
         self.error.emit(str(err))
 
-    def pack_data(self, command, pw=None, name=None, height=None, weight=None, data=None, content=None, image_data=None, joint=None, angle=None):
+    def pack_data(self, command, status=None, pw=None, name=None, height=None, weight=None, data=None, content=None, image_data=None, joint=None, angle=None):
         packed_data = b''
-
-        # 명령어 패킹 (길이 + 데이터)
-        packed_data += struct.pack('I', len(command)) + command.encode('utf-8')
 
         def pack_string(value):
             if value is not None:
@@ -127,7 +124,9 @@ class AitoMain(QObject) :
                 return struct.pack('I', len(encoded)) + encoded
             return struct.pack('I', 0)
 
-        # 문자열 패킹
+        # 언팩 순서에 맞춰서 패킹
+        packed_data += pack_string(command)
+        packed_data += pack_string(status)
         packed_data += pack_string(pw)
         packed_data += pack_string(name)
         packed_data += pack_string(str(height) if height is not None else None)
@@ -149,16 +148,16 @@ class AitoMain(QObject) :
         else:
             packed_data += struct.pack('I', 0)
 
-        # ✅ angle 패킹 (람다 → 문자열 변환)
+        # angle 패킹 (람다 함수는 문자열로 변환)
         if angle is not None:
-            if callable(angle):  
-                angle_str = f"lambda idx: {angle(0)}"  # 실행 가능한 문자열로 변환
+            if callable(angle):
+                angle_str = f"lambda idx: {angle(0)}"
             else:
                 angle_str = str(angle)
             packed_data += pack_string(angle_str)
         else:
             packed_data += struct.pack('I', 0)
-        
+
         return packed_data
 
     
