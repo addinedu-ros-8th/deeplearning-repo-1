@@ -21,7 +21,7 @@ mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
 
 class ExerciseClassifier:
-    def __init__(self, clients, model_path='./exercise_classifier.h5'):
+    def __init__(self, clients, model_path='/home/sang/dev_ws/git_ws/deeplearning-repo-1/exercise_classifier.h5'):
         self.model = load_model(model_path)
         # self.sequence = deque(maxlen=20)
         # self.lock = threading.Lock()
@@ -166,10 +166,7 @@ class ExerciseClassifier:
         if self.result is not None:
             predict_class = int(np.argmax(self.result))
             predicted_label = self.exercise_list[predict_class]
-<<<<<<< HEAD
-=======
             #print(predicted_label)
->>>>>>> 0e7c03886268b7d357f1b8f0361e1f80d13b5d71
             try:
                 # if self.exercise_count.get(predicted_label) != internal_name:
                 if internal_name != predicted_label:
