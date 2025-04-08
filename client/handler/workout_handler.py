@@ -74,10 +74,12 @@ class WorkoutHandler:
     def handle_break_time(main_window, frame):
         
         if main_window.break_remaining_time > 0:
+            main_window.lb_what.setText("휴식중...") 
             now = time.time()
             if now - main_window.last_tick_time >= 1:
                 main_window.break_remaining_time -= 1
                 main_window.last_tick_time = now
+                
         else:
             main_window.is_break = False
             main_window.is_working = True 
@@ -126,56 +128,24 @@ class WorkoutHandler:
                     print("🏁 모든 루틴 완료!")
                     main_window.lb_what.setText("루틴 완료")
                     main_window.is_working = False
+                    WorkoutHandler.handle_back_to_main(main_window)
                     return
                 else:
-                    print(f"✅ 다음 운동: {main_window.routine_queue[main_window.current_index]['name']}")
+                    print(f"다음 운동: {main_window.routine_queue[main_window.current_index]['name']}")
+                    main_window.current = main_window.routine_queue[main_window.current_index]
+                    main_window.lb_what.setText(main_window.current['name'])
+                    main_window.set_current_workout()
+                    main_window.start_break_timer()
             else:
-                
                 print("▶ 다음 세트로 이동합니다.")
-
+                main_window.start_break_timer()
             # 운동 재시작 플래그
             main_window.is_working = True
 
         except Exception as e:
             print("❌ 세트 강제 처리 실패:", e)
         
-   
-        
-    @staticmethod
-    def handle_set_progress(main_window, count):
-        try:
-            user_id = main_window.user_id
-            routine = main_window.routine_queue[main_window.current_index]
-            total_reps = routine['reps']
-            total_sets = routine['sets']
-            
-            # Count가 목표 횟수 도달한 경우
-            if count >= total_reps:
-                main_window.reps_done += 1
-                print(f" 세트 완료: {main_window.reps_done}/{total_sets}")
 
-                if main_window.reps_done >= total_sets:
-                    # 운동 완료 -> routine_workou.status == true 
-                    WorkoutHandler.mark_current_workout_done(main_window)
-                    main_window.reps_done = 0
-                    main_window.current_index += 1
-
-                    if main_window.current_index < len(main_window.routine_queue):
-                        print(f"다음 운동: {main_window.routine_queue[main_window.current_index]['name']}")
-                    else:
-                        print(" 전체 루틴 완료!")
-                        main_window.lb_what.setText("루틴 완료")
-                        # sql = """UPDATE routine SET status = TRUE WHERE user_id = ? """
-                        # main_window.cur.execute(sql, (user_id,))
-                        # main_window.db.conn.commit()
-                else:
-                    print(" 다음 세트 로.")
-
-                # 항상 break time 시작
-                main_window.start_break_timer()
-
-        except Exception as e:
-            print("세트 진행 로직 실패:", e)
 
     @staticmethod      
     def handle_pose_info(main_window, frame):
@@ -220,6 +190,25 @@ class WorkoutHandler:
         cv2.putText(frame, f"sets: {done_sets}/{total_sets}", 
                     (10, 260), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 0), 2)
         main_window.lb_set.setText(str(done_sets))
+        
+        if done_sets == total_sets:
+            main_window.reps_done = 0 # 세트수 초기화 
+            main_window.current_index += 1
+            if main_window.current_index < len(main_window.routine_queue):
+                # 다음 운동 정보 갱신
+                main_window.current = main_window.routine_queue[main_window.current_index]
+                main_window.lb_what.setText(main_window.current['name'])
+                main_window.set_current_workout()
+                main_window.start_break_timer()   
+            # else:
+            #     # ✅ 루틴 종료 처리
+            #     print("🏁 모든 루틴 완료!")
+            #     main_window.lb_what.setText("루틴 완료")
+            #     main_window.is_working = False
+            #     WorkoutHandler.handle_back_to_main(main_window)
+            #     return
+                    
+
     @staticmethod    
     def handle_workout_timer(main_window, frame):
         if main_window.remaining_time > 0:
@@ -299,8 +288,6 @@ class WorkoutHandler:
             
         elif main_window.is_break:
             WorkoutHandler.handle_break_time(main_window, frame)        # break time countdown 
-                
-
         elif main_window.is_lookup:
             WorkoutHandler.handle_lookup_mode(main_window, frame, lmList)
 
