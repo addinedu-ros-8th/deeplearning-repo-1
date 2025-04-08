@@ -164,8 +164,6 @@ class WorkoutHandler:
         except Exception as e:
             print("handle_pose_info 루틴 정보 접근 실패:", e)
             return
-        
-        count = pi_data['count']
 
         # remaining_reps = max(0, total_reps - count)
         # remaining_sets = max(0, total_sets - done_sets)
@@ -181,7 +179,10 @@ class WorkoutHandler:
             cv2.circle(frame, (pt['x'], pt['y']), 6, (0, 100, 255), -1)
 
         # 남은 개수와 세트
-        cv2.putText(frame, f"reps: {count}/{total_reps}", 
+        if main_window.tcp.count == total_reps:
+            main_window.tcp.count = 0
+            main_window.reps_done += 1
+        cv2.putText(frame, f"reps: {main_window.tcp.count}/{total_reps}", 
                     (10, 220), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 255), 2)
         cv2.putText(frame, f"sets: {done_sets}/{total_sets}", 
                     (10, 260), cv2.FONT_HERSHEY_SIMPLEX, 1.2, (255, 255, 0), 2)
