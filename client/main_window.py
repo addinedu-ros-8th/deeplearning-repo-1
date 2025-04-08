@@ -61,6 +61,10 @@ class MainWindow(QMainWindow, main_class):
 
         self.reps_done = 0
         self.set_done = False
+
+        self.sets = 0
+        self.reps = 0
+        self.counts =0 
         
         self.auth = AuthHandler(self)
         self.btn_profile1.clicked.connect(lambda: self.auth.login_user(self.label_profile1.text()))

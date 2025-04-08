@@ -114,11 +114,13 @@ class UISetupHelper:
         main_window.btn_back2main_2.clicked.connect(main_window.back2main)
     @staticmethod
     def button_stylers(main_window):
-        main_window.day_icon.setPixmap(QPixmap("./image_folder/weights.png").scaled(30, 30))
-        main_window.time_icon.setPixmap(QPixmap("./image_folder/clock.png").scaled(30, 30))
-        main_window.count_icon.setPixmap(QPixmap("./image_folder/days.png").scaled(30, 30))
-        
+        main_window.day_icon.setPixmap(QPixmap("./image_folder/weights.png").scaled(50, 50))
+        main_window.time_icon.setPixmap(QPixmap("./image_folder/clock.png").scaled(50, 50))
+        main_window.count_icon.setPixmap(QPixmap("./image_folder/days.png").scaled(50, 50))
+    
         main_window.lb_first.setPixmap(QPixmap("./image_folder/first.png").scaled(50, 50))
+
+        
         # 회원정보 수정 Button
         main_window.btn_modify.setIcon(QIcon("./image_folder/Modify.png"))
         main_window.btn_modify.setIconSize(main_window.btn_modify.sizeHint())
@@ -178,6 +180,16 @@ class UISetupHelper:
         QPushButton {
             border: 2px solid #ccc;
             background-color: SkyBlue;
+        }
+        """)
+        # re-watch Button 
+        main_window.btn_lastWorkout.setIcon(QIcon("./image_folder/exercise.png"))
+        main_window.btn_lastWorkout.setIconSize(main_window.btn_lastWorkout.sizeHint()*8)
+        main_window.btn_lastWorkout.setStyleSheet("""
+        QPushButton {
+            border: none;
+            padding: 0px;
+            margin: 0px;
         }
         """)
 
