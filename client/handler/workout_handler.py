@@ -19,6 +19,10 @@ class WorkoutHandler:
         self.cur = self.main_window.cur
         self.db = self.main_window.db
 
+        self.count = 0
+        self.reps = 0
+        self.sets = 0
+
         print("💡 현재 username:", main_window.username)
 
     def load_user_routine(self):
