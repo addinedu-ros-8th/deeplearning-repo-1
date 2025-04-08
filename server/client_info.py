@@ -10,7 +10,6 @@ class ClientInfo:
         self.tier = 0
         self.score = 0
         self.routine = []
-        self.image_buffer = deque(maxlen=30)
 
     def set_user_info(self, user_id, user_name=None, weight=0, height=0, tier=0, score=0):
         self.user_id = user_id
