@@ -139,10 +139,12 @@ class AngleGuid():
         }
 
         self.guide_angle = {
-            "shoulder": lambda idx: -130 * (1 if idx == 0 else -1),
+            "shoulder": lambda idx: -50 * (1 if idx == 0 else -1),
             "squat": lambda idx: 90 * (1 if idx == 1 else -1),
             "knee": lambda idx: -98
         }
+
+        joint_data = []  # 좌우 joint 데이터 모음
 
         for idx, (a, b, c) in enumerate(self.joint_map[self.exercise]):
             passing = False
@@ -151,6 +153,7 @@ class AngleGuid():
             pt3 = self.to_pixel(frame, c, landmarks)
             pts = [pt1, pt2, pt3]
 
+            # 운동 종류에 따라 초기화
             if self.exercise == "squat":
                 self.squat_init()
             elif self.exercise == "shoulder":
@@ -160,62 +163,58 @@ class AngleGuid():
             else:
                 return
 
+            # 각도 계산
             angle = self.calculate_angle(landmarks[a], landmarks[b], landmarks[c])
             if (landmarks[c].y > landmarks[a].y and self.exercise == "shoulder"):
-               passing = True
+                passing = True
 
             self.update(idx, angle, passing)
 
+            # 각 운동 별 벡터 구성
             if self.exercise == "shoulder":
-                origin = pt1
-                center = pt2
-                point = pt1
+                origin, center, point = pt1, pt2, pt1
             elif self.exercise == "squat":
-                origin = pt2
-                center = pt2
-                point = pt3
+                origin, center, point = pt2, pt2, pt3
             elif self.exercise == "knee":
-                origin = pt1
-                center = pt2
-                point = pt1
+                origin, center, point = pt1, pt2, pt1
 
-            # 초기 가이드 벡터
+            # 가이드 벡터 초기화
             if not self.initialized[idx]:
                 self.vectors[idx] = self.get_point_by_angle(origin, center, point, self.guide_angle[self.exercise](idx))
                 self.initialized[idx] = True
 
-            # 가이드 라인
+            # 가이드 라인 그리기
             cv2.line(frame, tuple(origin.astype(int)), tuple(self.vectors[idx].astype(int)), self.p, 2)
-            # print(origin.astype(int))
-            # print(self.vectors[idx].astype(int))
 
-            # 관절 색
+            # 관절 색상 결정
             if self.exercise == "shoulder":
-                if angle > self.up_angle and landmarks[c].y < landmarks[a].y:
-                    color = self.g 
-                else:
-                    color = self.r
+                color = self.g if angle > self.up_angle and landmarks[c].y < landmarks[a].y else self.r
             elif self.exercise == "knee":
                 color = self.g if angle < self.up_angle else self.r
             elif self.exercise == "squat":
                 color = self.r if angle > self.down_angle else self.g
 
-            # 관절 라인
+            # 관절 선
             cv2.line(frame, tuple(pt1.astype(int)), tuple(pt2.astype(int)), color, 2)
             cv2.line(frame, tuple(pt2.astype(int)), tuple(pt3.astype(int)), color, 2)
 
-
-            # 점 & 각도 표시
+            # 관절 점 & 각도 표시
             for pt in [pt1, pt2, pt3]:
                 cv2.circle(frame, tuple(pt.astype(int)), 4, self.b, -1)
-
             cv2.putText(frame, str(int(angle)), (int(pt2[0]), int(pt2[1])), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
-            
-            self.frame_count += 1
 
-            # 60프레임에 한 번만 전송
-            if self.frame_count % 33 == 0:
-                self.sendLand.send_pose_data(user_id, origin, self.vectors[idx], pts)
+            # joint 데이터 수집
+            joint_data.append({
+                "origin": origin.tolist(),
+                "guide": self.vectors[idx].tolist(),
+                "points": [pt.tolist() for pt in pts]
+            })
+
+        self.frame_count += 1
+
+        # 일정 프레임 주기마다 한 번만 전송
+        if self.frame_count % 33 == 0:
+            self.sendLand.send_pose_data(user_id, joint_data)
     
     def set_exercise(self, exercise):
         with self.lock:
