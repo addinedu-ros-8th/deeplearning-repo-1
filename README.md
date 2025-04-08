@@ -10,7 +10,6 @@ DL 프로젝트 1조 저장소. 팀 CHICAGO
   <h3 align="center">피트니스 AI 에이전트(Fitness AI Agent)</h3>
 
   <p align="center">
-    <a href="">Video Demo</a>\\
     <a href="https://docs.google.com/presentation/d/1iNOuPEVw5FUgLmUJqL00OPBQSc4z1UGs">Presentation</a>
   </p>
 </p>
@@ -27,7 +26,7 @@ AI 기반 스마트 피트니스 트레이닝 시스템
 - **맞춤형 운동 가이드 제공 가능성** : 사용자 데이터를 기반으로 추후 운동 난이도 추천 및 진행률 시각화 등 확장 가능
 
 
-mp4 - video
+![Image](https://github.com/user-attachments/assets/fc12cd22-ef3a-408d-b2a1-71b10ff9d416)
 
 <br>
 
@@ -77,12 +76,23 @@ mp4 - video
     pip install pydub
     pip install tensorflow
 ```
-## 기능  
+## 주요 기능 
+### Login 
+![Image](https://github.com/user-attachments/assets/fab18721-b4bd-4628-a3ac-186867eefb38)
 ### Hand gesture UI 
+
 #### Lookup - 티어별 운동들 살펴보기   
 ![Image](https://github.com/user-attachments/assets/4879d38c-d6cb-4a4c-a3a6-226bc995d4b0)
 #### Hand gesture (손가락인식)
 ![Image](https://github.com/user-attachments/assets/5ce51d23-7b70-46bd-af8f-2a0e75ded9b8)
+
+### Workout - drawline, counting, tts 
+#### Break time
+![Image](https://github.com/user-attachments/assets/29590237-c99e-40eb-aafd-a7890b883574)
+#### Time over 
+![Image](https://github.com/user-attachments/assets/4f285284-2fcd-43e0-b30a-1e0114c029d6)
+
+
 
 ## 설계
 ### 시나리오
@@ -97,20 +107,15 @@ mp4 - video
 | Bronze | Squat |<img src="https://github.com/user-attachments/assets/491558c9-faaa-4b01-8d36-5a93c5eb2b85" width="230" height="200">| silver| Standing Bicycle |<img src="https://github.com/user-attachments/assets/67b59edf-f230-487e-92e9-16ef001b4ae0" width="250" height="200">|
 | Bronze | Front-lunge |<img src="https://github.com/user-attachments/assets/e043a262-e350-4472-a08f-83c30f68440e" width="230" height="200">| silver| Side lunge |<img src="https://github.com/user-attachments/assets/e127fadd-b4bc-4498-b52d-681b0251f387" width="250" height="200">| 
 
-|  Tier  |  이름  | 설명 |
-|:--------:|--------|------|
-| Gold |Sit-up|<img src="https://github.com/user-attachments/assets/71533531-f640-41a6-a9a8-8a0c02339610" width="250" height="200">|    
-| Gold |Side-plank|<img src="https://github.com/user-attachments/assets/d10ed58e-d8c4-468b-b2c6-9f7ae036c877" width="250" height="200">|  
-| Gold |leg-raise|<img src="https://github.com/user-attachments/assets/beee0275-f334-4c4e-abc4-03919dab8375" width="250" height="200">| 
-| Gold |V-up|<img src="https://github.com/user-attachments/assets/bd2f1997-ab37-4f33-a336-bcec9089bd99" width="250" height="200">| 
+
 
 ### Architecture  
 #### 1) SW
-![Image](https://github.com/user-attachments/assets/5796be21-5a7c-438a-b598-ea8193de69ac)
+![Image](https://github.com/user-attachments/assets/13a78c71-6e38-424f-a4a7-bb9ba25d9b86)
 #### 2) HW
 ![Image](https://github.com/user-attachments/assets/ee48d138-91da-4a27-8f0a-88d739a6a221)
 #### 3) ERD 
-![Image](https://github.com/user-attachments/assets/fb42019f-67a3-46c5-bd02-2793efa1790e)
+![Image](https://github.com/user-attachments/assets/fffa8ef7-b725-47d5-8c10-b99cf20ea940)
 
 
  
